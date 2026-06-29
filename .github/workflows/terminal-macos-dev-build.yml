@@ -1,0 +1,142 @@
+name: Terminal macOS Dev Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: "Mac CPU target"
+        required: true
+        default: "aarch64"
+        type: choice
+        options:
+          - "aarch64"
+          - "x86_64"
+      brand:
+        description: "Zen brand config to build from"
+        required: true
+        default: "twilight"
+        type: choice
+        options:
+          - "twilight"
+          - "release"
+      use-sccache:
+        description: "Use GitHub build cache"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    name: Build terminal Zen for macOS (${{ inputs.arch }})
+    runs-on: macos-26
+    timeout-minutes: 720
+    env:
+      SURFER_COMPAT: ${{ inputs.arch }}
+      SURFER_PLATFORM: darwin
+      ZEN_RELEASE_BRANCH: ${{ inputs.brand }}
+      ZEN_RELEASE: "1"
+      ZEN_GA_DISABLE_PGO: "true"
+      SCCACHE_GHA_ENABLED: ${{ inputs.use-sccache && 'true' || 'false' }}
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Generate build ID
+        id: buildid
+        shell: bash
+        run: |
+          echo "id=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+          echo "version=terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@main
+        if: ${{ inputs.use-sccache }}
+        with:
+          disable_annotations: true
+
+      - name: Expose actions cache variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env['ACTIONS_CACHE_URL'])
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env['ACTIONS_RUNTIME_TOKEN'])
+
+      - name: Install macOS build tools
+        shell: bash
+        run: |
+          brew update
+          brew install cairo gnu-tar mercurial watchman
+          python3 -m pip install --user mercurial setuptools
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "$(cat .rust-toolchain)"
+          source "$HOME/.cargo/env"
+          rustup target add "${{ inputs.arch }}-apple-darwin"
+          echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "$(python3 -m site --user-base)/bin" >> "$GITHUB_PATH"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Prepare Zen build config
+        run: npm run surfer -- ci --brand "${{ inputs.brand }}" --display-version "${{ steps.buildid.outputs.version }}"
+
+      - name: Download Firefox source and dependencies
+        run: npm run download -- --verbose
+
+      - name: Import Zen source into Firefox source
+        run: npm run import -- --verbose
+
+      - name: Bootstrap Firefox build environment
+        shell: bash
+        run: |
+          cd engine
+          export PATH="$(python3 -m site --user-base)/bin:$PATH"
+          ./mach --no-interactive bootstrap --application-choice browser --exclude macos-sdk || true
+
+      - name: Build language packs
+        run: sh scripts/download-language-packs.sh
+
+      - name: Build Zen terminal fork
+        shell: bash
+        run: |
+          source "$HOME/.cargo/env"
+          export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
+          npm run build
+
+      - name: Package macOS app
+        shell: bash
+        run: |
+          source "$HOME/.cargo/env"
+          export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
+          npm run package
+
+      - name: Collect DMG
+        shell: bash
+        run: |
+          set -eux
+          mkdir -p terminal-build-artifacts
+          cp dist/*.dmg "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
+          find terminal-build-artifacts -maxdepth 1 -type f -print
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: zen-terminal-${{ inputs.arch }}-dmg
+          path: terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg
+          retention-days: 7

@@ -8,6 +8,7 @@
   <menuseparator/>
   <menuitem data-l10n-id="zen-panel-ui-new-empty-split" command="cmd_zenNewEmptySplit" image="chrome://browser/skin/zen-icons/split.svg" />
   <menuitem data-l10n-id="tabs-toolbar-new-tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
+  <menuitem label="New Terminal Tab" command="cmd_zenNewTerminalTab" image="chrome://browser/skin/zen-icons/developer.svg" />
 </menupopup>
 
 <menupopup id="zenWorkspaceMoreActions">

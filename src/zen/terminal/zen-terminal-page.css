@@ -1,0 +1,91 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+:root {
+  color-scheme: dark;
+  background: #060906;
+}
+
+html,
+body,
+#zen-terminal-page {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(83, 145, 64, 0.16), transparent 28rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 16rem),
+    #050805;
+  color: rgba(244, 247, 239, 0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+#zen-terminal-page {
+  box-sizing: border-box;
+  display: grid;
+  padding: 24px;
+}
+
+#zen-terminal-surface {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: calc(100vh - 48px);
+  border: 1px solid rgba(123, 201, 92, 0.24);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.72);
+  box-shadow:
+    0 20px 80px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+}
+
+#zen-terminal-surface:focus-visible {
+  outline: 2px solid rgba(143, 231, 105, 0.54);
+  outline-offset: 3px;
+}
+
+#zen-terminal-output {
+  overflow: auto;
+  padding: 24px 24px 12px;
+  white-space: pre-wrap;
+}
+
+.terminal-line {
+  min-height: 1.45em;
+  line-height: 1.45;
+}
+
+.terminal-muted {
+  color: rgba(244, 247, 239, 0.54);
+}
+
+.terminal-command {
+  color: rgba(164, 238, 126, 0.94);
+}
+
+.terminal-error {
+  color: rgba(255, 128, 128, 0.92);
+}
+
+#zen-terminal-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(244, 247, 239, 0.54);
+}
+
+#zen-terminal-prompt {
+  color: rgba(143, 231, 105, 0.96);
+  font-weight: 700;
+}
+
+#zen-terminal-surface[terminal-ready] #zen-terminal-status-text {
+  color: rgba(244, 247, 239, 0.74);
+}

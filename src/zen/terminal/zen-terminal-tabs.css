@@ -1,0 +1,18 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Terminal tabs must look like normal Zen tabs. This file only adds tiny
+   terminal-specific hints; it must not replace Zen's tab/sidebar UI. */
+.tabbrowser-tab[zen-terminal-tab="true"] .tab-icon-image,
+.tabbrowser-tab[zen-terminal-tab="true"] .tab-icon-overlay {
+  list-style-image: none !important;
+}
+
+.tabbrowser-tab[zen-terminal-tab="true"] .tab-icon-stack::before {
+  content: "›_";
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.82;
+}

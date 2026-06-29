@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Terminal</title>
+    <link
+      rel="stylesheet"
+      href="chrome://browser/content/zen-styles/zen-terminal-page.css"
+    />
+    <script
+      type="module"
+      src="chrome://browser/content/zen-terminal/ZenTerminalPage.mjs"
+    ></script>
+  </head>
+  <body>
+    <main id="zen-terminal-page">
+      <section id="zen-terminal-surface" aria-label="Terminal" tabindex="0">
+        <div id="zen-terminal-output" role="log" aria-live="polite">
+          <div class="terminal-line terminal-muted">Zen Terminal</div>
+          <div class="terminal-line terminal-muted">
+            A local Mac shell starts here through macOS pseudo-terminal support.
+          </div>
+        </div>
+        <footer id="zen-terminal-status">
+          <span id="zen-terminal-prompt">…</span>
+          <span id="zen-terminal-status-text">starting shell</span>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>
