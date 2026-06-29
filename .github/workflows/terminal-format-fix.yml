@@ -51,10 +51,10 @@ jobs:
           cd engine
           ./mach lint --fix zen/terminal/ZenTerminalPage.mjs zen/terminal/ZenTerminalTabs.mjs
 
-      - name: Copy fixed files back to source
+      - name: Note where fixed files live
         run: |
-          cp engine/zen/terminal/ZenTerminalPage.mjs src/zen/terminal/ZenTerminalPage.mjs
-          cp engine/zen/terminal/ZenTerminalTabs.mjs src/zen/terminal/ZenTerminalTabs.mjs
+          echo "Zen import exposes src files inside engine, so mach lint --fix updates the source tree directly."
+          git status --short -- src/zen/terminal/ZenTerminalPage.mjs src/zen/terminal/ZenTerminalTabs.mjs
 
       - name: Commit formatting fix if needed
         run: |
