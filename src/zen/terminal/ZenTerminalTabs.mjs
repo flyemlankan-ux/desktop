@@ -37,7 +37,7 @@ export class ZenTerminalTabs {
 
   openTerminalTab() {
     const tab = gBrowser.addTab(ZEN_TERMINAL_TAB_URL, {
-      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
     });
     this.markTerminalTab(tab);
     gBrowser.selectedTab = tab;
