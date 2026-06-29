@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const { Subprocess } = ChromeUtils.importESModule(
-  "resource://gre/modules/Subprocess.sys.mjs",
+  "resource://gre/modules/Subprocess.sys.mjs"
 );
 
 const surface = document.getElementById("zen-terminal-surface");
@@ -238,7 +238,7 @@ function terminalSequenceFor(event) {
   }
 }
 
-surface.addEventListener("keydown", async (event) => {
+surface.addEventListener("keydown", async event => {
   const sequence = terminalSequenceFor(event);
   if (!sequence) {
     return;
@@ -253,7 +253,7 @@ surface.addEventListener("keydown", async (event) => {
   await writeToShell(sequence);
 });
 
-surface.addEventListener("paste", async (event) => {
+surface.addEventListener("paste", async event => {
   const text = event.clipboardData?.getData("text/plain");
   if (!text) {
     return;
