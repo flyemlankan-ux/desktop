@@ -93,7 +93,22 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
-      - name: Prepare Zen build config
+      - name: Prepare terminal fork identity
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("surfer.json")
+          data = json.loads(path.read_text())
+          data["name"] = "Zen Terminal"
+          data["appId"] = "zen-terminal"
+          data["binaryName"] = "zen-terminal"
+          path.write_text(json.dumps(data, indent=2) + "\n")
+          PY
+
+      - name: Prepare Zen terminal build config
         run: npm run surfer -- ci --brand "${{ inputs.brand }}" --display-version "${{ steps.buildid.outputs.version }}"
 
       - name: Download Firefox source and dependencies

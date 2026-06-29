@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const { Subprocess } = ChromeUtils.importESModule(
-  "resource://gre/modules/Subprocess.sys.mjs"
+  "resource://gre/modules/Subprocess.sys.mjs",
 );
 
 const surface = document.getElementById("zen-terminal-surface");
@@ -14,6 +14,11 @@ const statusText = document.getElementById("zen-terminal-status-text");
 let shellProcess = null;
 let shellReady = false;
 let stopping = false;
+
+function getTerminalContainerName() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("name") || "Terminal";
+}
 
 function appendLine(text = "", className = "") {
   const line = document.createElement("div");
@@ -124,7 +129,7 @@ async function readPipe(pipe, className = "") {
 
 async function startShell() {
   setStatus("starting shell", false);
-  appendLine("Starting local shell…", "terminal-muted");
+  appendLine(`Starting ${getTerminalContainerName()}…`, "terminal-muted");
 
   const launch = getShellLaunch();
   const env = {
@@ -144,7 +149,10 @@ async function startShell() {
 
     shellReady = true;
     setStatus("ready — type directly into this terminal", true);
-    appendLine(`Connected to ${launch.label}`, "terminal-muted");
+    appendLine(
+      `Connected to ${getTerminalContainerName()} (${launch.label})`,
+      "terminal-muted",
+    );
     surface.focus();
 
     readPipe(shellProcess.stdout);
@@ -238,7 +246,7 @@ function terminalSequenceFor(event) {
   }
 }
 
-surface.addEventListener("keydown", async event => {
+surface.addEventListener("keydown", async (event) => {
   const sequence = terminalSequenceFor(event);
   if (!sequence) {
     return;
@@ -253,7 +261,7 @@ surface.addEventListener("keydown", async event => {
   await writeToShell(sequence);
 });
 
-surface.addEventListener("paste", async event => {
+surface.addEventListener("paste", async (event) => {
   const text = event.clipboardData?.getData("text/plain");
   if (!text) {
     return;

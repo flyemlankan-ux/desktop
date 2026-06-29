@@ -7,8 +7,23 @@
   <menuitem data-l10n-id="zen-panel-ui-folder-create" command="cmd_zenOpenFolderCreation" image="chrome://browser/skin/zen-icons/folder.svg" />
   <menuseparator/>
   <menuitem data-l10n-id="zen-panel-ui-new-empty-split" command="cmd_zenNewEmptySplit" image="chrome://browser/skin/zen-icons/split.svg" />
-  <menuitem data-l10n-id="tabs-toolbar-new-tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
-  <menuitem label="New Terminal Tab" command="cmd_zenNewTerminalTab" image="chrome://browser/skin/zen-icons/developer.svg" />
+  <menuitem label="Browser Tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
+  <menu id="zenCreateBrowserContainerTabMenu"
+    label="Browser Container Tab"
+    image="chrome://browser/skin/zen-icons/container-tab.svg"
+    hide-if-private-browsing="true"
+    hide-if-usercontext-disabled="true">
+    <menupopup onpopupshowing="return createUserContextMenu(event, { isContextMenu: true, showDefaultTab: true });" />
+  </menu>
+  <menuseparator/>
+  <menuitem label="Terminal Tab" command="cmd_zenNewTerminalTab" image="chrome://browser/skin/zen-icons/developer.svg" />
+  <menu id="zenCreateTerminalContainerTabMenu"
+    label="Terminal Container Tab"
+    image="chrome://browser/skin/zen-icons/developer.svg">
+    <menupopup>
+      <menuitem label="Default Terminal" command="cmd_zenNewTerminalContainerTab" data-terminal-container-id="default" data-terminal-container-name="Default Terminal" />
+    </menupopup>
+  </menu>
 </menupopup>
 
 <menupopup id="zenWorkspaceMoreActions">

@@ -8,25 +8,119 @@ import { spawnSync } from "node:child_process";
 
 const checks = new Map([
   ["terminal dir registered", ["src/zen/moz.build", '"terminal"']],
-  ["terminal jar included", ["src/browser/base/content/zen-assets.jar.inc.mn", "../../../zen/terminal/jar.inc.mn"]],
-  ["terminal command declared", ["src/browser/base/content/zen-commands.inc.xhtml", "cmd_zenNewTerminalTab"]],
-  ["terminal menu item present", ["src/browser/base/content/zen-panels/popups.inc", "New Terminal Tab"]],
-  ["terminal module preloaded", ["src/zen/common/ZenPreloadedScripts.js", "ZenTerminalTabs.mjs"]],
-  ["terminal command handled", ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"]],
-  ["terminal tab opens chrome page", ["src/zen/terminal/ZenTerminalTabs.mjs", "chrome://browser/content/zen-terminal/terminal.xhtml"]],
-  ["terminal page jarred", ["src/zen/terminal/jar.inc.mn", "content/browser/zen-terminal/terminal.xhtml"]],
-  ["terminal page script jarred", ["src/zen/terminal/jar.inc.mn", "ZenTerminalPage.mjs"]],
-  ["terminal page css jarred", ["src/zen/terminal/jar.inc.mn", "zen-terminal-page.css"]],
-  ["subprocess shell wired", ["src/zen/terminal/ZenTerminalPage.mjs", "Subprocess.call"]],
-  ["mac pseudo-terminal helper wired", ["src/zen/terminal/ZenTerminalPage.mjs", "/usr/bin/script"]],
-  ["raw key handling wired", ["src/zen/terminal/ZenTerminalPage.mjs", "terminalSequenceFor"]],
+  [
+    "terminal jar included",
+    [
+      "src/browser/base/content/zen-assets.jar.inc.mn",
+      "../../../zen/terminal/jar.inc.mn",
+    ],
+  ],
+  [
+    "terminal command declared",
+    [
+      "src/browser/base/content/zen-commands.inc.xhtml",
+      "cmd_zenNewTerminalTab",
+    ],
+  ],
+  [
+    "plain terminal tab choice present",
+    ["src/browser/base/content/zen-panels/popups.inc", "Terminal Tab"],
+  ],
+  [
+    "browser container choice present",
+    ["src/browser/base/content/zen-panels/popups.inc", "Browser Container Tab"],
+  ],
+  [
+    "terminal container choice present",
+    [
+      "src/browser/base/content/zen-panels/popups.inc",
+      "Terminal Container Tab",
+    ],
+  ],
+  [
+    "terminal container command declared",
+    [
+      "src/browser/base/content/zen-commands.inc.xhtml",
+      "cmd_zenNewTerminalContainerTab",
+    ],
+  ],
+  [
+    "terminal module preloaded",
+    ["src/zen/common/ZenPreloadedScripts.js", "ZenTerminalTabs.mjs"],
+  ],
+  [
+    "terminal command handled",
+    ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"],
+  ],
+  [
+    "terminal tab opens chrome page",
+    [
+      "src/zen/terminal/ZenTerminalTabs.mjs",
+      "chrome://browser/content/zen-terminal/terminal.xhtml",
+    ],
+  ],
+  [
+    "terminal page jarred",
+    [
+      "src/zen/terminal/jar.inc.mn",
+      "content/browser/zen-terminal/terminal.xhtml",
+    ],
+  ],
+  [
+    "terminal page script jarred",
+    ["src/zen/terminal/jar.inc.mn", "ZenTerminalPage.mjs"],
+  ],
+  [
+    "terminal page css jarred",
+    ["src/zen/terminal/jar.inc.mn", "zen-terminal-page.css"],
+  ],
+  [
+    "subprocess shell wired",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "Subprocess.call"],
+  ],
+  [
+    "mac pseudo-terminal helper wired",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "/usr/bin/script"],
+  ],
+  [
+    "raw key handling wired",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "terminalSequenceFor"],
+  ],
   ["paste handling wired", ["src/zen/terminal/ZenTerminalPage.mjs", "paste"]],
-  ["shell writes input", ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdin.write"]],
-  ["shell reads stdout", ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdout"]],
-  ["output cleaner used", ["src/zen/terminal/ZenTerminalPage.mjs", "const cleaned = cleanTerminalText(text);"]],
-  ["shell closes on tab close", ["src/zen/terminal/ZenTerminalPage.mjs", "pagehide"]],
-  ["manual mac workflow added", [".github/workflows/terminal-macos-dev-build.yml", "Terminal macOS Dev Build"]],
-  ["build note updated", ["docs/terminal-tabs-build.md", "sends keystrokes directly"]],
+  [
+    "shell writes input",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdin.write"],
+  ],
+  [
+    "shell reads stdout",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdout"],
+  ],
+  [
+    "output cleaner used",
+    [
+      "src/zen/terminal/ZenTerminalPage.mjs",
+      "const cleaned = cleanTerminalText(text);",
+    ],
+  ],
+  [
+    "shell closes on tab close",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "pagehide"],
+  ],
+  [
+    "manual mac workflow added",
+    [
+      ".github/workflows/terminal-macos-dev-build.yml",
+      "Terminal macOS Dev Build",
+    ],
+  ],
+  [
+    "terminal fork identity patched",
+    [".github/workflows/terminal-macos-dev-build.yml", "zen-terminal"],
+  ],
+  [
+    "build note updated",
+    ["docs/terminal-tabs-build.md", "sends keystrokes directly"],
+  ],
 ]);
 
 const syntaxFiles = [

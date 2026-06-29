@@ -15,17 +15,37 @@ export const ZEN_TERMINAL_TAB_URL =
   "chrome://browser/content/zen-terminal/terminal.xhtml";
 
 export class ZenTerminalTabs {
+  #terminalUrl(options = {}) {
+    const params = new URLSearchParams();
+    if (options.terminalContainerId) {
+      params.set("container", options.terminalContainerId);
+    }
+    if (options.terminalContainerName) {
+      params.set("name", options.terminalContainerName);
+    }
+    const query = params.toString();
+    return query ? `${ZEN_TERMINAL_TAB_URL}?${query}` : ZEN_TERMINAL_TAB_URL;
+  }
+
   isTerminalTab(tab) {
     return Boolean(tab?.hasAttribute?.(ZEN_TERMINAL_TAB_ATTRIBUTE));
   }
 
-  markTerminalTab(tab) {
+  markTerminalTab(tab, options = {}) {
     if (!tab) {
       return;
     }
     tab.setAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE, "true");
     tab.setAttribute("zen-show-sublabel", "true");
-    tab.setAttribute("label", tab.getAttribute("label") || "Terminal");
+    if (options.terminalContainerId) {
+      tab.setAttribute(
+        "zen-terminal-container-id",
+        options.terminalContainerId,
+      );
+    }
+    const label =
+      options.terminalContainerName || tab.getAttribute("label") || "Terminal";
+    tab.setAttribute("label", label);
   }
 
   unmarkTerminalTab(tab) {
@@ -35,11 +55,11 @@ export class ZenTerminalTabs {
     tab.removeAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE);
   }
 
-  openTerminalTab() {
-    const tab = gBrowser.addTab(ZEN_TERMINAL_TAB_URL, {
+  openTerminalTab(options = {}) {
+    const tab = gBrowser.addTab(this.#terminalUrl(options), {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     });
-    this.markTerminalTab(tab);
+    this.markTerminalTab(tab, options);
     gBrowser.selectedTab = tab;
     return tab;
   }
