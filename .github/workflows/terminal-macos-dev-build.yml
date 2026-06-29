@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           echo "id=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-          echo "version=terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+          echo "version=1.0.0-terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
