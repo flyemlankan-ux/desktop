@@ -124,14 +124,27 @@ jobs:
         run: |
           source "$HOME/.cargo/env"
           export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
+          set +e
           npm run package
+          package_status=$?
+          set -e
+          if [ "$package_status" -ne 0 ]; then
+            echo "surfer package failed after app packaging. Checking whether a DMG was still created."
+            if find engine/obj-* -path '*/dist/*.dmg' -print -quit | grep -q .; then
+              echo "DMG exists, continuing. This dev build does not need updater MAR files."
+            else
+              exit "$package_status"
+            fi
+          fi
 
       - name: Collect DMG
         shell: bash
         run: |
           set -eux
           mkdir -p terminal-build-artifacts
-          cp dist/*.dmg "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
+          dmg_path="$(find engine/obj-* -path '*/dist/*.dmg' -print -quit)"
+          test -n "$dmg_path"
+          cp "$dmg_path" "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
           find terminal-build-artifacts -maxdepth 1 -type f -print
 
       - name: Upload DMG
