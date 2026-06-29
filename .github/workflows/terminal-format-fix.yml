@@ -1,0 +1,67 @@
+name: Terminal Format Fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Surfer engine cache
+        uses: actions/cache@v5
+        with:
+          path: .surfer/engine/
+          key: surfer-engine-${{ hashFiles('surfer.json') }}
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Download Firefox and dependencies
+        run: npm run download
+
+      - name: Run Bootstrap
+        run: npm run bootstrap
+
+      - name: Add .hgignore file to the engine dir
+        run: touch engine/.hgignore
+
+      - name: Import patches
+        run: npm run import
+
+      - name: Let Zen lint fix terminal files
+        run: |
+          cd engine
+          ./mach lint --fix zen/terminal/ZenTerminalPage.mjs zen/terminal/ZenTerminalTabs.mjs
+
+      - name: Copy fixed files back to source
+        run: |
+          cp engine/zen/terminal/ZenTerminalPage.mjs src/zen/terminal/ZenTerminalPage.mjs
+          cp engine/zen/terminal/ZenTerminalTabs.mjs src/zen/terminal/ZenTerminalTabs.mjs
+
+      - name: Commit formatting fix if needed
+        run: |
+          if git diff --quiet -- src/zen/terminal/ZenTerminalPage.mjs src/zen/terminal/ZenTerminalTabs.mjs; then
+            echo "No terminal formatting changes needed."
+          else
+            git add src/zen/terminal/ZenTerminalPage.mjs src/zen/terminal/ZenTerminalTabs.mjs
+            git commit -m "style: apply Zen lint formatting to terminal files"
+            git push
+          fi

@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const { Subprocess } = ChromeUtils.importESModule(
-  "resource://gre/modules/Subprocess.sys.mjs"
+  "resource://gre/modules/Subprocess.sys.mjs",
 );
 
 const surface = document.getElementById("zen-terminal-surface");
@@ -98,14 +98,14 @@ function getShellLaunch() {
     return {
       command: "/usr/bin/script",
       arguments: ["-q", "/dev/null", shell, "-l"],
-      label: `${shell} through macOS pseudo-terminal`
+      label: `${shell} through macOS pseudo-terminal`,
     };
   }
 
   return {
     command: shell,
     arguments: ["-l"],
-    label: shell
+    label: shell,
   };
 }
 
@@ -130,7 +130,7 @@ async function startShell() {
   const env = {
     TERM: "xterm-256color",
     COLORTERM: "truecolor",
-    ZEN_TERMINAL: "1"
+    ZEN_TERMINAL: "1",
   };
 
   try {
@@ -139,7 +139,7 @@ async function startShell() {
       arguments: launch.arguments,
       environmentAppend: true,
       environment: env,
-      stderr: "pipe"
+      stderr: "pipe",
     });
 
     shellReady = true;
@@ -238,7 +238,7 @@ function terminalSequenceFor(event) {
   }
 }
 
-surface.addEventListener("keydown", async event => {
+surface.addEventListener("keydown", async (event) => {
   const sequence = terminalSequenceFor(event);
   if (!sequence) {
     return;
@@ -253,7 +253,7 @@ surface.addEventListener("keydown", async event => {
   await writeToShell(sequence);
 });
 
-surface.addEventListener("paste", async event => {
+surface.addEventListener("paste", async (event) => {
   const text = event.clipboardData?.getData("text/plain");
   if (!text) {
     return;
