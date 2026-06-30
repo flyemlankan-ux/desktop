@@ -53,6 +53,15 @@ const checks = new Map([
     ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"],
   ],
 
+
+  [
+    "native Firefox new tab container menu patched",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#patchFirefoxContainerMenuBuilder"],
+  ],
+  [
+    "rendered command include has XML comment",
+    ["src/browser/base/content/zen-commands.inc.xhtml", "<!-- This Source Code Form"],
+  ],
   [
     "real New Tab container picker bridged",
     ["src/zen/terminal/ZenTerminalTabs.mjs", "#installNewTabContainerMenuBridge"],

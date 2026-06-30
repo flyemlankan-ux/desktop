@@ -28,6 +28,7 @@ const DEFAULT_TERMINAL_CONTAINER = {
 export class ZenTerminalTabs {
   constructor() {
     this.#installNewTabContainerMenuBridge();
+    this.#patchFirefoxContainerMenuBuilder();
   }
 
   #terminalUrl(options = {}) {
@@ -114,6 +115,32 @@ export class ZenTerminalTabs {
       labels.includes("Banking") ||
       labels.includes("Shopping")
     );
+  }
+
+
+  #patchFirefoxContainerMenuBuilder() {
+    const install = () => {
+      if (typeof window.CreateContainerTabMenu !== "function") {
+        window.setTimeout(install, 50);
+        return;
+      }
+
+      if (window.CreateContainerTabMenu.__zenTerminalPatched) {
+        return;
+      }
+
+      const originalCreateContainerTabMenu = window.CreateContainerTabMenu;
+      const patchedCreateContainerTabMenu = event => {
+        const result = originalCreateContainerTabMenu.call(window, event);
+        this.#injectTerminalChoices(event.target);
+        window.setTimeout(() => this.#injectTerminalChoices(event.target), 0);
+        return result;
+      };
+      patchedCreateContainerTabMenu.__zenTerminalPatched = true;
+      window.CreateContainerTabMenu = patchedCreateContainerTabMenu;
+    };
+
+    install();
   }
 
   #installNewTabContainerMenuBridge() {
