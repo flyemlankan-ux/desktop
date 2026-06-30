@@ -122,10 +122,21 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "/usr/bin/script"],
   ],
   [
-    "raw key handling wired",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "terminalSequenceFor"],
+    "real terminal engine vendored",
+    ["src/zen/terminal/vendor/xterm.js", "Terminal"],
   ],
-  ["paste handling wired", ["src/zen/terminal/ZenTerminalPage.mjs", "paste"]],
+  [
+    "real terminal css vendored",
+    ["src/zen/terminal/vendor/xterm.css", ".xterm"],
+  ],
+  [
+    "terminal page loads xterm",
+    ["src/zen/terminal/terminal.xhtml", "vendor/xterm.js"],
+  ],
+  [
+    "terminal input handled by xterm",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "terminal.onData"],
+  ],
   [
     "shell writes input",
     ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdin.write"],
@@ -135,11 +146,8 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdout"],
   ],
   [
-    "output cleaner used",
-    [
-      "src/zen/terminal/ZenTerminalPage.mjs",
-      "const cleaned = cleanTerminalText(text);",
-    ],
+    "shell output written to xterm",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "terminal.write(chunk)"],
   ],
   [
     "shell closes on tab close",

@@ -14,75 +14,11 @@ const statusText = document.getElementById("zen-terminal-status-text");
 let shellProcess = null;
 let shellReady = false;
 let stopping = false;
+let terminal = null;
 
 function getTerminalContainerName() {
   const params = new URLSearchParams(window.location.search);
   return params.get("name") || "Terminal";
-}
-
-function appendLine(text = "", className = "") {
-  const line = document.createElement("div");
-  line.className = ["terminal-line", className].filter(Boolean).join(" ");
-  line.textContent = text;
-  output.appendChild(line);
-  output.scrollTop = output.scrollHeight;
-}
-
-const ESC = String.fromCharCode(27);
-const BEL = String.fromCharCode(7);
-const BACKSPACE = String.fromCharCode(8);
-
-function cleanTerminalText(text = "") {
-  let cleaned = "";
-  for (let index = 0; index < text.length; index++) {
-    const char = text[index];
-
-    if (char === BEL || char === BACKSPACE) {
-      continue;
-    }
-
-    if (char !== ESC) {
-      cleaned += char;
-      continue;
-    }
-
-    const next = text[index + 1];
-    if (next === "]") {
-      index += 2;
-      while (index < text.length && text[index] !== BEL) {
-        if (text[index] === ESC && text[index + 1] === "\\") {
-          index++;
-          break;
-        }
-        index++;
-      }
-      continue;
-    }
-
-    if (next === "[") {
-      index += 2;
-      while (index < text.length && !/[A-Za-z@-~]/.test(text[index])) {
-        index++;
-      }
-      continue;
-    }
-
-    if (next === "(" || next === ")") {
-      index += 2;
-      continue;
-    }
-
-    index++;
-  }
-  return cleaned;
-}
-
-function appendChunk(text = "", className = "") {
-  const cleaned = cleanTerminalText(text);
-  const lines = cleaned.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-  for (const line of lines) {
-    appendLine(line, className);
-  }
 }
 
 function setStatus(text, isReady = false) {
@@ -114,28 +50,97 @@ function getShellLaunch() {
   };
 }
 
+function fitTerminalToSurface() {
+  if (!terminal) {
+    return;
+  }
+
+  const fontSize = 14;
+  const characterWidth = 8.4;
+  const characterHeight = 19;
+  const bounds = output.getBoundingClientRect();
+  const columns = Math.max(20, Math.floor(bounds.width / characterWidth));
+  const rows = Math.max(6, Math.floor(bounds.height / characterHeight));
+
+  terminal.resize(columns, rows);
+}
+
+function initTerminal() {
+  if (!window.Terminal) {
+    throw new Error("xterm.js did not load");
+  }
+
+  terminal = new window.Terminal({
+    allowProposedApi: false,
+    convertEol: false,
+    cursorBlink: true,
+    cursorStyle: "block",
+    disableStdin: false,
+    fontFamily: "Menlo, Monaco, 'SF Mono', Consolas, monospace",
+    fontSize: 14,
+    lineHeight: 1.25,
+    macOptionIsMeta: true,
+    scrollback: 10000,
+    theme: {
+      background: "#000000",
+      foreground: "#f4f7ef",
+      cursor: "#8fe769",
+      selectionBackground: "#315822",
+      black: "#000000",
+      brightBlack: "#666666",
+      red: "#ff6b6b",
+      brightRed: "#ff8f8f",
+      green: "#8fe769",
+      brightGreen: "#b8ff9e",
+      yellow: "#f4d35e",
+      brightYellow: "#ffe98a",
+      blue: "#6ea8fe",
+      brightBlue: "#9cc4ff",
+      magenta: "#d795ff",
+      brightMagenta: "#e6b8ff",
+      cyan: "#6fffe9",
+      brightCyan: "#a4fff2",
+      white: "#eeeeee",
+      brightWhite: "#ffffff",
+    },
+  });
+
+  terminal.open(output);
+  fitTerminalToSurface();
+  terminal.focus();
+
+  terminal.onData(data => {
+    writeToShell(data);
+  });
+
+  window.addEventListener("resize", fitTerminalToSurface);
+}
+
 async function readPipe(pipe, className = "") {
   try {
     let chunk;
     while ((chunk = await pipe.readString())) {
-      appendChunk(chunk, className);
+      terminal.write(chunk);
     }
   } catch (error) {
     if (!stopping) {
-      appendLine(`reader stopped: ${error.message}`, "terminal-muted");
+      terminal.writeln(`reader stopped: ${error.message}`);
     }
   }
 }
 
 async function startShell() {
   setStatus("starting shell", false);
-  appendLine(`Starting ${getTerminalContainerName()}…`, "terminal-muted");
+  initTerminal();
+  terminal.writeln(`Starting ${getTerminalContainerName()}…`);
 
   const launch = getShellLaunch();
   const env = {
     TERM: "xterm-256color",
     COLORTERM: "truecolor",
     ZEN_TERMINAL: "1",
+    COLUMNS: String(terminal.cols),
+    LINES: String(terminal.rows),
   };
 
   try {
@@ -149,11 +154,10 @@ async function startShell() {
 
     shellReady = true;
     setStatus("ready — type directly into this terminal", true);
-    appendLine(
+    terminal.writeln(
       `Connected to ${getTerminalContainerName()} (${launch.label})`,
-      "terminal-muted",
     );
-    surface.focus();
+    terminal.focus();
 
     readPipe(shellProcess.stdout);
     if (shellProcess.stderr) {
@@ -163,118 +167,32 @@ async function startShell() {
     const result = await shellProcess.wait();
     shellReady = false;
     if (!stopping) {
-      appendLine(`Shell exited with code ${result.exitCode}`, "terminal-muted");
+      terminal.writeln(`Shell exited with code ${result.exitCode}`);
       setStatus("shell exited", false);
     }
   } catch (error) {
     shellReady = false;
-    appendLine(`Could not start shell: ${error.message}`, "terminal-error");
+    terminal?.writeln(`Could not start shell: ${error.message}`);
     setStatus("shell failed", false);
   }
 }
 
 async function writeToShell(text) {
   if (!shellProcess || !shellReady) {
-    appendLine("Shell is not ready yet.", "terminal-muted");
     return;
   }
 
   try {
     await shellProcess.stdin.write(text);
   } catch (error) {
-    appendLine(`Could not write to shell: ${error.message}`, "terminal-error");
+    terminal?.writeln(`Could not write to shell: ${error.message}`);
   }
 }
 
-function controlKeyFor(event) {
-  if (
-    !event.ctrlKey ||
-    event.metaKey ||
-    event.altKey ||
-    event.key.length !== 1
-  ) {
-    return null;
-  }
-
-  const code = event.key.toUpperCase().charCodeAt(0);
-  if (code < 65 || code > 90) {
-    return null;
-  }
-
-  return String.fromCharCode(code - 64);
-}
-
-function terminalSequenceFor(event) {
-  const control = controlKeyFor(event);
-  if (control) {
-    return control;
-  }
-
-  switch (event.key) {
-    case "Enter":
-      return "\r";
-    case "Backspace":
-      return "\x7f";
-    case "Tab":
-      return "\t";
-    case "Escape":
-      return "\x1b";
-    case "ArrowUp":
-      return "\x1b[A";
-    case "ArrowDown":
-      return "\x1b[B";
-    case "ArrowRight":
-      return "\x1b[C";
-    case "ArrowLeft":
-      return "\x1b[D";
-    case "Home":
-      return "\x1b[H";
-    case "End":
-      return "\x1b[F";
-    case "Delete":
-      return "\x1b[3~";
-    default:
-      if (
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        event.key.length === 1
-      ) {
-        return event.key;
-      }
-      return null;
-  }
-}
-
-surface.addEventListener("keydown", async (event) => {
-  const sequence = terminalSequenceFor(event);
-  if (!sequence) {
-    return;
-  }
-
-  event.preventDefault();
-
-  if (event.ctrlKey && event.key.toLowerCase() === "l") {
-    output.replaceChildren();
-  }
-
-  await writeToShell(sequence);
-});
-
-surface.addEventListener("paste", async (event) => {
-  const text = event.clipboardData?.getData("text/plain");
-  if (!text) {
-    return;
-  }
-
-  event.preventDefault();
-  await writeToShell(text);
-});
-
-surface.addEventListener("mousedown", () => surface.focus());
+surface.addEventListener("mousedown", () => terminal?.focus());
 window.addEventListener("pagehide", stopShell, { once: true });
 window.addEventListener("beforeunload", stopShell, { once: true });
-window.addEventListener("pageshow", () => surface.focus());
+window.addEventListener("pageshow", () => terminal?.focus());
 
 async function stopShell() {
   stopping = true;

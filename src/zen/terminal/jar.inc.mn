@@ -10,3 +10,5 @@
   content/browser/zen-terminal/containers.xhtml                 (containers.xhtml)
   content/browser/zen-terminal/ZenTerminalContainers.mjs        (ZenTerminalContainers.mjs)
   content/browser/zen-terminal/zen-terminal-containers.css      (zen-terminal-containers.css)
+  content/browser/zen-terminal/vendor/xterm.js                  (vendor/xterm.js)
+  content/browser/zen-terminal/vendor/xterm.css                 (vendor/xterm.css)
