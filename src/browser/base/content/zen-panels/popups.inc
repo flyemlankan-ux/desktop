@@ -16,12 +16,12 @@
     <menupopup onpopupshowing="return createUserContextMenu(event, { isContextMenu: true, showDefaultTab: true });" />
   </menu>
   <menuseparator/>
-  <menuitem label="Terminal Tab" command="cmd_zenNewTerminalTab" image="chrome://browser/skin/zen-icons/developer.svg" />
+  <menuitem label="Terminal Tab" oncommand="gZenTerminalTabs.openTerminalTab();" image="chrome://browser/skin/zen-icons/developer.svg" />
   <menu id="zenCreateTerminalContainerTabMenu"
     label="Terminal Container Tab"
     image="chrome://browser/skin/zen-icons/developer.svg">
     <menupopup>
-      <menuitem label="Default Terminal" command="cmd_zenNewTerminalContainerTab" data-terminal-container-id="default" data-terminal-container-name="Default Terminal" />
+      <menuitem label="Default Terminal" oncommand="gZenTerminalTabs.openTerminalTab({ terminalContainerId: 'default', terminalContainerName: 'Default Terminal' });" data-terminal-container-id="default" data-terminal-container-name="Default Terminal" />
     </menupopup>
   </menu>
 </menupopup>

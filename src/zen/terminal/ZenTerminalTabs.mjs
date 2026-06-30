@@ -65,4 +65,4 @@ export class ZenTerminalTabs {
   }
 }
 
-export const gZenTerminalTabs = new ZenTerminalTabs();
+window.gZenTerminalTabs = new ZenTerminalTabs();
