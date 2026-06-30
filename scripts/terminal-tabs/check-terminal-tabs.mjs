@@ -69,6 +69,19 @@ const checks = new Map([
     "terminal container manager visible",
     ["src/zen/terminal/ZenTerminalTabs.mjs", "Manage Terminal Containers"],
   ],
+
+  [
+    "terminal containers page jarred",
+    ["src/zen/terminal/jar.inc.mn", "containers.xhtml"],
+  ],
+  [
+    "terminal containers page opens from menu",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainersPage"],
+  ],
+  [
+    "terminal containers page can save containers",
+    ["src/zen/terminal/ZenTerminalContainers.mjs", "zen.terminal.containers"],
+  ],
   [
     "terminal tab opens chrome page",
     [

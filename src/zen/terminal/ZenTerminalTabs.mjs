@@ -15,6 +15,8 @@
 export const ZEN_TERMINAL_TAB_ATTRIBUTE = "zen-terminal-tab";
 export const ZEN_TERMINAL_TAB_URL =
   "chrome://browser/content/zen-terminal/terminal.xhtml";
+const ZEN_TERMINAL_CONTAINERS_URL =
+  "chrome://browser/content/zen-terminal/containers.xhtml";
 
 const TERMINAL_CONTAINERS_PREF = "zen.terminal.containers";
 const TERMINAL_MENU_MARKER = "data-zen-terminal-menu";
@@ -188,7 +190,7 @@ export class ZenTerminalTabs {
   #makeManageTerminalContainersItem() {
     const item = this.#createXULElement("menuitem");
     item.setAttribute("label", "Manage Terminal Containers…");
-    item.addEventListener("command", () => this.promptForNewTerminalContainer());
+    item.addEventListener("command", () => this.openTerminalContainersPage());
     return item;
   }
 
