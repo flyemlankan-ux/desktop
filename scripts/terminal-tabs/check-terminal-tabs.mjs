@@ -145,6 +145,15 @@ const checks = new Map([
     "shell closes on tab close",
     ["src/zen/terminal/ZenTerminalPage.mjs", "pagehide"],
   ],
+
+  [
+    "engine New Tab menu patch script exists",
+    ["scripts/terminal-tabs/patch-engine-newtab-menu.mjs", "CreateContainerTabMenu"],
+  ],
+  [
+    "terminal build patches imported Firefox menu",
+    [".github/workflows/terminal-macos-dev-build.yml", "patch-engine-newtab-menu.mjs"],
+  ],
   [
     "manual mac workflow added",
     [

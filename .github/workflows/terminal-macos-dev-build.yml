@@ -117,6 +117,9 @@ jobs:
       - name: Import Zen source into Firefox source
         run: npm run import -- --verbose
 
+      - name: Patch imported Firefox New Tab menu for terminal tabs
+        run: node scripts/terminal-tabs/patch-engine-newtab-menu.mjs
+
       - name: Bootstrap Firefox build environment
         shell: bash
         run: |
