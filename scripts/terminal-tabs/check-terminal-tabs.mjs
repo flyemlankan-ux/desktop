@@ -52,6 +52,23 @@ const checks = new Map([
     "terminal command handled",
     ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"],
   ],
+
+  [
+    "real New Tab container picker bridged",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#installNewTabContainerMenuBridge"],
+  ],
+  [
+    "terminal choices injected into container picker",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#injectTerminalChoices"],
+  ],
+  [
+    "terminal containers saved separately",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "zen.terminal.containers"],
+  ],
+  [
+    "terminal container manager visible",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "Manage Terminal Containers"],
+  ],
   [
     "terminal tab opens chrome page",
     [
