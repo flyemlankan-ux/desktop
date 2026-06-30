@@ -26,20 +26,20 @@ body {
 #zen-terminal-page {
   box-sizing: border-box;
   display: grid;
-  padding: 24px;
+  padding: 18px;
 }
 
 #zen-terminal-surface {
   box-sizing: border-box;
   display: grid;
   grid-template-rows: 1fr auto;
-  min-height: calc(100vh - 48px);
-  border: 1px solid rgba(123, 201, 92, 0.24);
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.72);
+  min-height: calc(100vh - 36px);
+  border: 1px solid rgba(123, 201, 92, 0.14);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.82);
   box-shadow:
-    0 20px 80px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    0 16px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
   overflow: hidden;
 }
 
@@ -49,9 +49,25 @@ body {
 }
 
 #zen-terminal-output {
-  overflow: auto;
-  padding: 24px 24px 12px;
+  overflow: hidden;
+  padding: 16px 18px 10px;
   white-space: pre-wrap;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#zen-terminal-output .xterm {
+  padding: 0;
+}
+
+#zen-terminal-output .xterm-viewport,
+#zen-terminal-output .xterm-screen {
+  background: transparent !important;
+}
+
+#zen-terminal-output .xterm-rows {
+  font-feature-settings: "liga" 0, "calt" 0;
+  -webkit-font-smoothing: antialiased;
 }
 
 .terminal-line {
@@ -76,13 +92,13 @@ body {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px 20px;
+  padding: 9px 18px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   color: rgba(244, 247, 239, 0.54);
 }
 
 #zen-terminal-prompt {
-  color: rgba(143, 231, 105, 0.96);
+  color: rgba(143, 231, 105, 0.82);
   font-weight: 700;
 }
 
