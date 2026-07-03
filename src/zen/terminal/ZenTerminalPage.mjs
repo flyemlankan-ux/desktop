@@ -2,6 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import {
+  getTerminalContainerRecipe,
+  normalizeTerminalRecipe,
+} from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
+
 const { Subprocess } = ChromeUtils.importESModule(
   "resource://gre/modules/Subprocess.sys.mjs",
 );
@@ -16,9 +21,55 @@ let shellReady = false;
 let stopping = false;
 let terminal = null;
 
+function getSearchParams() {
+  return new URLSearchParams(window.location.search);
+}
+
+function getTerminalUserContextId() {
+  return getSearchParams().get("userContextId");
+}
+
 function getTerminalContainerName() {
-  const params = new URLSearchParams(window.location.search);
+  const params = getSearchParams();
   return params.get("name") || "Terminal";
+}
+
+function getStartupRecord() {
+  const userContextId = getTerminalUserContextId();
+  if (!userContextId) {
+    return null;
+  }
+
+  return getTerminalContainerRecipe(userContextId);
+}
+
+function expandHomeFolder(folder) {
+  if (!folder) {
+    return "";
+  }
+
+  const home = Services.env.get("HOME") || "";
+  if (folder === "~") {
+    return home;
+  }
+  if (folder.startsWith("~/")) {
+    return `${home}${folder.slice(1)}`;
+  }
+  return folder;
+}
+
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+function getStartupFolder() {
+  const record = getStartupRecord();
+  return expandHomeFolder(record?.folder?.trim() || "");
+}
+
+function getStartupCommand() {
+  const record = getStartupRecord();
+  return normalizeTerminalRecipe(record?.recipe).command.trim();
 }
 
 function setStatus(text, isReady = false) {
@@ -169,6 +220,8 @@ async function startShell() {
       readPipe(shellProcess.stderr, "terminal-error");
     }
 
+    await runStartupCommands();
+
     const result = await shellProcess.wait();
     shellReady = false;
     if (!stopping) {
@@ -179,6 +232,20 @@ async function startShell() {
     shellReady = false;
     terminal?.writeln(`Could not start shell: ${error.message}`);
     setStatus("shell failed", false);
+  }
+}
+
+async function runStartupCommands() {
+  const folder = getStartupFolder();
+  if (folder) {
+    terminal.writeln(`Starting folder: ${folder}`);
+    await writeToShell(`cd ${shellQuote(folder)}\n`);
+  }
+
+  const command = getStartupCommand();
+  if (command) {
+    terminal.writeln("Running startup recipe…");
+    await writeToShell(`${command}\n`);
   }
 }
 

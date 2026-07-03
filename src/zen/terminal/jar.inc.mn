@@ -6,6 +6,7 @@
         content/browser/zen-styles/zen-terminal-tabs.css                        (../../zen/terminal/zen-terminal-tabs.css)
         content/browser/zen-terminal/terminal.xhtml                         (../../zen/terminal/terminal.xhtml)
         content/browser/zen-terminal/ZenTerminalPage.mjs                   (../../zen/terminal/ZenTerminalPage.mjs)
+        content/browser/zen-terminal/ZenTerminalContainerStore.mjs         (../../zen/terminal/ZenTerminalContainerStore.mjs)
         content/browser/zen-styles/zen-terminal-page.css                   (../../zen/terminal/zen-terminal-page.css)
         content/browser/zen-terminal/containers.xhtml                       (../../zen/terminal/containers.xhtml)
         content/browser/zen-terminal/ZenTerminalContainers.mjs              (../../zen/terminal/ZenTerminalContainers.mjs)

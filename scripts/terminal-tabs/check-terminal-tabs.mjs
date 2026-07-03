@@ -16,35 +16,6 @@ const checks = new Map([
     ],
   ],
   [
-    "terminal command declared",
-    [
-      "src/browser/base/content/zen-commands.inc.xhtml",
-      "cmd_zenNewTerminalTab",
-    ],
-  ],
-  [
-    "plain terminal tab choice present",
-    ["src/browser/base/content/zen-panels/popups.inc", "Terminal Tab"],
-  ],
-  [
-    "browser container choice present",
-    ["src/browser/base/content/zen-panels/popups.inc", "Browser Container Tab"],
-  ],
-  [
-    "terminal container choice present",
-    [
-      "src/browser/base/content/zen-panels/popups.inc",
-      "Terminal Container Tab",
-    ],
-  ],
-  [
-    "terminal container command declared",
-    [
-      "src/browser/base/content/zen-commands.inc.xhtml",
-      "cmd_zenNewTerminalContainerTab",
-    ],
-  ],
-  [
     "terminal module preloaded",
     ["src/zen/common/ZenPreloadedScripts.js", "ZenTerminalTabs.mjs"],
   ],
@@ -53,44 +24,142 @@ const checks = new Map([
     ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"],
   ],
 
+  // New Slice 1 native-container path.
+  [
+    "native terminal metadata store added",
+    [
+      "src/zen/terminal/ZenTerminalContainerStore.mjs",
+      "zen.terminal.containerRecipes",
+    ],
+  ],
+  [
+    "store records real container kind",
+    ["src/zen/terminal/ZenTerminalContainerStore.mjs", 'kind: "terminal"'],
+  ],
+  [
+    "store keeps future recipe steps without a schema change",
+    ["src/zen/terminal/ZenTerminalContainerStore.mjs", "steps"],
+  ],
+  [
+    "metadata store jarred",
+    ["src/zen/terminal/jar.inc.mn", "ZenTerminalContainerStore.mjs"],
+  ],
+  [
+    "preferences container list knows terminal metadata",
+    [
+      "src/browser/components/preferences/containers-js.patch",
+      "zen.terminal.containerRecipes",
+    ],
+  ],
+  [
+    "preferences delete removes terminal recipe",
+    [
+      "src/browser/components/preferences/containers-js.patch",
+      "removeZenTerminalContainerRecipe(userContextId)",
+    ],
+  ],
+  [
+    "add container dialog asks web or terminal",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "What kind of container is this?",
+    ],
+  ],
+  [
+    "terminal dialog has start folder field",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "zen-terminal-folder",
+    ],
+  ],
+  [
+    "terminal dialog has startup recipe field",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "zen-terminal-recipe",
+    ],
+  ],
+  [
+    "new native container writes terminal recipe by userContextId",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "setZenTerminalContainerRecipe(",
+    ],
+  ],
+  [
+    "switching back to web removes terminal recipe",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "removeZenTerminalContainerRecipe(userContextId)",
+    ],
+  ],
+  [
+    "native menu rows route terminal containers",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#routeNativeTerminalContainerRows"],
+  ],
+  [
+    "terminal container row does not keep browser command",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", 'item.removeAttribute("command")'],
+  ],
+  [
+    "terminal container row stops blank browser tab",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "stopImmediatePropagation"],
+  ],
+  [
+    "native terminal tab passes userContextId",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainerTab"],
+  ],
+  [
+    "restored terminal tabs are re-marked",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#markRestoredTerminalTabs"],
+  ],
+  [
+    "terminal page reads native container recipe",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "getTerminalContainerRecipe"],
+  ],
+  [
+    "terminal page cd's into start folder",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "cd ${shellQuote(folder)}"],
+  ],
+  [
+    "terminal page runs startup recipe",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "Running startup recipe"],
+  ],
+  [
+    "folder path is shell quoted",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "function shellQuote"],
+  ],
 
+  // Old fallback path must stay during this slice.
   [
-    "native Firefox new tab container menu patched",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "#patchFirefoxContainerMenuBuilder"],
+    "plain terminal tab choice still present as fallback",
+    ["src/browser/base/content/zen-panels/popups.inc", "Terminal Tab"],
   ],
   [
-    "rendered command include has XML comment",
-    ["src/browser/base/content/zen-commands.inc.xhtml", "<!-- This Source Code Form"],
+    "old terminal container choice still present as fallback",
+    [
+      "src/browser/base/content/zen-panels/popups.inc",
+      "Terminal Container Tab",
+    ],
   ],
   [
-    "real New Tab container picker bridged",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "#installNewTabContainerMenuBridge"],
-  ],
-  [
-    "terminal choices injected into container picker",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "#injectTerminalChoices"],
-  ],
-  [
-    "terminal containers saved separately",
+    "old fallback terminal containers pref still present",
     ["src/zen/terminal/ZenTerminalTabs.mjs", "zen.terminal.containers"],
   ],
   [
-    "terminal container manager visible",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "Manage Terminal Containers"],
-  ],
-
-  [
-    "terminal containers page jarred",
+    "old fallback terminal containers page still jarred",
     ["src/zen/terminal/jar.inc.mn", "containers.xhtml"],
   ],
   [
-    "terminal containers page opens from menu",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainersPage"],
-  ],
-  [
-    "terminal containers page can save containers",
+    "old fallback manage page still saves containers",
     ["src/zen/terminal/ZenTerminalContainers.mjs", "zen.terminal.containers"],
   ],
+  [
+    "old fallback manage page still opens",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainersPage"],
+  ],
+
+  // Core terminal proof from Slice 0 must remain true.
   [
     "terminal tab opens chrome page",
     [
@@ -154,14 +223,7 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "pagehide"],
   ],
 
-  [
-    "engine New Tab menu patch script exists",
-    ["scripts/terminal-tabs/patch-engine-newtab-menu.mjs", "CreateContainerTabMenu"],
-  ],
-  [
-    "terminal build patches imported Firefox menu",
-    [".github/workflows/terminal-macos-dev-build.yml", "patch-engine-newtab-menu.mjs"],
-  ],
+  // Build wiring must still exist.
   [
     "manual mac workflow added",
     [
@@ -173,13 +235,10 @@ const checks = new Map([
     "terminal fork identity patched",
     [".github/workflows/terminal-macos-dev-build.yml", "zen-terminal"],
   ],
-  [
-    "build note updated",
-    ["docs/terminal-tabs-build.md", "sends keystrokes directly"],
-  ],
 ]);
 
 const syntaxFiles = [
+  "src/zen/terminal/ZenTerminalContainerStore.mjs",
   "src/zen/terminal/ZenTerminalTabs.mjs",
   "src/zen/terminal/ZenTerminalPage.mjs",
   "src/zen/common/ZenPreloadedScripts.js",

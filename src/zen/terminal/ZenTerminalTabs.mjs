@@ -5,12 +5,19 @@
 /**
  * Zen Terminal Tabs
  *
- * The rule for this feature:
- * - Zen remains Zen: same shell, same workspaces, same folders, same menus.
- * - Browser containers and terminal containers are separate things.
- * - The normal New Tab/container picker must offer both browser tabs and
- *   terminal tabs, without adding a separate permanent terminal button.
+ * Slice 1 keeps the old terminal fallback menu, but adds the new path:
+ * real Firefox containers whose Zen metadata says kind = terminal open
+ * terminal tabs instead of blank browser tabs.
  */
+
+import {
+  getTerminalContainerRecipe,
+  isTerminalContainerId,
+} from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
+
+const { ContextualIdentityService } = ChromeUtils.importESModule(
+  "resource://gre/modules/ContextualIdentityService.sys.mjs",
+);
 
 export const ZEN_TERMINAL_TAB_ATTRIBUTE = "zen-terminal-tab";
 export const ZEN_TERMINAL_TAB_URL =
@@ -28,7 +35,9 @@ const DEFAULT_TERMINAL_CONTAINER = {
 export class ZenTerminalTabs {
   constructor() {
     this.#installNewTabContainerMenuBridge();
+    this.#installNativeTerminalContainerRouter();
     this.#patchFirefoxContainerMenuBuilder();
+    this.#markRestoredTerminalTabsSoon();
   }
 
   #terminalUrl(options = {}) {
@@ -38,6 +47,9 @@ export class ZenTerminalTabs {
     }
     if (options.terminalContainerName) {
       params.set("name", options.terminalContainerName);
+    }
+    if (options.userContextId) {
+      params.set("userContextId", options.userContextId);
     }
     const query = params.toString();
     return query ? `${ZEN_TERMINAL_TAB_URL}?${query}` : ZEN_TERMINAL_TAB_URL;
@@ -117,7 +129,6 @@ export class ZenTerminalTabs {
     );
   }
 
-
   #patchFirefoxContainerMenuBuilder() {
     const install = () => {
       if (typeof window.CreateContainerTabMenu !== "function") {
@@ -132,8 +143,12 @@ export class ZenTerminalTabs {
       const originalCreateContainerTabMenu = window.CreateContainerTabMenu;
       const patchedCreateContainerTabMenu = event => {
         const result = originalCreateContainerTabMenu.call(window, event);
+        this.#routeNativeTerminalContainerRows(event.target);
         this.#injectTerminalChoices(event.target);
-        window.setTimeout(() => this.#injectTerminalChoices(event.target), 0);
+        window.setTimeout(() => {
+          this.#routeNativeTerminalContainerRows(event.target);
+          this.#injectTerminalChoices(event.target);
+        }, 0);
         return result;
       };
       patchedCreateContainerTabMenu.__zenTerminalPatched = true;
@@ -148,10 +163,60 @@ export class ZenTerminalTabs {
       "popupshowing",
       event => {
         const popup = event.target;
-        window.setTimeout(() => this.#injectTerminalChoices(popup), 0);
+        window.setTimeout(() => {
+          this.#routeNativeTerminalContainerRows(popup);
+          this.#injectTerminalChoices(popup);
+        }, 0);
       },
       true,
     );
+  }
+
+  #installNativeTerminalContainerRouter() {
+    document.addEventListener(
+      "popupshowing",
+      event => {
+        const popup = event.target;
+        window.setTimeout(
+          () => this.#routeNativeTerminalContainerRows(popup),
+          0,
+        );
+      },
+      true,
+    );
+  }
+
+  #routeNativeTerminalContainerRows(popup) {
+    if (!this.#isBrowserContainerNewTabPopup(popup)) {
+      return;
+    }
+
+    for (const item of popup.querySelectorAll?.("[data-usercontextid]") || []) {
+      const userContextId = item.getAttribute("data-usercontextid");
+      if (!userContextId || !isTerminalContainerId(userContextId)) {
+        continue;
+      }
+
+      item.setAttribute("zen-terminal-native-container", "true");
+      item.removeAttribute("command");
+      item.removeAttribute("oncommand");
+
+      if (item.__zenTerminalNativeContainerRouted) {
+        continue;
+      }
+
+      item.__zenTerminalNativeContainerRouted = true;
+      item.addEventListener(
+        "command",
+        event => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          this.openTerminalContainerTab(userContextId);
+        },
+        true,
+      );
+    }
   }
 
   #injectTerminalChoices(popup) {
@@ -263,6 +328,13 @@ export class ZenTerminalTabs {
         options.terminalContainerId,
       );
     }
+    if (options.userContextId) {
+      tab.setAttribute("usercontextid", String(options.userContextId));
+      tab.setAttribute(
+        "zen-terminal-user-context-id",
+        String(options.userContextId),
+      );
+    }
     const label =
       options.terminalContainerName || tab.getAttribute("label") || "Terminal";
     tab.setAttribute("label", label);
@@ -275,10 +347,64 @@ export class ZenTerminalTabs {
     tab.removeAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE);
   }
 
-  openTerminalTab(options = {}) {
-    const tab = gBrowser.addTab(this.#terminalUrl(options), {
+  openTerminalContainersPage() {
+    const tab = gBrowser.addTab(ZEN_TERMINAL_CONTAINERS_URL, {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     });
+    gBrowser.selectedTab = tab;
+    return tab;
+  }
+
+  #getNativeContainerName(userContextId) {
+    try {
+      return ContextualIdentityService.getUserContextLabel(userContextId);
+    } catch (_) {
+      return "Terminal";
+    }
+  }
+
+  openTerminalContainerTab(userContextId) {
+    const recipe = getTerminalContainerRecipe(userContextId);
+    if (!recipe) {
+      return null;
+    }
+
+    return this.openTerminalTab({
+      userContextId,
+      terminalContainerName: this.#getNativeContainerName(userContextId),
+    });
+  }
+
+  #markRestoredTerminalTabsSoon() {
+    window.setTimeout(() => this.#markRestoredTerminalTabs(), 0);
+    window.setTimeout(() => this.#markRestoredTerminalTabs(), 1000);
+  }
+
+  #markRestoredTerminalTabs() {
+    for (const tab of gBrowser?.tabs || []) {
+      const spec = tab.linkedBrowser?.currentURI?.spec || "";
+      if (!spec.startsWith(ZEN_TERMINAL_TAB_URL)) {
+        continue;
+      }
+
+      const params = new URL(spec).searchParams;
+      this.markTerminalTab(tab, {
+        terminalContainerId: params.get("container"),
+        terminalContainerName: params.get("name") || "Terminal",
+        userContextId: params.get("userContextId"),
+      });
+    }
+  }
+
+  openTerminalTab(options = {}) {
+    const addTabOptions = {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    };
+    if (options.userContextId) {
+      addTabOptions.userContextId = Number(options.userContextId);
+    }
+
+    const tab = gBrowser.addTab(this.#terminalUrl(options), addTabOptions);
     this.markTerminalTab(tab, options);
     gBrowser.selectedTab = tab;
     return tab;

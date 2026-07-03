@@ -1,0 +1,244 @@
+diff --git a/browser/components/preferences/dialogs/containers.js b/browser/components/preferences/dialogs/containers.js
+--- a/browser/components/preferences/dialogs/containers.js
++++ b/browser/components/preferences/dialogs/containers.js
+@@ -6,6 +6,71 @@
+   "resource://gre/modules/ContextualIdentityService.sys.mjs"
+ );
+ 
++const ZEN_TERMINAL_CONTAINER_RECIPES_PREF = "zen.terminal.containerRecipes";
++
++function readZenTerminalContainerRecipes() {
++  try {
++    const parsed = JSON.parse(
++      Services.prefs.getStringPref(ZEN_TERMINAL_CONTAINER_RECIPES_PREF, "{}")
++    );
++    if (parsed && typeof parsed == "object" && !Array.isArray(parsed)) {
++      return parsed;
++    }
++  } catch (error) {}
++  return {};
++}
++
++function writeZenTerminalContainerRecipes(recipes) {
++  Services.prefs.setStringPref(
++    ZEN_TERMINAL_CONTAINER_RECIPES_PREF,
++    JSON.stringify(recipes || {})
++  );
++}
++
++function getZenTerminalContainerRecipe(userContextId) {
++  const record = readZenTerminalContainerRecipes()[String(userContextId)];
++  if (record?.kind != "terminal") {
++    return null;
++  }
++
++  const recipe = record.recipe || {};
++  return {
++    kind: "terminal",
++    folder: typeof record.folder == "string" ? record.folder : "",
++    recipe: {
++      type: recipe.type || "single-command",
++      command:
++        typeof recipe == "string"
++          ? recipe
++          : typeof recipe.command == "string"
++            ? recipe.command
++            : "",
++      steps: Array.isArray(recipe.steps) ? recipe.steps : [],
++    },
++  };
++}
++
++function setZenTerminalContainerRecipe(userContextId, folder, command) {
++  const recipes = readZenTerminalContainerRecipes();
++  recipes[String(userContextId)] = {
++    version: 1,
++    kind: "terminal",
++    folder: folder || "",
++    recipe: {
++      type: "single-command",
++      command: command || "",
++      steps: [],
++    },
++  };
++  writeZenTerminalContainerRecipes(recipes);
++}
++
++function removeZenTerminalContainerRecipe(userContextId) {
++  const recipes = readZenTerminalContainerRecipes();
++  delete recipes[String(userContextId)];
++  writeZenTerminalContainerRecipes(recipes);
++}
++
+ /**
+  * We want to set the window title immediately to prevent flickers.
+  */
+@@ -61,7 +126,16 @@
+     this._dialog = document.querySelector("dialog");
+     this.userContextId = aParams.userContextId || null;
+     this.identity = aParams.identity;
++    const terminalRecipe = getZenTerminalContainerRecipe(this.userContextId);
++    this.containerKind = this.userContextId
++      ? terminalRecipe
++        ? "terminal"
++        : "web"
++      : null;
+ 
++    this.createKindChooser();
++    this.createTerminalFields(terminalRecipe);
++
+     const iconWrapper = document.getElementById("iconWrapper");
+     iconWrapper.appendChild(this.createIconButtons());
+ 
+@@ -83,15 +157,120 @@
+     document.addEventListener("dialogaccept", () => this.onApplyChanges());
+ 
+     // This is to prevent layout jank caused by the svgs and outlines rendering at different times
+-    document.getElementById("containers-content").removeAttribute("hidden");
++    this.updateKindView();
+   },
+ 
+-  // Check if name is provided to determine if the form can be submitted
++  // Check if a kind and name are provided to determine if the form can be submitted
+   checkForm() {
+     const name = document.getElementById("name");
+-    this._dialog.toggleAttribute("buttondisabledaccept", !name.value.trim());
++    this._dialog.toggleAttribute(
++      "buttondisabledaccept",
++      !this.containerKind || !name.value.trim()
++    );
++  },
++
++  createKindChooser() {
++    const content = document.getElementById("containers-content");
++    const chooser = document.createXULElement("vbox");
++    chooser.setAttribute("id", "zen-container-kind-chooser");
++    chooser.style.marginBlockEnd = "16px";
++
++    const title = document.createXULElement("label");
++    title.setAttribute("value", "What kind of container is this?");
++    title.style.fontWeight = "600";
++    title.style.marginBlockEnd = "8px";
++    chooser.appendChild(title);
++
++    const row = document.createXULElement("hbox");
++    row.setAttribute("align", "center");
++    row.style.gap = "8px";
++
++    const web = document.createXULElement("button");
++    web.setAttribute("id", "zen-container-kind-web");
++    web.setAttribute("label", "Web");
++    web.addEventListener("command", () => this.chooseKind("web"));
++    row.appendChild(web);
++
++    const terminal = document.createXULElement("button");
++    terminal.setAttribute("id", "zen-container-kind-terminal");
++    terminal.setAttribute("label", "Terminal");
++    terminal.addEventListener("command", () => this.chooseKind("terminal"));
++    row.appendChild(terminal);
++
++    chooser.appendChild(row);
++    content.parentNode.insertBefore(chooser, content);
+   },
+ 
++  createTerminalFields(terminalRecipe) {
++    const content = document.getElementById("containers-content");
++    const fields = document.createXULElement("vbox");
++    fields.setAttribute("id", "zen-terminal-container-fields");
++    fields.style.marginBlockStart = "16px";
++
++    const folderRow = document.createXULElement("hbox");
++    folderRow.setAttribute("align", "center");
++
++    const folderLabel = document.createXULElement("label");
++    folderLabel.setAttribute("value", "Start folder");
++    folderLabel.setAttribute("control", "zen-terminal-folder");
++    folderLabel.style.minWidth = "120px";
++    folderRow.appendChild(folderLabel);
++
++    const folderInput = document.createElementNS(
++      "http://www.w3.org/1999/xhtml",
++      "input"
++    );
++    folderInput.setAttribute("id", "zen-terminal-folder");
++    folderInput.setAttribute("type", "text");
++    folderInput.setAttribute("placeholder", "~/Desktop/project");
++    folderInput.value = terminalRecipe?.folder || "";
++    folderRow.appendChild(folderInput);
++    fields.appendChild(folderRow);
++
++    const recipeRow = document.createXULElement("hbox");
++    recipeRow.setAttribute("align", "center");
++    recipeRow.style.marginBlockStart = "8px";
++
++    const recipeLabel = document.createXULElement("label");
++    recipeLabel.setAttribute("value", "Startup recipe");
++    recipeLabel.setAttribute("control", "zen-terminal-recipe");
++    recipeLabel.style.minWidth = "120px";
++    recipeRow.appendChild(recipeLabel);
++
++    const recipeInput = document.createElementNS(
++      "http://www.w3.org/1999/xhtml",
++      "input"
++    );
++    recipeInput.setAttribute("id", "zen-terminal-recipe");
++    recipeInput.setAttribute("type", "text");
++    recipeInput.setAttribute("placeholder", "echo hello");
++    recipeInput.value = terminalRecipe?.recipe?.command || "";
++    recipeRow.appendChild(recipeInput);
++    fields.appendChild(recipeRow);
++
++    content.appendChild(fields);
++  },
++
++  chooseKind(kind) {
++    this.containerKind = kind;
++    this.updateKindView();
++    this.checkForm();
++  },
++
++  updateKindView() {
++    const content = document.getElementById("containers-content");
++    const terminalFields = document.getElementById(
++      "zen-terminal-container-fields"
++    );
++    const web = document.getElementById("zen-container-kind-web");
++    const terminal = document.getElementById("zen-container-kind-terminal");
++
++    web?.toggleAttribute("default", this.containerKind == "web");
++    terminal?.toggleAttribute("default", this.containerKind == "terminal");
++    content.toggleAttribute("hidden", !this.containerKind);
++    terminalFields?.toggleAttribute("hidden", this.containerKind != "terminal");
++  },
++
+   createIconButtons() {
+     let radiogroup = document.createXULElement("radiogroup");
+     radiogroup.setAttribute("id", "icon");
+@@ -161,11 +340,24 @@
+       throw new Error("Internal error. The color value doesn't match.");
+     }
+ 
+-    if (this.userContextId) {
+-      ContextualIdentityService.update(this.userContextId, name, icon, color);
++    let userContextId = this.userContextId;
++    if (userContextId) {
++      ContextualIdentityService.update(userContextId, name, icon, color);
+     } else {
+-      ContextualIdentityService.create(name, icon, color);
++      const identity = ContextualIdentityService.create(name, icon, color);
++      userContextId = identity.userContextId;
+     }
++
++    if (this.containerKind == "terminal") {
++      setZenTerminalContainerRecipe(
++        userContextId,
++        document.getElementById("zen-terminal-folder").value.trim(),
++        document.getElementById("zen-terminal-recipe").value.trim()
++      );
++    } else {
++      removeZenTerminalContainerRecipe(userContextId);
++    }
++
+     window.parent.location.reload();
+   },
+ };

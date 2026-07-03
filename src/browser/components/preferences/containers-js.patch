@@ -1,0 +1,75 @@
+diff --git a/browser/components/preferences/containers.js b/browser/components/preferences/containers.js
+--- a/browser/components/preferences/containers.js
++++ b/browser/components/preferences/containers.js
+@@ -7,6 +7,46 @@
+ const defaultContainerIcon = "fingerprint";
+ const defaultContainerColor = "blue";
+ 
++const ZEN_TERMINAL_CONTAINER_RECIPES_PREF = "zen.terminal.containerRecipes";
++
++function readZenTerminalContainerRecipes() {
++  try {
++    const parsed = JSON.parse(
++      Services.prefs.getStringPref(ZEN_TERMINAL_CONTAINER_RECIPES_PREF, "{}")
++    );
++    if (parsed && typeof parsed == "object" && !Array.isArray(parsed)) {
++      return parsed;
++    }
++  } catch (error) {}
++  return {};
++}
++
++function writeZenTerminalContainerRecipes(recipes) {
++  Services.prefs.setStringPref(
++    ZEN_TERMINAL_CONTAINER_RECIPES_PREF,
++    JSON.stringify(recipes || {})
++  );
++}
++
++function isZenTerminalContainer(userContextId) {
++  const record = readZenTerminalContainerRecipes()[String(userContextId)];
++  return record?.kind == "terminal";
++}
++
++function removeZenTerminalContainerRecipe(userContextId) {
++  const key = String(userContextId || "");
++  if (!key) {
++    return;
++  }
++
++  const recipes = readZenTerminalContainerRecipes();
++  if (Object.hasOwn(recipes, key)) {
++    delete recipes[key];
++    writeZenTerminalContainerRecipes(recipes);
++  }
++}
++
++
+ let gContainersPane = {
+   init() {
+     this._list = document.getElementById("containersView");
+@@ -58,6 +98,16 @@
+       label.setAttribute("tooltiptext", containerName);
+       outer.appendChild(label);
+ 
++      if (isZenTerminalContainer(container.userContextId)) {
++        let terminalBadge = document.createXULElement("label");
++        terminalBadge.textContent = "Terminal";
++        terminalBadge.setAttribute("value", "Terminal");
++        terminalBadge.setAttribute("zen-terminal-container-badge", "true");
++        terminalBadge.style.marginInlineStart = "8px";
++        terminalBadge.style.opacity = "0.7";
++        outer.appendChild(terminalBadge);
++      }
++
+       let containerButtons = document.createXULElement("hbox");
+       containerButtons.className = "container-buttons";
+       item.appendChild(containerButtons);
+@@ -118,6 +168,7 @@
+     }
+ 
+     ContextualIdentityService.remove(userContextId);
++    removeZenTerminalContainerRecipe(userContextId);
+     this._rebuildView();
+   },
+ 
