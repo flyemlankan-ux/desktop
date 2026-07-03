@@ -316,10 +316,26 @@ export class ZenTerminalTabs {
     return Boolean(tab?.hasAttribute?.(ZEN_TERMINAL_TAB_ATTRIBUTE));
   }
 
+  #forceNormalZenTab(tab) {
+    if (!tab) {
+      return;
+    }
+
+    tab.removeAttribute("zen-essential");
+    tab.removeAttribute("zenDefaultUserContextId");
+    tab.removeAttribute("zen-pinned-changed");
+    delete tab._zenPinnedInitialState;
+
+    if (tab.pinned) {
+      gBrowser.unpinTab(tab);
+    }
+  }
+
   markTerminalTab(tab, options = {}) {
     if (!tab) {
       return;
     }
+    this.#forceNormalZenTab(tab);
     tab.setAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE, "true");
     tab.setAttribute("zen-show-sublabel", "true");
     if (options.terminalContainerId) {
@@ -335,8 +351,11 @@ export class ZenTerminalTabs {
         String(options.userContextId),
       );
     }
+    const existingLabel = tab.getAttribute("label");
     const label =
-      options.terminalContainerName || tab.getAttribute("label") || "Terminal";
+      options.preserveExistingLabel && existingLabel
+        ? existingLabel
+        : options.terminalContainerName || existingLabel || "Terminal";
     tab.setAttribute("label", label);
   }
 
@@ -392,6 +411,7 @@ export class ZenTerminalTabs {
         terminalContainerId: params.get("container"),
         terminalContainerName: params.get("name") || "Terminal",
         userContextId: params.get("userContextId"),
+        preserveExistingLabel: true,
       });
     }
   }
@@ -405,6 +425,7 @@ export class ZenTerminalTabs {
     }
 
     const tab = gBrowser.addTab(this.#terminalUrl(options), addTabOptions);
+    this.#forceNormalZenTab(tab);
     this.markTerminalTab(tab, options);
     gBrowser.selectedTab = tab;
     return tab;

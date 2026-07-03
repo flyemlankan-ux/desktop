@@ -1,7 +1,7 @@
 diff --git a/browser/components/preferences/dialogs/containers.js b/browser/components/preferences/dialogs/containers.js
 --- a/browser/components/preferences/dialogs/containers.js
 +++ b/browser/components/preferences/dialogs/containers.js
-@@ -6,6 +6,71 @@
+@@ -6,6 +6,69 @@
    "resource://gre/modules/ContextualIdentityService.sys.mjs"
  );
  
@@ -35,7 +35,6 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +  const recipe = record.recipe || {};
 +  return {
 +    kind: "terminal",
-+    folder: typeof record.folder == "string" ? record.folder : "",
 +    recipe: {
 +      type: recipe.type || "single-command",
 +      command:
@@ -49,12 +48,11 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +  };
 +}
 +
-+function setZenTerminalContainerRecipe(userContextId, folder, command) {
++function setZenTerminalContainerRecipe(userContextId, command) {
 +  const recipes = readZenTerminalContainerRecipes();
 +  recipes[String(userContextId)] = {
-+    version: 1,
++    version: 2,
 +    kind: "terminal",
-+    folder: folder || "",
 +    recipe: {
 +      type: "single-command",
 +      command: command || "",
@@ -73,7 +71,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
  /**
   * We want to set the window title immediately to prevent flickers.
   */
-@@ -61,7 +126,16 @@
+@@ -61,7 +124,16 @@
      this._dialog = document.querySelector("dialog");
      this.userContextId = aParams.userContextId || null;
      this.identity = aParams.identity;
@@ -90,7 +88,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
      const iconWrapper = document.getElementById("iconWrapper");
      iconWrapper.appendChild(this.createIconButtons());
  
-@@ -83,15 +157,120 @@
+@@ -83,15 +155,99 @@
      document.addEventListener("dialogaccept", () => this.onApplyChanges());
  
      // This is to prevent layout jank caused by the svgs and outlines rendering at different times
@@ -147,29 +145,8 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    fields.setAttribute("id", "zen-terminal-container-fields");
 +    fields.style.marginBlockStart = "16px";
 +
-+    const folderRow = document.createXULElement("hbox");
-+    folderRow.setAttribute("align", "center");
-+
-+    const folderLabel = document.createXULElement("label");
-+    folderLabel.setAttribute("value", "Start folder");
-+    folderLabel.setAttribute("control", "zen-terminal-folder");
-+    folderLabel.style.minWidth = "120px";
-+    folderRow.appendChild(folderLabel);
-+
-+    const folderInput = document.createElementNS(
-+      "http://www.w3.org/1999/xhtml",
-+      "input"
-+    );
-+    folderInput.setAttribute("id", "zen-terminal-folder");
-+    folderInput.setAttribute("type", "text");
-+    folderInput.setAttribute("placeholder", "~/Desktop/project");
-+    folderInput.value = terminalRecipe?.folder || "";
-+    folderRow.appendChild(folderInput);
-+    fields.appendChild(folderRow);
-+
 +    const recipeRow = document.createXULElement("hbox");
 +    recipeRow.setAttribute("align", "center");
-+    recipeRow.style.marginBlockStart = "8px";
 +
 +    const recipeLabel = document.createXULElement("label");
 +    recipeLabel.setAttribute("value", "Startup recipe");
@@ -183,7 +160,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    );
 +    recipeInput.setAttribute("id", "zen-terminal-recipe");
 +    recipeInput.setAttribute("type", "text");
-+    recipeInput.setAttribute("placeholder", "echo hello");
++    recipeInput.setAttribute("placeholder", "cd ~/projects/app && claude");
 +    recipeInput.value = terminalRecipe?.recipe?.command || "";
 +    recipeRow.appendChild(recipeInput);
 +    fields.appendChild(recipeRow);
@@ -214,7 +191,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
    createIconButtons() {
      let radiogroup = document.createXULElement("radiogroup");
      radiogroup.setAttribute("id", "icon");
-@@ -161,11 +340,24 @@
+@@ -161,11 +317,23 @@
        throw new Error("Internal error. The color value doesn't match.");
      }
  
@@ -232,7 +209,6 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    if (this.containerKind == "terminal") {
 +      setZenTerminalContainerRecipe(
 +        userContextId,
-+        document.getElementById("zen-terminal-folder").value.trim(),
 +        document.getElementById("zen-terminal-recipe").value.trim()
 +      );
 +    } else {

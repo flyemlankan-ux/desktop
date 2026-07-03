@@ -1,7 +1,7 @@
 diff --git a/browser/components/preferences/containers.js b/browser/components/preferences/containers.js
 --- a/browser/components/preferences/containers.js
 +++ b/browser/components/preferences/containers.js
-@@ -7,6 +7,46 @@
+@@ -7,6 +7,41 @@
  const defaultContainerIcon = "fingerprint";
  const defaultContainerColor = "blue";
  
@@ -26,11 +26,6 @@ diff --git a/browser/components/preferences/containers.js b/browser/components/p
 +  );
 +}
 +
-+function isZenTerminalContainer(userContextId) {
-+  const record = readZenTerminalContainerRecipes()[String(userContextId)];
-+  return record?.kind == "terminal";
-+}
-+
 +function removeZenTerminalContainerRecipe(userContextId) {
 +  const key = String(userContextId || "");
 +  if (!key) {
@@ -48,24 +43,7 @@ diff --git a/browser/components/preferences/containers.js b/browser/components/p
  let gContainersPane = {
    init() {
      this._list = document.getElementById("containersView");
-@@ -58,6 +98,16 @@
-       label.setAttribute("tooltiptext", containerName);
-       outer.appendChild(label);
- 
-+      if (isZenTerminalContainer(container.userContextId)) {
-+        let terminalBadge = document.createXULElement("label");
-+        terminalBadge.textContent = "Terminal";
-+        terminalBadge.setAttribute("value", "Terminal");
-+        terminalBadge.setAttribute("zen-terminal-container-badge", "true");
-+        terminalBadge.style.marginInlineStart = "8px";
-+        terminalBadge.style.opacity = "0.7";
-+        outer.appendChild(terminalBadge);
-+      }
-+
-       let containerButtons = document.createXULElement("hbox");
-       containerButtons.className = "container-buttons";
-       item.appendChild(containerButtons);
-@@ -118,6 +168,7 @@
+@@ -118,6 +153,7 @@
      }
  
      ContextualIdentityService.remove(userContextId);

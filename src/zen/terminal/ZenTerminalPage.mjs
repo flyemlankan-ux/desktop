@@ -20,6 +20,7 @@ let shellProcess = null;
 let shellReady = false;
 let stopping = false;
 let terminal = null;
+let activeShellLaunch = null;
 
 function getSearchParams() {
   return new URLSearchParams(window.location.search);
@@ -43,34 +44,112 @@ function getStartupRecord() {
   return getTerminalContainerRecipe(userContextId);
 }
 
-function expandHomeFolder(folder) {
-  if (!folder) {
-    return "";
-  }
-
-  const home = Services.env.get("HOME") || "";
-  if (folder === "~") {
-    return home;
-  }
-  if (folder.startsWith("~/")) {
-    return `${home}${folder.slice(1)}`;
-  }
-  return folder;
+function getStartupCommand() {
+  const record = getStartupRecord();
+  return normalizeTerminalRecipe(record?.recipe).command.trim();
 }
 
 function shellQuote(value) {
   return `'${String(value).replaceAll("'", "'\\''")}'`;
 }
 
-function getStartupFolder() {
-  const record = getStartupRecord();
-  return expandHomeFolder(record?.folder?.trim() || "");
+function getHomeDirectory() {
+  return Services.env.get("HOME") || "/";
 }
 
-function getStartupCommand() {
-  const record = getStartupRecord();
-  return normalizeTerminalRecipe(record?.recipe).command.trim();
-}
+const PYTHON_RESIZE_PREFIX = "\x1b]777;resize;";
+const PYTHON_RESIZE_SUFFIX = "\x07";
+const PYTHON_PTY_BRIDGE = String.raw`
+import errno
+import fcntl
+import os
+import pty
+import select
+import signal
+import struct
+import sys
+import termios
+
+rows = max(6, int(sys.argv[1]))
+cols = max(20, int(sys.argv[2]))
+shell = sys.argv[3]
+home = os.path.expanduser("~")
+
+def set_size(fd, new_rows, new_cols):
+    data = struct.pack("HHHH", max(6, new_rows), max(20, new_cols), 0, 0)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, data)
+
+pid, fd = pty.fork()
+if pid == 0:
+    try:
+        os.chdir(home)
+    except Exception:
+        pass
+    os.environ["TERM"] = "xterm-256color"
+    os.environ["COLORTERM"] = "truecolor"
+    os.environ["ZEN_TERMINAL"] = "1"
+    os.environ["SHELL_SESSIONS_DISABLE"] = "1"
+    os.environ["COLUMNS"] = str(cols)
+    os.environ["LINES"] = str(rows)
+    os.execv(shell, [shell, "-l"])
+
+set_size(fd, rows, cols)
+os.set_blocking(fd, False)
+os.set_blocking(sys.stdin.fileno(), False)
+stdin_open = True
+
+prefix = b"\x1b]777;resize;"
+suffix = b"\x07"
+
+def handle_input(data):
+    global rows, cols
+    if data.startswith(prefix) and data.endswith(suffix):
+        try:
+            payload = data[len(prefix):-len(suffix)].decode("ascii")
+            new_rows, new_cols = [int(part) for part in payload.split(";", 1)]
+            rows, cols = new_rows, new_cols
+            set_size(fd, rows, cols)
+            os.kill(pid, signal.SIGWINCH)
+            return
+        except Exception:
+            return
+    os.write(fd, data)
+
+while True:
+    read_targets = [fd]
+    if stdin_open:
+        read_targets.append(sys.stdin.fileno())
+    try:
+        readable, _, _ = select.select(read_targets, [], [])
+    except OSError:
+        break
+
+    if fd in readable:
+        try:
+            data = os.read(fd, 65536)
+        except OSError as error:
+            if error.errno in (errno.EIO, errno.EBADF):
+                break
+            raise
+        if not data:
+            break
+        os.write(sys.stdout.fileno(), data)
+
+    if stdin_open and sys.stdin.fileno() in readable:
+        try:
+            data = os.read(sys.stdin.fileno(), 65536)
+        except BlockingIOError:
+            data = b""
+        if not data:
+            stdin_open = False
+        else:
+            handle_input(data)
+
+try:
+    os.kill(pid, signal.SIGHUP)
+except Exception:
+    pass
+`;
 
 function setStatus(text, isReady = false) {
   terminalPrompt.textContent = isReady ? "›_" : "…";
@@ -83,22 +162,37 @@ function getShellCommand() {
   return envShell || "/bin/zsh";
 }
 
-function getShellLaunch() {
+function getShellLaunches() {
   const shell = getShellCommand();
+  const rows = String(terminal.rows);
+  const columns = String(terminal.cols);
+  const loginCommand = `cd ${shellQuote(getHomeDirectory())}; export SHELL_SESSIONS_DISABLE=1; stty rows ${rows} cols ${columns} 2>/dev/null; exec ${shellQuote(shell)} -l`;
+
+  const launches = [];
 
   if (Services.appinfo.OS === "Darwin") {
-    return {
+    launches.push({
+      command: "/usr/bin/python3",
+      arguments: ["-u", "-c", PYTHON_PTY_BRIDGE, rows, columns, shell],
+      label: "resizable PTY bridge",
+      resizable: true,
+    });
+    launches.push({
       command: "/usr/bin/script",
-      arguments: ["-q", "/dev/null", shell, "-l"],
-      label: `${shell} through macOS pseudo-terminal`,
-    };
+      arguments: ["-q", "/dev/null", "/bin/zsh", "-lc", loginCommand],
+      label: "macOS script pseudo-terminal fallback",
+      resizable: false,
+    });
+  } else {
+    launches.push({
+      command: shell,
+      arguments: ["-lc", loginCommand],
+      label: shell,
+      resizable: false,
+    });
   }
 
-  return {
-    command: shell,
-    arguments: ["-l"],
-    label: shell,
-  };
+  return launches;
 }
 
 function fitTerminalToSurface() {
@@ -114,6 +208,7 @@ function fitTerminalToSurface() {
   const rows = Math.max(6, Math.floor(bounds.height / characterHeight));
 
   terminal.resize(columns, rows);
+  sendTerminalResize(rows, columns);
 }
 
 function initTerminal() {
@@ -188,31 +283,39 @@ async function readPipe(pipe, className = "") {
 async function startShell() {
   setStatus("starting shell", false);
   initTerminal();
-  terminal.writeln(`Starting ${getTerminalContainerName()}…`);
-
-  const launch = getShellLaunch();
   const env = {
     TERM: "xterm-256color",
     COLORTERM: "truecolor",
     ZEN_TERMINAL: "1",
+    SHELL_SESSIONS_DISABLE: "1",
     COLUMNS: String(terminal.cols),
     LINES: String(terminal.rows),
   };
 
   try {
-    shellProcess = await Subprocess.call({
-      command: launch.command,
-      arguments: launch.arguments,
-      environmentAppend: true,
-      environment: env,
-      stderr: "pipe",
-    });
+    let lastError = null;
+    for (const launch of getShellLaunches()) {
+      try {
+        shellProcess = await Subprocess.call({
+          command: launch.command,
+          arguments: launch.arguments,
+          environmentAppend: true,
+          environment: env,
+          stderr: "pipe",
+        });
+        activeShellLaunch = launch;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!shellProcess) {
+      throw lastError || new Error("No shell launcher worked");
+    }
 
     shellReady = true;
-    setStatus("ready — type directly into this terminal", true);
-    terminal.writeln(
-      `Connected to ${getTerminalContainerName()} (${launch.label})`,
-    );
+    setStatus("ready", true);
     terminal.focus();
 
     readPipe(shellProcess.stdout);
@@ -236,17 +339,20 @@ async function startShell() {
 }
 
 async function runStartupCommands() {
-  const folder = getStartupFolder();
-  if (folder) {
-    terminal.writeln(`Starting folder: ${folder}`);
-    await writeToShell(`cd ${shellQuote(folder)}\n`);
-  }
-
   const command = getStartupCommand();
   if (command) {
-    terminal.writeln("Running startup recipe…");
     await writeToShell(`${command}\n`);
   }
+}
+
+async function sendTerminalResize(rows = terminal?.rows, columns = terminal?.cols) {
+  if (!shellProcess || !shellReady || !activeShellLaunch?.resizable) {
+    return;
+  }
+
+  await writeToShell(
+    `${PYTHON_RESIZE_PREFIX}${rows};${columns}${PYTHON_RESIZE_SUFFIX}`,
+  );
 }
 
 async function writeToShell(text) {

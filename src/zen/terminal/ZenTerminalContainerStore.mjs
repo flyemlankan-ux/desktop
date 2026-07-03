@@ -5,14 +5,15 @@
 /**
  * Stores Zen's extra data for real Firefox containers.
  *
- * Firefox already owns the container itself: name, colour, icon, and
- * userContextId. Zen only stores the extra terminal-only fields here.
+ * Firefox owns the real container: name, colour, icon, and userContextId.
+ * Zen only stores whether that container opens a terminal, plus one optional
+ * startup recipe. If the recipe needs a folder, put `cd ~/path && ...` in it.
  */
 
 export const ZEN_TERMINAL_CONTAINER_RECIPES_PREF =
   "zen.terminal.containerRecipes";
 
-export const ZEN_TERMINAL_RECIPE_VERSION = 1;
+export const ZEN_TERMINAL_RECIPE_VERSION = 2;
 
 export function readTerminalContainerRecipes() {
   try {
@@ -67,7 +68,6 @@ export function normalizeTerminalContainerRecord(record) {
   return {
     version: Number(record.version || ZEN_TERMINAL_RECIPE_VERSION),
     kind: "terminal",
-    folder: typeof record.folder === "string" ? record.folder : "",
     recipe: normalizeTerminalRecipe(record.recipe),
   };
 }
@@ -96,7 +96,6 @@ export function setTerminalContainerRecipe(userContextId, record = {}) {
   recipes[key] = {
     version: ZEN_TERMINAL_RECIPE_VERSION,
     kind: "terminal",
-    folder: typeof record.folder === "string" ? record.folder : "",
     recipe: normalizeTerminalRecipe(record.recipe),
   };
   writeTerminalContainerRecipes(recipes);

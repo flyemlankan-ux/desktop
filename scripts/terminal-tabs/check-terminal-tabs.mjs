@@ -66,13 +66,6 @@ const checks = new Map([
     ],
   ],
   [
-    "terminal dialog has start folder field",
-    [
-      "src/browser/components/preferences/dialogs/containers-js.patch",
-      "zen-terminal-folder",
-    ],
-  ],
-  [
     "terminal dialog has startup recipe field",
     [
       "src/browser/components/preferences/dialogs/containers-js.patch",
@@ -118,16 +111,40 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "getTerminalContainerRecipe"],
   ],
   [
-    "terminal page cd's into start folder",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "cd ${shellQuote(folder)}"],
+    "terminal page starts in home by default",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "getHomeDirectory"],
   ],
   [
-    "terminal page runs startup recipe",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "Running startup recipe"],
+    "terminal page runs startup recipe silently",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "runStartupCommands"],
   ],
   [
-    "folder path is shell quoted",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "function shellQuote"],
+    "terminal uses resizable PTY bridge for full-screen apps",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "PYTHON_PTY_BRIDGE"],
+  ],
+  [
+    "PTY bridge sets kernel terminal size",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "TIOCSWINSZ"],
+  ],
+  [
+    "PTY bridge sends SIGWINCH on resize",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "SIGWINCH"],
+  ],
+  [
+    "terminal disables macOS restored-session noise",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "SHELL_SESSIONS_DISABLE"],
+  ],
+  [
+    "folder is now part of recipe text not separate storage",
+    ["src/browser/components/preferences/dialogs/containers-js.patch", "cd ~/projects/app && claude"],
+  ],
+  [
+    "terminal tabs force normal Zen tabs",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#forceNormalZenTab"],
+  ],
+  [
+    "restored terminal tabs preserve user rename",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "preserveExistingLabel"],
   ],
 
   // Old fallback path must stay during this slice.
@@ -237,6 +254,22 @@ const checks = new Map([
   ],
 ]);
 
+
+const forbidden = new Map([
+  [
+    "separate start folder field removed from dialog",
+    ["src/browser/components/preferences/dialogs/containers-js.patch", "zen-terminal-folder"],
+  ],
+  [
+    "separate folder removed from store writes",
+    ["src/zen/terminal/ZenTerminalContainerStore.mjs", "folder:"],
+  ],
+  [
+    "container list terminal badge removed to avoid TerminalTerminal",
+    ["src/browser/components/preferences/containers-js.patch", "zen-terminal-container-badge"],
+  ],
+]);
+
 const syntaxFiles = [
   "src/zen/terminal/ZenTerminalContainerStore.mjs",
   "src/zen/terminal/ZenTerminalTabs.mjs",
@@ -259,6 +292,13 @@ for (const [name, [file, needle]] of checks) {
   const text = readFileSync(file, "utf8");
   if (!text.includes(needle)) {
     failed.push(`${name}: missing ${needle} in ${file}`);
+  }
+}
+
+for (const [name, [file, needle]] of forbidden) {
+  const text = readFileSync(file, "utf8");
+  if (text.includes(needle)) {
+    failed.push(`${name}: still contains ${needle} in ${file}`);
   }
 }
 
