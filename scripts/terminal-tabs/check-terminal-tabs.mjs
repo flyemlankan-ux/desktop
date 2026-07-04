@@ -236,6 +236,14 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "terminal.onData"],
   ],
   [
+    "terminal input handler is singleton guarded",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "window.__zenTerminalPageState"],
+  ],
+  [
+    "terminal duplicate input events are dropped before stdin",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "shouldDropDuplicateInput"],
+  ],
+  [
     "shell writes input",
     ["src/zen/terminal/ZenTerminalPage.mjs", "shellProcess.stdin.write"],
   ],

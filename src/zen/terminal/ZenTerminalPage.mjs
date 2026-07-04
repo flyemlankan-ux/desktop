@@ -16,11 +16,20 @@ const output = document.getElementById("zen-terminal-output");
 const terminalPrompt = document.getElementById("zen-terminal-prompt");
 const statusText = document.getElementById("zen-terminal-status-text");
 
+const pageState = (window.__zenTerminalPageState ||= {});
+pageState.instanceId = (pageState.instanceId || 0) + 1;
+if (pageState.onDataDisposable) {
+  pageState.onDataDisposable.dispose?.();
+  pageState.onDataDisposable = null;
+}
+
 let shellProcess = null;
 let shellReady = false;
 let stopping = false;
 let terminal = null;
 let activeShellLaunch = null;
+let lastInputWrite = "";
+let lastInputWriteTime = 0;
 
 function getSearchParams() {
   return new URLSearchParams(window.location.search);
@@ -263,7 +272,7 @@ function initTerminal() {
   fitTerminalToSurface();
   terminal.focus();
 
-  terminal.onData(data => {
+  pageState.onDataDisposable = terminal.onData(data => {
     writeToShell(data);
   });
 
@@ -358,7 +367,23 @@ async function sendTerminalResize(rows = terminal?.rows, columns = terminal?.col
   );
 }
 
+function shouldDropDuplicateInput(text) {
+  if (typeof text !== "string" || text.length !== 1) {
+    return false;
+  }
+
+  const now = performance.now();
+  const isDuplicate = text === lastInputWrite && now - lastInputWriteTime < 25;
+  lastInputWrite = text;
+  lastInputWriteTime = now;
+  return isDuplicate;
+}
+
 async function writeToShell(text) {
+  if (shouldDropDuplicateInput(text)) {
+    return;
+  }
+
   if (!shellProcess || !shellReady) {
     return;
   }
@@ -379,6 +404,8 @@ async function stopShell() {
   stopping = true;
   shellReady = false;
   try {
+    pageState.onDataDisposable?.dispose?.();
+    pageState.onDataDisposable = null;
     if (shellProcess) {
       await shellProcess.stdin.write("exit\n").catch(() => {});
       shellProcess.kill();
