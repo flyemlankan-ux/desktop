@@ -1722,11 +1722,27 @@ window.gZenVerticalTabsManager = {
       ".tab-editor-container"
     );
     let input = document.getElementById("tab-label-input");
+    const isTab = !!this._tabEdited.closest(".tabbrowser-tab");
+    const newName = input.value.replace(/\s+/g, " ").trim();
+    const shouldSaveTerminalRename =
+      isTab &&
+      this._tabEdited.hasAttribute("zen-terminal-tab") &&
+      newName &&
+      newName !== input._originalValue;
+
+    if (shouldSaveTerminalRename) {
+      this._tabEdited.zenStaticLabel = newName;
+      this._tabEdited._zenChangeLabelFlag = true;
+      gBrowser._setTabLabel(this._tabEdited, newName, {
+        _zenChangeLabelFlag: true,
+      });
+      delete this._tabEdited._zenChangeLabelFlag;
+    }
+
     input.remove();
     if (editorContainer) {
       editorContainer.remove();
     }
-    const isTab = !!this._tabEdited.closest(".tabbrowser-tab");
     const label = isTab
       ? this._tabEdited.querySelector(".tab-label-container-editing")
       : this._tabEdited;

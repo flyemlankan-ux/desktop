@@ -119,16 +119,16 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalPage.mjs", "runStartupCommands"],
   ],
   [
-    "terminal uses resizable PTY bridge for full-screen apps",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "PYTHON_PTY_BRIDGE"],
+    "known-good script launcher is default again",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "macOS script pseudo-terminal with initial size"],
   ],
   [
-    "PTY bridge sets kernel terminal size",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "TIOCSWINSZ"],
+    "script launcher sets initial terminal size for full-screen apps",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "stty rows"],
   ],
   [
-    "PTY bridge sends SIGWINCH on resize",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "SIGWINCH"],
+    "experimental Python PTY is not default",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "zen.terminal.experimentalPythonPtyBridge"],
   ],
   [
     "terminal disables macOS restored-session noise",
@@ -143,8 +143,20 @@ const checks = new Map([
     ["src/zen/terminal/ZenTerminalTabs.mjs", "#forceNormalZenTab"],
   ],
   [
+    "terminal tabs repeat normal-tab cleanup after Zen pin events",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "#forceNormalZenTabSoon"],
+  ],
+  [
+    "terminal tab labels are stored as Zen static labels",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "tab.zenStaticLabel = label"],
+  ],
+  [
     "restored terminal tabs preserve user rename",
     ["src/zen/terminal/ZenTerminalTabs.mjs", "preserveExistingLabel"],
+  ],
+  [
+    "terminal rename commits on blur",
+    ["src/zen/common/modules/ZenUIManager.mjs", "shouldSaveTerminalRename"],
   ],
 
   // Old fallback path must stay during this slice.
@@ -276,6 +288,7 @@ const syntaxFiles = [
   "src/zen/terminal/ZenTerminalPage.mjs",
   "src/zen/common/ZenPreloadedScripts.js",
   "src/zen/common/zen-sets.js",
+  "src/zen/common/modules/ZenUIManager.mjs",
 ];
 
 for (const file of syntaxFiles) {

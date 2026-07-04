@@ -172,17 +172,20 @@ function getShellLaunches() {
 
   if (Services.appinfo.OS === "Darwin") {
     launches.push({
-      command: "/usr/bin/python3",
-      arguments: ["-u", "-c", PYTHON_PTY_BRIDGE, rows, columns, shell],
-      label: "resizable PTY bridge",
-      resizable: true,
-    });
-    launches.push({
       command: "/usr/bin/script",
       arguments: ["-q", "/dev/null", "/bin/zsh", "-lc", loginCommand],
-      label: "macOS script pseudo-terminal fallback",
+      label: "macOS script pseudo-terminal with initial size",
       resizable: false,
     });
+
+    if (Services.prefs.getBoolPref("zen.terminal.experimentalPythonPtyBridge", false)) {
+      launches.push({
+        command: "/usr/bin/python3",
+        arguments: ["-u", "-c", PYTHON_PTY_BRIDGE, rows, columns, shell],
+        label: "experimental resizable PTY bridge",
+        resizable: true,
+      });
+    }
   } else {
     launches.push({
       command: shell,

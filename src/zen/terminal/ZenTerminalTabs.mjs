@@ -331,11 +331,18 @@ export class ZenTerminalTabs {
     }
   }
 
+  #forceNormalZenTabSoon(tab) {
+    for (const delay of [0, 100, 500, 1500]) {
+      window.setTimeout(() => this.#forceNormalZenTab(tab), delay);
+    }
+  }
+
   markTerminalTab(tab, options = {}) {
     if (!tab) {
       return;
     }
     this.#forceNormalZenTab(tab);
+    this.#forceNormalZenTabSoon(tab);
     tab.setAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE, "true");
     tab.setAttribute("zen-show-sublabel", "true");
     if (options.terminalContainerId) {
@@ -356,7 +363,10 @@ export class ZenTerminalTabs {
       options.preserveExistingLabel && existingLabel
         ? existingLabel
         : options.terminalContainerName || existingLabel || "Terminal";
-    tab.setAttribute("label", label);
+    tab.zenStaticLabel = label;
+    tab._zenChangeLabelFlag = true;
+    gBrowser._setTabLabel(tab, label, { _zenChangeLabelFlag: true });
+    delete tab._zenChangeLabelFlag;
   }
 
   unmarkTerminalTab(tab) {
