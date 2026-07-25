@@ -7,13 +7,13 @@
  *
  * Firefox owns the real container: name, colour, icon, and userContextId.
  * Zen only stores whether that container opens a terminal, plus one optional
- * startup recipe. If the recipe needs a folder, put `cd ~/path && ...` in it.
+ * ordered startup recipe.
  */
 
 export const ZEN_TERMINAL_CONTAINER_RECIPES_PREF =
   "zen.terminal.containerRecipes";
 
-export const ZEN_TERMINAL_RECIPE_VERSION = 2;
+export const ZEN_TERMINAL_RECIPE_VERSION = 3;
 
 export function readTerminalContainerRecipes() {
   try {
@@ -36,27 +36,65 @@ export function writeTerminalContainerRecipes(recipes) {
   );
 }
 
-export function normalizeTerminalRecipe(recipe) {
-  if (typeof recipe === "string") {
-    return {
-      type: "single-command",
-      command: recipe,
-      steps: [],
-    };
+function normalizeTerminalStep(step, index, usedIds) {
+  const command =
+    typeof step === "string"
+      ? step.trim()
+      : step && typeof step === "object"
+        ? String(step.command || "").trim()
+        : "";
+  if (!command) {
+    return null;
   }
 
-  if (recipe && typeof recipe === "object") {
-    return {
-      type: String(recipe.type || "single-command"),
-      command: String(recipe.command || ""),
-      steps: Array.isArray(recipe.steps) ? recipe.steps : [],
-    };
+  const requestedId =
+    step && typeof step === "object" ? String(step.id || "").trim() : "";
+  const baseId = requestedId || `step-${index + 1}`;
+  let id = baseId;
+  let suffix = 2;
+  while (usedIds.has(id)) {
+    id = `${baseId}-${suffix++}`;
+  }
+  usedIds.add(id);
+
+  return { id, command };
+}
+
+export function normalizeTerminalRecipe(recipe) {
+  const legacyCommand =
+    typeof recipe === "string"
+      ? recipe.trim()
+      : recipe && typeof recipe === "object"
+        ? String(recipe.command || "").trim()
+        : "";
+  const rawSteps =
+    recipe && typeof recipe === "object" && Array.isArray(recipe.steps)
+      ? recipe.steps
+      : [];
+  const usedIds = new Set();
+  let steps = rawSteps
+    .map((step, index) => normalizeTerminalStep(step, index, usedIds))
+    .filter(Boolean);
+
+  // Version 2 stored one command and reserved an empty steps array. Reading it
+  // as one step upgrades the data without changing the preference immediately.
+  if (!steps.length && legacyCommand) {
+    steps = [
+      normalizeTerminalStep(
+        { id: "step-1", command: legacyCommand },
+        0,
+        usedIds,
+      ),
+    ];
   }
 
   return {
-    type: "single-command",
-    command: "",
-    steps: [],
+    type: "ordered-steps",
+    // Keep the old field readable until the terminal page moves to the v3
+    // runner. New multi-step recipes intentionally have no misleading legacy
+    // command.
+    command: steps.length === 1 ? steps[0].command : "",
+    steps,
   };
 }
 
@@ -66,7 +104,7 @@ export function normalizeTerminalContainerRecord(record) {
   }
 
   return {
-    version: Number(record.version || ZEN_TERMINAL_RECIPE_VERSION),
+    version: ZEN_TERMINAL_RECIPE_VERSION,
     kind: "terminal",
     recipe: normalizeTerminalRecipe(record.recipe),
   };

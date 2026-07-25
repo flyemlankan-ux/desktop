@@ -3,45 +3,161 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * Zen Terminal Tabs
- *
- * Slice 1 keeps the old terminal fallback menu, but adds the new path:
- * real Firefox containers whose Zen metadata says kind = terminal open
- * terminal tabs instead of blank browser tabs.
+ * Opens real Firefox containers marked as terminal containers inside ordinary
+ * Zen tabs. Firefox still owns the one shared container list and its Manage
+ * entry; this class only changes what happens when a terminal row is chosen.
  */
 
 import {
   getTerminalContainerRecipe,
   isTerminalContainerId,
 } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
+import {
+  destroyTerminalSession,
+  normalizeTerminalSessionId,
+  retryPendingTerminalSessionDeletes,
+} from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
 
 const { ContextualIdentityService } = ChromeUtils.importESModule(
   "resource://gre/modules/ContextualIdentityService.sys.mjs",
+);
+const { BrowserWindowTracker } = ChromeUtils.importESModule(
+  "resource:///modules/BrowserWindowTracker.sys.mjs",
+);
+const { RunState } = ChromeUtils.importESModule(
+  "resource:///modules/sessionstore/RunState.sys.mjs",
 );
 
 export const ZEN_TERMINAL_TAB_ATTRIBUTE = "zen-terminal-tab";
 export const ZEN_TERMINAL_TAB_URL =
   "chrome://browser/content/zen-terminal/terminal.xhtml";
-const ZEN_TERMINAL_CONTAINERS_URL =
-  "chrome://browser/content/zen-terminal/containers.xhtml";
 
-const TERMINAL_CONTAINERS_PREF = "zen.terminal.containers";
-const TERMINAL_MENU_MARKER = "data-zen-terminal-menu";
-const DEFAULT_TERMINAL_CONTAINER = {
-  id: "default-terminal",
-  name: "Default Terminal",
-};
+function terminalSessionIdForTab(tab) {
+  let sessionId = normalizeTerminalSessionId(
+    tab?.getAttribute?.("zen-terminal-session-id"),
+  );
+  if (sessionId) {
+    return sessionId;
+  }
+
+  try {
+    sessionId = normalizeTerminalSessionId(
+      SessionStore.getCustomTabValue(tab, "zenTerminalSessionId"),
+    );
+  } catch (_) {
+    // Older restored tabs may only have the id in their URL.
+  }
+  if (sessionId) {
+    return sessionId;
+  }
+
+  const spec = tab?.linkedBrowser?.currentURI?.spec || "";
+  if (!spec.startsWith(ZEN_TERMINAL_TAB_URL)) {
+    return "";
+  }
+  try {
+    return normalizeTerminalSessionId(
+      new URL(spec).searchParams.get("session"),
+    );
+  } catch (_) {
+    return "";
+  }
+}
 
 export class ZenTerminalTabs {
   constructor() {
-    this.#installNewTabContainerMenuBridge();
-    this.#installNativeTerminalContainerRouter();
     this.#patchFirefoxContainerMenuBuilder();
+    this.#installTerminalSessionCloseHandler();
     this.#markRestoredTerminalTabsSoon();
+    void retryPendingTerminalSessionDeletes();
+  }
+
+  /**
+   * Populates Zen's one container menu with Firefox's real Web and Terminal
+   * containers. The normal browser-tab row already exists beside this menu, so
+   * Firefox's extra "No Container" row is deliberately omitted.
+   */
+  populateUnifiedContainerMenu(event) {
+    const result = window.createUserContextMenu(event, {
+      isContextMenu: true,
+      showDefaultTab: false,
+    });
+    this.#routeNativeTerminalContainerRows(event.target);
+    window.setTimeout(
+      () => this.#routeNativeTerminalContainerRows(event.target),
+      0,
+    );
+    return result;
+  }
+
+  /**
+   * Firefox also opens a container menu from a long press on its New Tab
+   * button. Keep that native doorway, but route terminal rows through the same
+   * terminal-tab opener. No extra rows are injected.
+   */
+  #patchFirefoxContainerMenuBuilder() {
+    const install = () => {
+      if (typeof window.CreateContainerTabMenu !== "function") {
+        window.setTimeout(install, 50);
+        return;
+      }
+      if (window.CreateContainerTabMenu.__zenTerminalPatched) {
+        return;
+      }
+
+      const originalCreateContainerTabMenu = window.CreateContainerTabMenu;
+      const patchedCreateContainerTabMenu = (event) => {
+        const result = originalCreateContainerTabMenu.call(window, event);
+        this.#routeNativeTerminalContainerRows(event.target);
+        window.setTimeout(
+          () => this.#routeNativeTerminalContainerRows(event.target),
+          0,
+        );
+        return result;
+      };
+      patchedCreateContainerTabMenu.__zenTerminalPatched = true;
+      window.CreateContainerTabMenu = patchedCreateContainerTabMenu;
+    };
+
+    install();
+  }
+
+  #routeNativeTerminalContainerRows(popup) {
+    for (const item of popup?.querySelectorAll?.("[data-usercontextid]") ||
+      []) {
+      const userContextId = item.getAttribute("data-usercontextid");
+      if (!userContextId || !isTerminalContainerId(userContextId)) {
+        continue;
+      }
+
+      item.setAttribute("zen-terminal-native-container", "true");
+      item.removeAttribute("command");
+      item.removeAttribute("oncommand");
+      if (item.__zenTerminalNativeContainerRouted) {
+        continue;
+      }
+
+      item.__zenTerminalNativeContainerRouted = true;
+      item.addEventListener(
+        "command",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          this.openTerminalContainerTab(userContextId);
+        },
+        true,
+      );
+    }
   }
 
   #terminalUrl(options = {}) {
     const params = new URLSearchParams();
+    if (options.terminalSessionId) {
+      params.set("session", options.terminalSessionId);
+    }
+    // Keep the old URL value readable for already-restored tabs. New tabs use
+    // only the real Firefox userContextId.
     if (options.terminalContainerId) {
       params.set("container", options.terminalContainerId);
     }
@@ -53,263 +169,6 @@ export class ZenTerminalTabs {
     }
     const query = params.toString();
     return query ? `${ZEN_TERMINAL_TAB_URL}?${query}` : ZEN_TERMINAL_TAB_URL;
-  }
-
-  #readTerminalContainers() {
-    let containers = [];
-    try {
-      containers = JSON.parse(
-        Services.prefs.getStringPref(TERMINAL_CONTAINERS_PREF, "[]"),
-      );
-    } catch (_) {
-      containers = [];
-    }
-
-    if (!Array.isArray(containers) || !containers.length) {
-      return [DEFAULT_TERMINAL_CONTAINER];
-    }
-
-    return containers
-      .filter(container => container?.id && container?.name)
-      .map(container => ({
-        id: String(container.id),
-        name: String(container.name),
-      }));
-  }
-
-  #writeTerminalContainers(containers) {
-    Services.prefs.setStringPref(
-      TERMINAL_CONTAINERS_PREF,
-      JSON.stringify(containers),
-    );
-  }
-
-  #createXULElement(tagName) {
-    if (document.createXULElement) {
-      return document.createXULElement(tagName);
-    }
-    return document.createElementNS(
-      "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
-      tagName,
-    );
-  }
-
-  #menuLabel(node) {
-    return (
-      node.getAttribute?.("label") ||
-      node.getAttribute?.("aria-label") ||
-      node.textContent ||
-      ""
-    ).trim();
-  }
-
-  #isBrowserContainerNewTabPopup(popup) {
-    if (!popup || popup.localName !== "menupopup") {
-      return false;
-    }
-
-    if (popup.id === "zenCreateNewPopup") {
-      return true;
-    }
-
-    const children = Array.from(popup.children || []);
-    const labels = children.map(child => this.#menuLabel(child)).join(" | ");
-    const hasBrowserContainerRows = children.some(child => {
-      const attrs = child.getAttributeNames?.() || [];
-      return attrs.some(attr => attr.toLowerCase().includes("usercontext"));
-    });
-
-    return (
-      hasBrowserContainerRows ||
-      labels.includes("No Container") ||
-      labels.includes("Manage containers") ||
-      labels.includes("Personal") ||
-      labels.includes("Banking") ||
-      labels.includes("Shopping")
-    );
-  }
-
-  #patchFirefoxContainerMenuBuilder() {
-    const install = () => {
-      if (typeof window.CreateContainerTabMenu !== "function") {
-        window.setTimeout(install, 50);
-        return;
-      }
-
-      if (window.CreateContainerTabMenu.__zenTerminalPatched) {
-        return;
-      }
-
-      const originalCreateContainerTabMenu = window.CreateContainerTabMenu;
-      const patchedCreateContainerTabMenu = event => {
-        const result = originalCreateContainerTabMenu.call(window, event);
-        this.#routeNativeTerminalContainerRows(event.target);
-        this.#injectTerminalChoices(event.target);
-        window.setTimeout(() => {
-          this.#routeNativeTerminalContainerRows(event.target);
-          this.#injectTerminalChoices(event.target);
-        }, 0);
-        return result;
-      };
-      patchedCreateContainerTabMenu.__zenTerminalPatched = true;
-      window.CreateContainerTabMenu = patchedCreateContainerTabMenu;
-    };
-
-    install();
-  }
-
-  #installNewTabContainerMenuBridge() {
-    document.addEventListener(
-      "popupshowing",
-      event => {
-        const popup = event.target;
-        window.setTimeout(() => {
-          this.#routeNativeTerminalContainerRows(popup);
-          this.#injectTerminalChoices(popup);
-        }, 0);
-      },
-      true,
-    );
-  }
-
-  #installNativeTerminalContainerRouter() {
-    document.addEventListener(
-      "popupshowing",
-      event => {
-        const popup = event.target;
-        window.setTimeout(
-          () => this.#routeNativeTerminalContainerRows(popup),
-          0,
-        );
-      },
-      true,
-    );
-  }
-
-  #routeNativeTerminalContainerRows(popup) {
-    if (!this.#isBrowserContainerNewTabPopup(popup)) {
-      return;
-    }
-
-    for (const item of popup.querySelectorAll?.("[data-usercontextid]") || []) {
-      const userContextId = item.getAttribute("data-usercontextid");
-      if (!userContextId || !isTerminalContainerId(userContextId)) {
-        continue;
-      }
-
-      item.setAttribute("zen-terminal-native-container", "true");
-      item.removeAttribute("command");
-      item.removeAttribute("oncommand");
-
-      if (item.__zenTerminalNativeContainerRouted) {
-        continue;
-      }
-
-      item.__zenTerminalNativeContainerRouted = true;
-      item.addEventListener(
-        "command",
-        event => {
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-          this.openTerminalContainerTab(userContextId);
-        },
-        true,
-      );
-    }
-  }
-
-  #injectTerminalChoices(popup) {
-    if (!this.#isBrowserContainerNewTabPopup(popup)) {
-      return;
-    }
-
-    if (popup.querySelector?.(`[${TERMINAL_MENU_MARKER}="true"]`)) {
-      return;
-    }
-
-    const terminalRows = [
-      this.#makeSeparator(),
-      this.#makeTerminalTabItem(),
-      this.#makeTerminalContainerMenu(),
-      this.#makeManageTerminalContainersItem(),
-    ];
-
-    const manageBrowserContainersItem = Array.from(popup.children || []).find(
-      child => this.#menuLabel(child).includes("Manage containers"),
-    );
-
-    for (const row of terminalRows) {
-      row.setAttribute(TERMINAL_MENU_MARKER, "true");
-      popup.insertBefore(row, manageBrowserContainersItem || null);
-    }
-  }
-
-  #makeSeparator() {
-    return this.#createXULElement("menuseparator");
-  }
-
-  #makeTerminalTabItem() {
-    const item = this.#createXULElement("menuitem");
-    item.setAttribute("label", "New Terminal Tab");
-    item.setAttribute("class", "menuitem-iconic");
-    item.addEventListener("command", () => this.openTerminalTab());
-    return item;
-  }
-
-  #makeTerminalContainerMenu() {
-    const menu = this.#createXULElement("menu");
-    menu.setAttribute("label", "New Terminal Container Tab");
-    menu.setAttribute("class", "menu-iconic");
-
-    const popup = this.#createXULElement("menupopup");
-    for (const container of this.#readTerminalContainers()) {
-      const item = this.#createXULElement("menuitem");
-      item.setAttribute("label", container.name);
-      item.addEventListener("command", () =>
-        this.openTerminalTab({
-          terminalContainerId: container.id,
-          terminalContainerName: container.name,
-        }),
-      );
-      popup.appendChild(item);
-    }
-
-    menu.appendChild(popup);
-    return menu;
-  }
-
-  #makeManageTerminalContainersItem() {
-    const item = this.#createXULElement("menuitem");
-    item.setAttribute("label", "Manage Terminal Containers…");
-    item.addEventListener("command", () => this.openTerminalContainersPage());
-    return item;
-  }
-
-  promptForNewTerminalContainer() {
-    const input = { value: "" };
-    const ok = Services.prompt.prompt(
-      window,
-      "New Terminal Container",
-      "Name this terminal container:",
-      input,
-      null,
-      {},
-    );
-
-    const name = input.value.trim();
-    if (!ok || !name) {
-      return null;
-    }
-
-    const containers = this.#readTerminalContainers().filter(
-      container => container.id !== DEFAULT_TERMINAL_CONTAINER.id,
-    );
-    const id = `terminal-${Date.now()}`;
-    const container = { id, name };
-    containers.push(container);
-    this.#writeTerminalContainers(containers);
-    return container;
   }
 
   isTerminalTab(tab) {
@@ -325,7 +184,6 @@ export class ZenTerminalTabs {
     tab.removeAttribute("zenDefaultUserContextId");
     tab.removeAttribute("zen-pinned-changed");
     delete tab._zenPinnedInitialState;
-
     if (tab.pinned) {
       gBrowser.unpinTab(tab);
     }
@@ -344,12 +202,22 @@ export class ZenTerminalTabs {
     this.#forceNormalZenTab(tab);
     this.#forceNormalZenTabSoon(tab);
     tab.setAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE, "true");
-    tab.setAttribute("zen-show-sublabel", "true");
-    if (options.terminalContainerId) {
-      tab.setAttribute(
-        "zen-terminal-container-id",
-        options.terminalContainerId,
-      );
+    tab.removeAttribute("zen-show-sublabel");
+
+    if (options.terminalSessionId) {
+      const sessionId = normalizeTerminalSessionId(options.terminalSessionId);
+      if (sessionId) {
+        tab.setAttribute("zen-terminal-session-id", sessionId);
+        try {
+          SessionStore.setCustomTabValue(
+            tab,
+            "zenTerminalSessionId",
+            sessionId,
+          );
+        } catch (_) {
+          // The URL also carries the id and remains the restore source of truth.
+        }
+      }
     }
     if (options.userContextId) {
       tab.setAttribute("usercontextid", String(options.userContextId));
@@ -358,6 +226,7 @@ export class ZenTerminalTabs {
         String(options.userContextId),
       );
     }
+
     const existingLabel = tab.getAttribute("label");
     const label =
       options.preserveExistingLabel && existingLabel
@@ -370,18 +239,9 @@ export class ZenTerminalTabs {
   }
 
   unmarkTerminalTab(tab) {
-    if (!tab) {
-      return;
+    if (tab) {
+      tab.removeAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE);
     }
-    tab.removeAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE);
-  }
-
-  openTerminalContainersPage() {
-    const tab = gBrowser.addTab(ZEN_TERMINAL_CONTAINERS_URL, {
-      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
-    });
-    gBrowser.selectedTab = tab;
-    return tab;
   }
 
   #getNativeContainerName(userContextId) {
@@ -418,6 +278,7 @@ export class ZenTerminalTabs {
 
       const params = new URL(spec).searchParams;
       this.markTerminalTab(tab, {
+        terminalSessionId: params.get("session"),
         terminalContainerId: params.get("container"),
         terminalContainerName: params.get("name") || "Terminal",
         userContextId: params.get("userContextId"),
@@ -427,18 +288,75 @@ export class ZenTerminalTabs {
   }
 
   openTerminalTab(options = {}) {
+    const terminalSessionId =
+      normalizeTerminalSessionId(options.terminalSessionId) ||
+      Services.uuid.generateUUID().toString().slice(1, -1).toLowerCase();
+    const terminalOptions = { ...options, terminalSessionId };
     const addTabOptions = {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     };
-    if (options.userContextId) {
-      addTabOptions.userContextId = Number(options.userContextId);
+    if (terminalOptions.userContextId) {
+      addTabOptions.userContextId = Number(terminalOptions.userContextId);
     }
 
-    const tab = gBrowser.addTab(this.#terminalUrl(options), addTabOptions);
+    const tab = gBrowser.addTab(
+      this.#terminalUrl(terminalOptions),
+      addTabOptions,
+    );
     this.#forceNormalZenTab(tab);
-    this.markTerminalTab(tab, options);
+    this.markTerminalTab(tab, terminalOptions);
     gBrowser.selectedTab = tab;
     return tab;
+  }
+
+  #installTerminalSessionCloseHandler() {
+    window.addEventListener(
+      "TabClose",
+      (event) => this.#onTerminalTabClose(event),
+      true,
+    );
+  }
+
+  #hasAnotherOpenTerminalTab(sessionId, closingTab) {
+    for (const browserWindow of BrowserWindowTracker.orderedWindows) {
+      if (!browserWindow?.gBrowser || browserWindow.closed) {
+        continue;
+      }
+      for (const tab of browserWindow.gBrowser.tabs) {
+        if (
+          tab !== closingTab &&
+          !tab.closing &&
+          terminalSessionIdForTab(tab) === sessionId
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  #onTerminalTabClose(event) {
+    const tab = event.target;
+    const sessionId = terminalSessionIdForTab(tab);
+    if (!sessionId) {
+      return;
+    }
+    if (
+      event.detail?.adoptedBy ||
+      RunState.isQuitting ||
+      window._zenClosingWindow ||
+      window.closing
+    ) {
+      return;
+    }
+
+    // Zen may close synchronized copies of one tab in quick succession. Wait
+    // until that work finishes, then destroy only when no copy remains.
+    window.setTimeout(() => {
+      if (!this.#hasAnotherOpenTerminalTab(sessionId, tab)) {
+        void destroyTerminalSession(sessionId);
+      }
+    }, 0);
   }
 }
 

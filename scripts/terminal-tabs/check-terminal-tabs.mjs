@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const checks = new Map([
@@ -19,11 +19,6 @@ const checks = new Map([
     "terminal module preloaded",
     ["src/zen/common/ZenPreloadedScripts.js", "ZenTerminalTabs.mjs"],
   ],
-  [
-    "terminal command handled",
-    ["src/zen/common/zen-sets.js", "gZenTerminalTabs.openTerminalTab"],
-  ],
-
   // New Slice 1 native-container path.
   [
     "native terminal metadata store added",
@@ -43,6 +38,44 @@ const checks = new Map([
   [
     "metadata store jarred",
     ["src/zen/terminal/jar.inc.mn", "ZenTerminalContainerStore.mjs"],
+  ],
+  [
+    "persistent terminal session manager added",
+    ["src/zen/terminal/ZenTerminalSessionManager.mjs", "zen.terminal.sessions"],
+  ],
+  [
+    "persistent session manager jarred",
+    ["src/zen/terminal/jar.inc.mn", "ZenTerminalSessionManager.mjs"],
+  ],
+  [
+    "container deletion destroys its persistent sessions",
+    [
+      "src/browser/components/preferences/containers-js.patch",
+      "destroyTerminalSessionsForUserContextId(userContextId)",
+    ],
+  ],
+  [
+    "terminal to web change destroys its persistent sessions",
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "destroyTerminalSessionsForUserContextId(userContextId)",
+    ],
+  ],
+  [
+    "terminal tabs receive stable session ids",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "terminalSessionId"],
+  ],
+  [
+    "explicit tab close destroys its persistent session",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "destroyTerminalSession"],
+  ],
+  [
+    "page reattaches through dedicated tmux server",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "ZEN_TERMINAL_TMUX_SOCKET"],
+  ],
+  [
+    "startup command is skipped on tmux reattach",
+    ["src/zen/terminal/ZenTerminalPage.mjs", "tmuxSessionWasNew"],
   ],
   [
     "preferences container list knows terminal metadata",
@@ -88,7 +121,25 @@ const checks = new Map([
   ],
   [
     "native menu rows route terminal containers",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "#routeNativeTerminalContainerRows"],
+    [
+      "src/zen/terminal/ZenTerminalTabs.mjs",
+      "#routeNativeTerminalContainerRows",
+    ],
+  ],
+  [
+    "one native menu populates mixed web and terminal containers",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "populateUnifiedContainerMenu"],
+  ],
+  [
+    "unified container menu omits duplicate plain browser row",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "showDefaultTab: false"],
+  ],
+  [
+    "create menu uses the unified native container list",
+    [
+      "src/browser/base/content/zen-panels/popups.inc",
+      "gZenTerminalTabs.populateUnifiedContainerMenu(event)",
+    ],
   ],
   [
     "terminal container row does not keep browser command",
@@ -120,7 +171,10 @@ const checks = new Map([
   ],
   [
     "known-good script launcher is default again",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "macOS script pseudo-terminal with initial size"],
+    [
+      "src/zen/terminal/ZenTerminalPage.mjs",
+      "macOS script pseudo-terminal with initial size",
+    ],
   ],
   [
     "script launcher sets initial terminal size for full-screen apps",
@@ -128,7 +182,10 @@ const checks = new Map([
   ],
   [
     "experimental Python PTY is not default",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "zen.terminal.experimentalPythonPtyBridge"],
+    [
+      "src/zen/terminal/ZenTerminalPage.mjs",
+      "zen.terminal.experimentalPythonPtyBridge",
+    ],
   ],
   [
     "terminal disables macOS restored-session noise",
@@ -136,7 +193,10 @@ const checks = new Map([
   ],
   [
     "folder is now part of recipe text not separate storage",
-    ["src/browser/components/preferences/dialogs/containers-js.patch", "cd ~/projects/app && claude"],
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "cd ~/projects/app && claude",
+    ],
   ],
   [
     "terminal tabs force normal Zen tabs",
@@ -157,35 +217,6 @@ const checks = new Map([
   [
     "terminal rename commits on blur",
     ["src/zen/common/modules/ZenUIManager.mjs", "shouldSaveTerminalRename"],
-  ],
-
-  // Old fallback path must stay during this slice.
-  [
-    "plain terminal tab choice still present as fallback",
-    ["src/browser/base/content/zen-panels/popups.inc", "Terminal Tab"],
-  ],
-  [
-    "old terminal container choice still present as fallback",
-    [
-      "src/browser/base/content/zen-panels/popups.inc",
-      "Terminal Container Tab",
-    ],
-  ],
-  [
-    "old fallback terminal containers pref still present",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "zen.terminal.containers"],
-  ],
-  [
-    "old fallback terminal containers page still jarred",
-    ["src/zen/terminal/jar.inc.mn", "containers.xhtml"],
-  ],
-  [
-    "old fallback manage page still saves containers",
-    ["src/zen/terminal/ZenTerminalContainers.mjs", "zen.terminal.containers"],
-  ],
-  [
-    "old fallback manage page still opens",
-    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainersPage"],
   ],
 
   // Core terminal proof from Slice 0 must remain true.
@@ -253,7 +284,7 @@ const checks = new Map([
   ],
   [
     "shell output written to xterm",
-    ["src/zen/terminal/ZenTerminalPage.mjs", "terminal.write(chunk)"],
+    ["src/zen/terminal/ZenTerminalPage.mjs", "terminal.write(chunk, resolve)"],
   ],
   [
     "shell closes on tab close",
@@ -274,11 +305,59 @@ const checks = new Map([
   ],
 ]);
 
-
 const forbidden = new Map([
   [
+    "old terminal-only menu item removed",
+    ["src/browser/base/content/zen-panels/popups.inc", 'label="Terminal Tab"'],
+  ],
+  [
+    "old terminal-container submenu removed",
+    [
+      "src/browser/base/content/zen-panels/popups.inc",
+      'label="Terminal Container Tab"',
+    ],
+  ],
+  [
+    "old default terminal menu row removed",
+    ["src/browser/base/content/zen-panels/popups.inc", "Default Terminal"],
+  ],
+  [
+    "old terminal commands removed",
+    ["src/browser/base/content/zen-commands.inc.xhtml", "cmd_zenNewTerminal"],
+  ],
+  [
+    "old terminal command handlers removed",
+    ["src/zen/common/zen-sets.js", "cmd_zenNewTerminal"],
+  ],
+  [
+    "old synthetic container preference removed",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "zen.terminal.containers"],
+  ],
+  [
+    "old terminal menu injection removed",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "injectTerminalChoices"],
+  ],
+  [
+    "old terminal manage page opener removed",
+    ["src/zen/terminal/ZenTerminalTabs.mjs", "openTerminalContainersPage"],
+  ],
+  [
+    "old standalone page removed from jar",
+    ["src/zen/terminal/jar.inc.mn", "containers.xhtml"],
+  ],
+  [
+    "cloud build no longer patches a second terminal menu",
+    [
+      ".github/workflows/terminal-macos-dev-build.yml",
+      "patch-engine-newtab-menu",
+    ],
+  ],
+  [
     "separate start folder field removed from dialog",
-    ["src/browser/components/preferences/dialogs/containers-js.patch", "zen-terminal-folder"],
+    [
+      "src/browser/components/preferences/dialogs/containers-js.patch",
+      "zen-terminal-folder",
+    ],
   ],
   [
     "separate folder removed from store writes",
@@ -286,17 +365,29 @@ const forbidden = new Map([
   ],
   [
     "container list terminal badge removed to avoid TerminalTerminal",
-    ["src/browser/components/preferences/containers-js.patch", "zen-terminal-container-badge"],
+    [
+      "src/browser/components/preferences/containers-js.patch",
+      "zen-terminal-container-badge",
+    ],
   ],
 ]);
 
 const syntaxFiles = [
   "src/zen/terminal/ZenTerminalContainerStore.mjs",
+  "src/zen/terminal/ZenTerminalRecipeRunner.mjs",
+  "src/zen/terminal/ZenTerminalSessionManager.mjs",
   "src/zen/terminal/ZenTerminalTabs.mjs",
   "src/zen/terminal/ZenTerminalPage.mjs",
   "src/zen/common/ZenPreloadedScripts.js",
   "src/zen/common/zen-sets.js",
   "src/zen/common/modules/ZenUIManager.mjs",
+];
+
+const removedFiles = [
+  "src/zen/terminal/ZenTerminalContainers.mjs",
+  "src/zen/terminal/containers.xhtml",
+  "src/zen/terminal/zen-terminal-containers.css",
+  "scripts/terminal-tabs/patch-engine-newtab-menu.mjs",
 ];
 
 for (const file of syntaxFiles) {
@@ -309,6 +400,11 @@ for (const file of syntaxFiles) {
 }
 
 const failed = [];
+for (const file of removedFiles) {
+  if (existsSync(file)) {
+    failed.push(`old standalone terminal file still exists: ${file}`);
+  }
+}
 for (const [name, [file, needle]] of checks) {
   const text = readFileSync(file, "utf8");
   if (!text.includes(needle)) {

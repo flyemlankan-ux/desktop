@@ -1,11 +1,14 @@
 diff --git a/browser/components/preferences/dialogs/containers.js b/browser/components/preferences/dialogs/containers.js
 --- a/browser/components/preferences/dialogs/containers.js
 +++ b/browser/components/preferences/dialogs/containers.js
-@@ -6,6 +6,69 @@
+@@ -6,6 +6,112 @@
    "resource://gre/modules/ContextualIdentityService.sys.mjs"
  );
  
 +const ZEN_TERMINAL_CONTAINER_RECIPES_PREF = "zen.terminal.containerRecipes";
++const { destroyTerminalSessionsForUserContextId } = ChromeUtils.importESModule(
++  "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs"
++);
 +
 +function readZenTerminalContainerRecipes() {
 +  try {
@@ -26,37 +29,77 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +  );
 +}
 +
++function normalizeZenTerminalSteps(recipe) {
++  // Legacy recipes such as `cd ~/projects/app && claude` become one step.
++  const legacyCommand =
++    typeof recipe == "string"
++      ? recipe.trim()
++      : typeof recipe?.command == "string"
++        ? recipe.command.trim()
++        : "";
++  const rawSteps =
++    recipe && typeof recipe == "object" && Array.isArray(recipe.steps)
++      ? recipe.steps
++      : [];
++  const usedIds = new Set();
++  let steps = rawSteps
++    .map((step, index) => {
++      const command =
++        typeof step == "string"
++          ? step.trim()
++          : typeof step?.command == "string"
++            ? step.command.trim()
++            : "";
++      if (!command) {
++        return null;
++      }
++
++      const requestedId =
++        typeof step?.id == "string" ? step.id.trim() : "";
++      const baseId = requestedId || `step-${index + 1}`;
++      let id = baseId;
++      let suffix = 2;
++      while (usedIds.has(id)) {
++        id = `${baseId}-${suffix++}`;
++      }
++      usedIds.add(id);
++      return { id, command };
++    })
++    .filter(Boolean);
++
++  if (!steps.length && legacyCommand) {
++    steps = [{ id: "step-1", command: legacyCommand }];
++  }
++  return steps;
++}
++
 +function getZenTerminalContainerRecipe(userContextId) {
 +  const record = readZenTerminalContainerRecipes()[String(userContextId)];
 +  if (record?.kind != "terminal") {
 +    return null;
 +  }
 +
-+  const recipe = record.recipe || {};
 +  return {
 +    kind: "terminal",
 +    recipe: {
-+      type: recipe.type || "single-command",
-+      command:
-+        typeof recipe == "string"
-+          ? recipe
-+          : typeof recipe.command == "string"
-+            ? recipe.command
-+            : "",
-+      steps: Array.isArray(recipe.steps) ? recipe.steps : [],
++      type: "ordered-steps",
++      steps: normalizeZenTerminalSteps(record.recipe),
 +    },
 +  };
 +}
 +
-+function setZenTerminalContainerRecipe(userContextId, command) {
++function setZenTerminalContainerRecipe(userContextId, steps) {
 +  const recipes = readZenTerminalContainerRecipes();
++  const normalizedSteps = normalizeZenTerminalSteps({ steps });
 +  recipes[String(userContextId)] = {
-+    version: 2,
++    version: 3,
 +    kind: "terminal",
 +    recipe: {
-+      type: "single-command",
-+      command: command || "",
-+      steps: [],
++      type: "ordered-steps",
++      // One-step recipes still work in builds that only understand v2.
++      command:
++        normalizedSteps.length == 1 ? normalizedSteps[0].command : "",
++      steps: normalizedSteps,
 +    },
 +  };
 +  writeZenTerminalContainerRecipes(recipes);
@@ -71,7 +114,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
  /**
   * We want to set the window title immediately to prevent flickers.
   */
-@@ -61,7 +124,16 @@
+@@ -61,7 +167,19 @@
      this._dialog = document.querySelector("dialog");
      this.userContextId = aParams.userContextId || null;
      this.identity = aParams.identity;
@@ -81,14 +124,17 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +        ? "terminal"
 +        : "web"
 +      : null;
++    this.terminalRecipeSteps = terminalRecipe?.recipe?.steps || [];
++    this.terminalStepIdCounter = this.terminalRecipeSteps.length;
++    this.wasTerminalContainer = Boolean(terminalRecipe);
  
 +    this.createKindChooser();
-+    this.createTerminalFields(terminalRecipe);
++    this.createTerminalFields();
 +
      const iconWrapper = document.getElementById("iconWrapper");
      iconWrapper.appendChild(this.createIconButtons());
  
-@@ -83,15 +155,99 @@
+@@ -83,15 +201,220 @@
      document.addEventListener("dialogaccept", () => this.onApplyChanges());
  
      // This is to prevent layout jank caused by the svgs and outlines rendering at different times
@@ -139,33 +185,154 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    content.parentNode.insertBefore(chooser, content);
    },
  
-+  createTerminalFields(terminalRecipe) {
++  createTerminalFields() {
 +    const content = document.getElementById("containers-content");
 +    const fields = document.createXULElement("vbox");
 +    fields.setAttribute("id", "zen-terminal-container-fields");
 +    fields.style.marginBlockStart = "16px";
 +
-+    const recipeRow = document.createXULElement("hbox");
-+    recipeRow.setAttribute("align", "center");
-+
 +    const recipeLabel = document.createXULElement("label");
-+    recipeLabel.setAttribute("value", "Startup recipe");
-+    recipeLabel.setAttribute("control", "zen-terminal-recipe");
-+    recipeLabel.style.minWidth = "120px";
-+    recipeRow.appendChild(recipeLabel);
++    recipeLabel.setAttribute("value", "Startup steps");
++    recipeLabel.style.fontWeight = "600";
++    fields.appendChild(recipeLabel);
 +
-+    const recipeInput = document.createElementNS(
-+      "http://www.w3.org/1999/xhtml",
-+      "input"
-+    );
-+    recipeInput.setAttribute("id", "zen-terminal-recipe");
-+    recipeInput.setAttribute("type", "text");
-+    recipeInput.setAttribute("placeholder", "cd ~/projects/app && claude");
-+    recipeInput.value = terminalRecipe?.recipe?.command || "";
-+    recipeRow.appendChild(recipeInput);
-+    fields.appendChild(recipeRow);
++    const help = document.createXULElement("description");
++    help.textContent =
++      "Steps run from top to bottom. A connection step moves the following steps onto that computer.";
++    help.style.marginBlock = "4px 10px";
++    fields.appendChild(help);
++
++    const stepList = document.createXULElement("vbox");
++    stepList.setAttribute("id", "zen-terminal-recipe-steps");
++    stepList.style.gap = "8px";
++    fields.appendChild(stepList);
++
++    const addStep = document.createXULElement("button");
++    addStep.setAttribute("id", "zen-terminal-add-step");
++    addStep.setAttribute("label", "+ Add step");
++    addStep.style.marginBlockStart = "10px";
++    addStep.addEventListener("command", () => this.addTerminalRecipeStep());
++    fields.appendChild(addStep);
 +
 +    content.appendChild(fields);
++    this.renderTerminalRecipeSteps();
++  },
++
++  createTerminalStepId() {
++    this.terminalStepIdCounter++;
++    return `step-${Date.now()}-${this.terminalStepIdCounter}`;
++  },
++
++  addTerminalRecipeStep() {
++    this.terminalRecipeSteps.push({
++      id: this.createTerminalStepId(),
++      command: "",
++    });
++    this.renderTerminalRecipeSteps();
++    document
++      .querySelector("#zen-terminal-recipe-steps input:last-of-type")
++      ?.focus();
++  },
++
++  removeTerminalRecipeStep(stepId) {
++    this.terminalRecipeSteps = this.terminalRecipeSteps.filter(
++      step => step.id != stepId
++    );
++    this.renderTerminalRecipeSteps();
++  },
++
++  moveTerminalRecipeStep(stepId, offset) {
++    const index = this.terminalRecipeSteps.findIndex(step => step.id == stepId);
++    const target = index + offset;
++    if (
++      index < 0 ||
++      target < 0 ||
++      target >= this.terminalRecipeSteps.length
++    ) {
++      return;
++    }
++    const [step] = this.terminalRecipeSteps.splice(index, 1);
++    this.terminalRecipeSteps.splice(target, 0, step);
++    this.renderTerminalRecipeSteps();
++  },
++
++  renderTerminalRecipeSteps() {
++    const list = document.getElementById("zen-terminal-recipe-steps");
++    if (!list) {
++      return;
++    }
++    list.textContent = "";
++
++    if (!this.terminalRecipeSteps.length) {
++      const empty = document.createXULElement("description");
++      empty.textContent = "No startup steps. This opens a plain terminal.";
++      list.appendChild(empty);
++      return;
++    }
++
++    this.terminalRecipeSteps.forEach((step, index) => {
++      const row = document.createXULElement("hbox");
++      row.setAttribute("align", "center");
++      row.style.gap = "6px";
++
++      const number = document.createXULElement("label");
++      number.setAttribute("value", `${index + 1}.`);
++      number.style.minWidth = "24px";
++      row.appendChild(number);
++
++      const input = document.createElementNS(
++        "http://www.w3.org/1999/xhtml",
++        "input"
++      );
++      input.setAttribute("type", "text");
++      input.setAttribute("aria-label", `Startup step ${index + 1}`);
++      input.setAttribute(
++        "placeholder",
++        index == 0 ? "ssh person@computer" : "claude"
++      );
++      input.style.flex = "1";
++      input.value = step.command;
++      input.addEventListener("input", () => {
++        step.command = input.value;
++      });
++      row.appendChild(input);
++
++      const up = document.createXULElement("button");
++      up.setAttribute("label", "↑");
++      up.setAttribute("tooltiptext", "Move step up");
++      up.disabled = index == 0;
++      up.addEventListener("command", () =>
++        this.moveTerminalRecipeStep(step.id, -1)
++      );
++      row.appendChild(up);
++
++      const down = document.createXULElement("button");
++      down.setAttribute("label", "↓");
++      down.setAttribute("tooltiptext", "Move step down");
++      down.disabled = index == this.terminalRecipeSteps.length - 1;
++      down.addEventListener("command", () =>
++        this.moveTerminalRecipeStep(step.id, 1)
++      );
++      row.appendChild(down);
++
++      const remove = document.createXULElement("button");
++      remove.setAttribute("label", "Remove");
++      remove.addEventListener("command", () =>
++        this.removeTerminalRecipeStep(step.id)
++      );
++      row.appendChild(remove);
++
++      list.appendChild(row);
++    });
++  },
++
++  getTerminalRecipeSteps() {
++    return this.terminalRecipeSteps
++      .map(step => ({
++        id: step.id || this.createTerminalStepId(),
++        command: String(step.command || "").trim(),
++      }))
++      .filter(step => step.command);
 +  },
 +
 +  chooseKind(kind) {
@@ -191,7 +358,7 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
    createIconButtons() {
      let radiogroup = document.createXULElement("radiogroup");
      radiogroup.setAttribute("id", "icon");
-@@ -161,11 +317,23 @@
+@@ -161,11 +484,26 @@
        throw new Error("Internal error. The color value doesn't match.");
      }
  
@@ -209,9 +376,12 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    if (this.containerKind == "terminal") {
 +      setZenTerminalContainerRecipe(
 +        userContextId,
-+        document.getElementById("zen-terminal-recipe").value.trim()
++        this.getTerminalRecipeSteps()
 +      );
 +    } else {
++      if (this.wasTerminalContainer) {
++        void destroyTerminalSessionsForUserContextId(userContextId);
++      }
 +      removeZenTerminalContainerRecipe(userContextId);
 +    }
 +

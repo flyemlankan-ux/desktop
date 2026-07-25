@@ -1,11 +1,14 @@
 diff --git a/browser/components/preferences/containers.js b/browser/components/preferences/containers.js
 --- a/browser/components/preferences/containers.js
 +++ b/browser/components/preferences/containers.js
-@@ -7,6 +7,41 @@
+@@ -7,6 +7,44 @@
  const defaultContainerIcon = "fingerprint";
  const defaultContainerColor = "blue";
  
 +const ZEN_TERMINAL_CONTAINER_RECIPES_PREF = "zen.terminal.containerRecipes";
++const { destroyTerminalSessionsForUserContextId } = ChromeUtils.importESModule(
++  "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs"
++);
 +
 +function readZenTerminalContainerRecipes() {
 +  try {
@@ -43,9 +46,10 @@ diff --git a/browser/components/preferences/containers.js b/browser/components/p
  let gContainersPane = {
    init() {
      this._list = document.getElementById("containersView");
-@@ -118,6 +153,7 @@
+@@ -118,6 +156,8 @@
      }
  
++    void destroyTerminalSessionsForUserContextId(userContextId);
      ContextualIdentityService.remove(userContextId);
 +    removeZenTerminalContainerRecipe(userContextId);
      this._rebuildView();

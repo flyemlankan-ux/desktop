@@ -9,20 +9,11 @@
   <menuitem data-l10n-id="zen-panel-ui-new-empty-split" command="cmd_zenNewEmptySplit" image="chrome://browser/skin/zen-icons/split.svg" />
   <menuitem label="Browser Tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
   <menu id="zenCreateBrowserContainerTabMenu"
-    label="Browser Container Tab"
+    label="Container Tab"
     image="chrome://browser/skin/zen-icons/container-tab.svg"
     hide-if-private-browsing="true"
     hide-if-usercontext-disabled="true">
-    <menupopup onpopupshowing="return createUserContextMenu(event, { isContextMenu: true, showDefaultTab: true });" />
-  </menu>
-  <menuseparator/>
-  <menuitem label="Terminal Tab" oncommand="gZenTerminalTabs.openTerminalTab();" image="chrome://browser/skin/zen-icons/developer.svg" />
-  <menu id="zenCreateTerminalContainerTabMenu"
-    label="Terminal Container Tab"
-    image="chrome://browser/skin/zen-icons/developer.svg">
-    <menupopup>
-      <menuitem label="Default Terminal" oncommand="gZenTerminalTabs.openTerminalTab({ terminalContainerId: 'default', terminalContainerName: 'Default Terminal' });" data-terminal-container-id="default" data-terminal-container-name="Default Terminal" />
-    </menupopup>
+    <menupopup onpopupshowing="return gZenTerminalTabs.populateUnifiedContainerMenu(event);" />
   </menu>
 </menupopup>
 

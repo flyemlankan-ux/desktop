@@ -65,8 +65,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
 
+      - name: Check terminal wiring before the expensive build
+        run: node scripts/terminal-tabs/check-terminal-tabs.mjs
+
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@main
+        # v0.0.10. Pin the commit so a later change to the tag cannot alter this build.
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
         if: ${{ inputs.use-sccache }}
         with:
           disable_annotations: true
@@ -105,7 +109,16 @@ jobs:
           data["name"] = "Zen Terminal"
           data["appId"] = "zen-terminal"
           data["binaryName"] = "zen-terminal"
+          for brand in data["brands"].values():
+              brand["brandShorterName"] = "Zen Terminal"
+              brand["brandShortName"] = "Zen Terminal"
+              brand["brandFullName"] = "Zen Terminal"
           path.write_text(json.dumps(data, indent=2) + "\n")
+
+          # Surfer merges this local file into the generated Firefox build config.
+          # Removing the updater at build time prevents stock Zen from replacing
+          # the terminal fork, even if an old profile contains update preferences.
+          Path("mozconfig").write_text("ac_add_options --disable-updater\n")
           PY
 
       - name: Prepare Zen terminal build config
@@ -116,9 +129,6 @@ jobs:
 
       - name: Import Zen source into Firefox source
         run: npm run import -- --verbose
-
-      - name: Patch imported Firefox New Tab menu for terminal tabs
-        run: node scripts/terminal-tabs/patch-engine-newtab-menu.mjs
 
       - name: Bootstrap Firefox build environment
         shell: bash
@@ -165,9 +175,15 @@ jobs:
           cp "$dmg_path" "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
           find terminal-build-artifacts -maxdepth 1 -type f -print
 
+      - name: Inspect packaged terminal app
+        shell: bash
+        run: |
+          scripts/terminal-tabs/inspect-terminal-macos-dmg.sh \
+            "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
+
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
           name: zen-terminal-${{ inputs.arch }}-dmg
           path: terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg
-          retention-days: 7
+          retention-days: 30
