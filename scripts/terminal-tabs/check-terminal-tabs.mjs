@@ -56,6 +56,7 @@ for (const [path, text] of [
     "editor.commit() !== false",
   ],
   [".github/workflows/terminal-macos-dev-build.yml", "--disable-updater"],
+  ["src/toolkit/moz-configure.patch", 'default="zen-terminal"'],
 ])
   has(path, text);
 for (const file of [
@@ -73,6 +74,7 @@ assert.equal(
   false,
   "Firefox 155 removed the old container settings file",
 );
+no(".github/workflows/terminal-macos-dev-build.yml", "export MOZ_APP_PROFILE=");
 no(dir + "ZenTerminalPage.mjs", "shouldDropDuplicateInput");
 no(dir + "ZenTerminalPage.mjs", "PYTHON_PTY_BRIDGE");
 no("src/browser/base/content/zen-panels/popups.inc", 'label="Terminal Tab"');

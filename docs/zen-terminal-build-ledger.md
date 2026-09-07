@@ -118,3 +118,6 @@ Actual Mac crash test passed: only the test browser was killed; saved terminal k
 
 ### Final local source freeze
 25 actual native stable-overlay checks now pass, including real rename Enter/click-away/Escape, explicit temporary app-data isolation, actual app crash and all earlier interactions. Final focused rerun also passed24 recipe,14 persistence,9 Settings,25 safe-copy,10 native helper and10 rendered-page tests plus wiring/polish checks. These results justify a final source build, not personal-copy completion. Added a real-app profile-selection test; only syntax/help/unsafe-app rejection have run so far because it requires final compiled identity. It must run at the final installed app path before personal copying.
+
+## September 8 compiled identity correction
+Cloud34168510949 imported all stable source patches and passed focused tests, then failed configuration:155 project_flag MOZ_APP_PROFILE accepts an implied source value, not an exported mozconfig value. Moved the isolated zen-terminal default into the existing toolkit/moz.configure source patch and removed rejected export. This is the same C10/C13 requirement, not a relaxation. Added wiring regression to reject the invalid export. No installer was produced and no private data copied.

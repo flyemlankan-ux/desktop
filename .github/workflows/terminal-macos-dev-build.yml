@@ -129,7 +129,7 @@ jobs:
           # Surfer merges this local file into the generated Firefox build config.
           # Removing the updater at build time prevents stock Zen from replacing
           # the terminal fork, even if an old profile contains update preferences.
-          Path("mozconfig").write_text("ac_add_options --disable-updater\nexport MOZ_APP_PROFILE=zen-terminal\n")
+          Path("mozconfig").write_text("ac_add_options --disable-updater\n")
           PY
 
       - name: Prepare Zen terminal build config
