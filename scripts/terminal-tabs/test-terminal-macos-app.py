@@ -44,6 +44,11 @@ def screen(name):
  m.set_context('chrome');(proof/(args.label+'-'+name+'.png')).write_bytes(m.screenshot(format='binary'))
 try:
  start();record('real Mac app opens clean profile')
+ if args.label == 'packaged':
+  assert js('return Services.dirsvc.get("UAppData", Ci.nsIFile).path;').endswith('/zen-terminal')
+  record('personal app-data root is isolated from stock Zen')
+ assert js('return ChromeUtils.importESModule("resource://gre/modules/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
+ record('plain Terminal setup is available on first launch')
  # Open Settings using browser navigation, then drive its native container form.
  js('gBrowser.selectedTab = gBrowser.addTab("about:preferences#containers", {triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
  m.set_context('content')

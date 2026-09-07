@@ -9,9 +9,14 @@
       "detail": true
     },
     {
+      "test": "plain Terminal setup is available on first launch",
+      "result": "pass",
+      "detail": true
+    },
+    {
       "test": "create terminal container through actual Settings",
       "result": "pass",
-      "detail": 6
+      "detail": 7
     },
     {
       "test": "menu opens real saved terminal",
@@ -39,5 +44,5 @@
       "detail": true
     }
   ],
-  "log": "/Users/ar/zen-terminal-research/desktop/.terminal-test/mac-5d110f6f/gecko.log"
+  "log": "/Users/ar/zen-terminal-research/desktop/.terminal-test/mac-50a087c1/gecko.log"
 }

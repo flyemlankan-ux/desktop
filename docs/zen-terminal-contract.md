@@ -6,6 +6,7 @@ These rules preserve the recovered founder intent.
 Keep real Zen navigation, browser tabs, folders and workspaces; terminal tabs belong to native containers.
 
 ## C02 — R02
+On first use, include a plain Terminal container with an empty startup recipe (phase2 B). Do not recreate it after deliberate deletion.
 Native Settings is the single place to create web or terminal containers; mixed launch list, no duplicate terminal menus.
 
 ## C03 — R03

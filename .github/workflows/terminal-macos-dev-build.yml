@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew install cairo gnu-tar mercurial watchman
+          brew install cairo gnu-tar mercurial watchman tmux
           python3 -m pip install --user mercurial setuptools
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "$(cat .rust-toolchain)"
           source "$HOME/.cargo/env"
@@ -102,6 +102,7 @@ jobs:
           node scripts/terminal-tabs/test-terminal-recipes.mjs
           node scripts/terminal-tabs/test-terminal-session-persistence.mjs
           node scripts/terminal-tabs/test-terminal-polish.mjs
+          python3 scripts/terminal-tabs/test-copy-zen-profiles.py
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
 
@@ -126,7 +127,7 @@ jobs:
           # Surfer merges this local file into the generated Firefox build config.
           # Removing the updater at build time prevents stock Zen from replacing
           # the terminal fork, even if an old profile contains update preferences.
-          Path("mozconfig").write_text("ac_add_options --disable-updater\n")
+          Path("mozconfig").write_text("ac_add_options --disable-updater\nexport MOZ_APP_PROFILE=zen-terminal\n")
           PY
 
       - name: Prepare Zen terminal build config

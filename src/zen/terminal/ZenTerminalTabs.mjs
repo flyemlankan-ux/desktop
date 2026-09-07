@@ -11,6 +11,7 @@
 import {
   getTerminalContainerRecipe,
   isTerminalContainerId,
+  setTerminalContainerRecipe,
 } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
 import {
   destroyTerminalSession,
@@ -66,10 +67,37 @@ function terminalSessionIdForTab(tab) {
 
 export class ZenTerminalTabs {
   constructor() {
+    this.#ensureDefaultTerminalContainer();
     this.#patchFirefoxContainerMenuBuilder();
     this.#installTerminalSessionCloseHandler();
     this.#markRestoredTerminalTabsSoon();
     void retryPendingTerminalSessionDeletes();
+  }
+
+  #ensureDefaultTerminalContainer() {
+    const pref = "zen.terminal.defaultContainerCreated";
+    if (Services.prefs.getBoolPref(pref, false)) return;
+    try {
+      const identities = ContextualIdentityService.getPublicIdentities();
+      if (
+        !identities.some((identity) =>
+          isTerminalContainerId(identity.userContextId),
+        )
+      ) {
+        const identity = ContextualIdentityService.create(
+          "Terminal",
+          "briefcase",
+          "purple",
+        );
+        setTerminalContainerRecipe(identity.userContextId, {
+          recipe: { steps: [] },
+        });
+      }
+      // Do not recreate a default the user deliberately deletes later.
+      Services.prefs.setBoolPref(pref, true);
+    } catch (error) {
+      console.error("Could not prepare the default terminal container", error);
+    }
   }
 
   /**

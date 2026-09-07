@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+"""Copy a closed Zen setup to a NEW private folder. Dry-run unless --copy.
+
+The source-engine version is an explicit assertion about the newest Firefox
+engine that has opened ANY source profile. Zen's own LastVersion is not a
+Firefox engine version and is never compared to one.
+"""
+import argparse
+import configparser
+import contextlib
+import ctypes
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+
+
+class CopyError(RuntimeError):
+    pass
+
+
+LOCK_NAMES = {".parentlock", "parent.lock", "lock"}
+CACHE_NAMES = {"cache2", "startupCache", "shader-cache", "thumbnails"}
+CRITICAL_NAMES = {
+    "key4.db", "logins.json", "cookies.sqlite", "cookies.sqlite-wal",
+    "places.sqlite", "places.sqlite-wal", "prefs.js", "containers.json",
+    "extensions.json", "sessionstore.jsonlz4", "zen-workspaces.json",
+    "zen-sessions.json", "zen-sessions.jsonlz4", "recovery.jsonlz4", "recovery.baklz4",
+    "previous.jsonlz4", "upgrade.jsonlz4",
+}
+
+
+def version_key(value):
+    match = re.fullmatch(r"(\d+(?:\.\d+){0,3})(?:(a|b|rc)(\d+))?(?:esr)?", value)
+    if not match:
+        raise CopyError("Engine versions must be numeric Firefox versions, optionally a/b/rc/esr.")
+    numbers = tuple(map(int, match[1].split(".")))
+    return (*numbers, *(0 for _ in range(4 - len(numbers))),
+            {"a": 0, "b": 1, "rc": 2, None: 3}[match[2]], int(match[3] or 0))
+
+
+def ini_file(file):
+    parser = configparser.ConfigParser(interpolation=None, strict=True)
+    parser.optionxform = str
+    try:
+        with file.open(encoding="utf-8") as stream:
+            parser.read_file(stream)
+    except (OSError, UnicodeError, configparser.Error) as error:
+        raise CopyError(f"Cannot safely read {file.name}: {error}") from error
+    return parser
+
+
+def reject_symlink_ancestors(path):
+    for candidate in [path, *path.parents]:
+        if candidate.is_symlink():
+            raise CopyError("Symlink paths are not accepted.")
+
+
+def inside(path, parent):
+    return path == parent or parent in path.parents
+
+
+def paths(source, destination):
+    source = Path(os.path.abspath(source))
+    destination = Path(os.path.abspath(destination))
+    reject_symlink_ancestors(source)
+    reject_symlink_ancestors(destination)
+    if not source.is_dir():
+        raise CopyError("Source root must be an existing directory.")
+    if inside(source, destination) or inside(destination, source):
+        raise CopyError("Source and destination must be separate, non-overlapping folders.")
+    if destination.exists():
+        raise CopyError("Destination already exists; overwriting is forbidden.")
+    if not destination.parent.is_dir():
+        raise CopyError("Destination parent must already exist.")
+    if any((parent / ".git").exists() for parent in [destination.parent, *destination.parents]):
+        raise CopyError("Private browser data must never be copied inside a source repository.")
+    return source, destination
+
+
+def registered_profiles(source, default_name=None):
+    original = ini_file(source / "profiles.ini")
+    profiles = []
+    for section in original.sections():
+        if not re.fullmatch(r"Profile\d+", section):
+            continue
+        row = original[section]
+        if not row.get("Name") or not row.get("Path") or row.get("IsRelative") not in {"0", "1"}:
+            raise CopyError(f"Incomplete registered profile: {section}")
+        raw = Path(row["Path"])
+        if ".." in raw.parts or (row["IsRelative"] == "1" and raw.is_absolute()):
+            raise CopyError("Profile paths may not escape the source root.")
+        profile = source / raw if row["IsRelative"] == "1" else raw
+        if not profile.is_absolute() or not inside(profile, source) or profile == source:
+            raise CopyError("External profiles are not silently skipped; every profile must be inside the source root.")
+        reject_symlink_ancestors(profile)
+        if not profile.is_dir():
+            raise CopyError("A registered profile directory is missing.")
+        relative = profile.relative_to(source).as_posix()
+        if any(inside(profile, item["path"]) or inside(item["path"], profile) for item in profiles):
+            raise CopyError("Registered profile directories must not overlap or repeat.")
+        compatibility_path = profile / "compatibility.ini"
+        if not compatibility_path.exists():
+            # Firefox registers a new profile before first launch. Such a
+            # profile may contain just its creation timestamp, not user data.
+            entries = list(profile.iterdir())
+            if any(entry.name != "times.json" or not entry.is_file() or entry.is_symlink()
+                   for entry in entries):
+                raise CopyError("An initialized profile is missing compatibility metadata.")
+            last_version = "uninitialized"
+        else:
+            compatibility = ini_file(compatibility_path)
+            last_version = compatibility.get("Compatibility", "LastVersion", fallback="")
+            if not re.match(r"^\d[\w.+-]*(?:_.*)?$", last_version):
+                raise CopyError("A profile has missing or unrecognized LastVersion metadata.")
+        profiles.append({"section": section, "name": row["Name"], "relative": relative,
+                         "path": profile, "default": row.get("Default") == "1",
+                         "last_version": last_version})
+    if not profiles:
+        raise CopyError("No registered profiles were found.")
+    if default_name:
+        chosen = [p for p in profiles if p["name"] == default_name]
+    else:
+        install_paths = {original.get(section, "Default", fallback="")
+                         for section in original.sections() if section.startswith("Install")}
+        install_matches = [p for p in profiles if p["relative"] in install_paths or str(p["path"]) in install_paths]
+        # Install sections reflect the application's actual default, whereas
+        # ProfileN Default can be an older historical default.
+        chosen = install_matches or [p for p in profiles if p["default"]]
+        if not chosen and len(profiles) == 1:
+            chosen = profiles
+    if len(chosen) != 1:
+        raise CopyError("Default profile is ambiguous; pass --default-profile with its exact name.")
+    return profiles, chosen[0]
+
+
+def scan_tree(source):
+    snapshot = {}
+    for directory, dirs, files in os.walk(source, followlinks=False):
+        for name in dirs + files:
+            path = Path(directory) / name
+            info = path.lstat()
+            if stat.S_ISLNK(info.st_mode):
+                raise CopyError("Source contains a symlink; nothing will be copied.")
+            if not (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode)):
+                raise CopyError("Source contains a special file; nothing will be copied.")
+            snapshot[path.relative_to(source).as_posix()] = (info.st_ino, info.st_size, info.st_mtime_ns, info.st_mode)
+    return snapshot
+
+
+def ensure_closed(source):
+    ps = subprocess.run(["/bin/ps", "-axo", "pid=,comm="], capture_output=True, text=True, check=True, timeout=30)
+    for line in ps.stdout.splitlines():
+        columns = line.strip().split(None, 1)
+        if len(columns) == 2 and Path(columns[1]).name.lower() in {"zen", "zen-bin"}:
+            raise CopyError("Close every Zen browser before copying profiles.")
+    lsof = shutil.which("lsof") or ("/usr/sbin/lsof" if Path("/usr/sbin/lsof").exists() else None)
+    if not lsof:
+        raise CopyError("lsof is required to verify the source is not open.")
+    result = subprocess.run([lsof, "-t", "+D", str(source)], capture_output=True, text=True, timeout=30)
+    if result.returncode not in {0, 1} or result.stderr.strip():
+        raise CopyError("Could not reliably check open source files.")
+    if any(pid.strip() != str(os.getpid()) for pid in result.stdout.splitlines() if pid.strip()):
+        raise CopyError("Source files are open in another process; close it before copying.")
+
+
+@contextlib.contextmanager
+def hold_profile_locks(profiles):
+    descriptors = []
+    try:
+        for profile in profiles:
+            for name in LOCK_NAMES:
+                lock = profile["path"] / name
+                if not lock.exists():
+                    continue
+                fd = os.open(lock, os.O_RDONLY | os.O_NOFOLLOW)
+                descriptors.append(fd)
+                try:
+                    # Shared locks are valid on read-only descriptors and
+                    # conflict with Firefox's exclusive process lock.
+                    fcntl.lockf(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                except OSError as error:
+                    raise CopyError("A source profile is actively locked; close Zen first.") from error
+        yield
+    finally:
+        for fd in descriptors:
+            os.close(fd)
+
+
+def excluded(relative, profiles):
+    if relative in {"profiles.ini", "installs.ini"} or Path(relative).name in {".parentlock", "parent.lock"}:
+        return True
+    parts = Path(relative).parts
+    for profile in profiles:
+        root = Path(profile["relative"]).parts
+        if parts[:len(root)] == root and len(parts) > len(root):
+            tail = parts[len(root):]
+            if tail[0] in CACHE_NAMES or (len(tail) == 1 and tail[0] in LOCK_NAMES):
+                return True
+    return False
+
+
+@contextlib.contextmanager
+def source_file(source, relative):
+    # Refuse symlink swaps in every path component, not just during planning.
+    descriptors = []
+    try:
+        directory = os.open(source, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        descriptors.append(directory)
+        parts = Path(relative).parts
+        for part in parts[:-1]:
+            directory = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+            descriptors.append(directory)
+        fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            os.close(fd)
+            raise CopyError("Source changed into a special file during copying.")
+        with os.fdopen(fd, "rb") as stream:
+            yield stream
+    finally:
+        for fd in reversed(descriptors):
+            os.close(fd)
+
+
+def digest_source(source, relative):
+    value = hashlib.sha256()
+    with source_file(source, relative) as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            value.update(chunk)
+    return value.hexdigest()
+
+
+def digest(file):
+    value = hashlib.sha256()
+    with file.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            value.update(chunk)
+    return value.hexdigest()
+
+
+def atomic_publish(stage, destination):
+    """Atomic no-overwrite rename; never replace even an empty destination."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == "darwin":
+        function = libc.renamex_np
+        result = function(os.fsencode(stage), os.fsencode(destination), 4)  # RENAME_EXCL
+    elif sys.platform.startswith("linux") and hasattr(libc, "renameat2"):
+        result = libc.renameat2(-100, os.fsencode(stage), -100, os.fsencode(destination), 1)
+    else:
+        raise CopyError("This platform lacks a supported atomic no-overwrite rename.")
+    if result:
+        raise CopyError(f"Cannot publish the private copy: {os.strerror(ctypes.get_errno())}")
+
+
+def copy_setup(source_root, destination_root, source_engine_version, target_engine_version,
+               default_profile=None, copy=False, activity_check=ensure_closed):
+    source, destination = paths(source_root, destination_root)
+    if version_key(target_engine_version) < version_key(source_engine_version):
+        raise CopyError("Target engine is older than the declared source engine; downgrade is forbidden.")
+    profiles, chosen = registered_profiles(source, default_profile)
+    snapshot = scan_tree(source)
+    activity_check(source)
+    with hold_profile_locks(profiles):
+        summary = {"mode": "copy" if copy else "dry-run", "profile_count": len(profiles),
+                   "default_profile": chosen["name"], "source_engine_version": source_engine_version,
+                   "target_engine_version": target_engine_version,
+                   "registered_profiles": [{"name": p["name"], "path": p["relative"],
+                       "source_app_last_version": p["last_version"]} for p in profiles]}
+        if not copy:
+            return summary
+        stage = Path(tempfile.mkdtemp(prefix=f".{destination.name}.private-copy-", dir=destination.parent))
+        try:
+            hashes = {}
+            for relative, info in snapshot.items():
+                if excluded(relative, profiles):
+                    continue
+                target = stage / relative
+                if stat.S_ISDIR(info[3]):
+                    target.mkdir(mode=0o700, parents=True, exist_ok=True)
+                    continue
+                target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                # No copied file is made readable to another account.
+                with source_file(source, relative) as read, target.open("xb") as write:
+                    shutil.copyfileobj(read, write, 1024 * 1024)
+                    write.flush()
+                    os.fsync(write.fileno())
+                target.chmod((info[3] & 0o700) | 0o600)
+                hashes[relative] = digest(target)
+                if hashes[relative] != digest_source(source, relative):
+                    raise CopyError("Source changed during copying; private copy was discarded.")
+            activity_check(source)
+            if scan_tree(source) != snapshot:
+                raise CopyError("Source changed during copying; private copy was discarded.")
+            for relative, expected in hashes.items():
+                if digest_source(source, relative) != expected:
+                    raise CopyError("Source changed during verification; private copy was discarded.")
+            output = configparser.ConfigParser(interpolation=None)
+            output.optionxform = str
+            output["General"] = {"StartWithLastProfile": "1", "Version": "2"}
+            for profile in profiles:
+                output[profile["section"]] = {"Name": profile["name"], "IsRelative": "1",
+                    "Path": profile["relative"], "Default": "1" if profile is chosen else "0"}
+            with (stage / "profiles.ini").open("x", encoding="utf-8") as stream:
+                output.write(stream)
+                stream.flush()
+                os.fsync(stream.fileno())
+            (stage / "profiles.ini").chmod(0o600)
+            summary["verified_files"] = len(hashes)
+            summary["critical_sha256"] = {relative: value for relative, value in hashes.items()
+                if Path(relative).name in CRITICAL_NAMES or "sessionstore-backups" in Path(relative).parts}
+            metadata = stage / "zen-terminal-copy-verification.json"
+            with metadata.open("x", encoding="utf-8") as stream:
+                json.dump(summary, stream, indent=2)
+                stream.write("\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            metadata.chmod(0o600)
+            # Re-check destination ancestors immediately before publishing.
+            paths(source, destination)
+            atomic_publish(stage, destination)
+            # Hashes stay private inside the destination, never in console logs.
+            return {key: value for key, value in summary.items() if key != "critical_sha256"}
+        finally:
+            if stage.exists():
+                shutil.rmtree(stage)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-root", required=True)
+    parser.add_argument("--destination-root", required=True)
+    parser.add_argument("--source-engine-version", required=True,
+                        help="Newest Firefox engine known to have opened ANY source profile; not Zen's app version.")
+    parser.add_argument("--target-engine-version", required=True)
+    parser.add_argument("--default-profile")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--dry-run", action="store_true")
+    modes.add_argument("--copy", action="store_true")
+    args = parser.parse_args()
+    try:
+        result = copy_setup(args.source_root, args.destination_root, args.source_engine_version,
+                            args.target_engine_version, args.default_profile, args.copy)
+        print(json.dumps(result, indent=2))
+    except (CopyError, OSError, subprocess.SubprocessError) as error:
+        print(f"Profile copy stopped: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
