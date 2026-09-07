@@ -79,6 +79,8 @@ for relative, patch_name in patches:
 for name in ['ZenPreloadedScripts.js', 'zen-sets.js']:
     entries[prefix + name] = (root / 'src/zen/common' / name).read_bytes()
 
+entries[prefix + 'ZenUIManager.mjs'] = (root / 'src/zen/common/modules/ZenUIManager.mjs').read_bytes()
+
 # The native popup's shape comes from this stable checkout's committed baseline.
 old = subprocess.check_output(['git', 'show', '1.22b:src/browser/base/content/zen-panels/popups.inc'], cwd=root).decode()
 new = (root / 'src/browser/base/content/zen-panels/popups.inc').read_text()

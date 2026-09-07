@@ -21,7 +21,7 @@ with net_socket.socket() as listener:
  listener.bind(('127.0.0.1',0));marionette_port=listener.getsockname()[1]
 prefs={'marionette.port':marionette_port,'browser.shell.checkDefaultBrowser':False,'browser.startup.page':3,'zen.welcome-screen.seen':True,'app.update.disabledForTesting':True,'app.update.auto':False,'app.update.enabled':False,'browser.startup.homepage':'about:blank','browser.aboutwelcome.enabled':False,'browser.sessionstore.resume_from_crash':True,'privacy.userContext.enabled':True,'privacy.userContext.ui.enabled':True}
 (profile/'user.js').write_text('\n'.join('user_pref(%s, %s);'%(json.dumps(k),json.dumps(v)) for k,v in prefs.items()))
-env=dict(os.environ,HOME=str(home),ZDOTDIR=str(home),SHELL='/bin/zsh',PATH='/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',MOZ_NO_REMOTE='1')
+env=dict(os.environ,MOZ_APP_DATA=str(home/'app-data'),MOZ_LOCAL_APP_DATA=str(home/'local-app-data'),HOME=str(home),ZDOTDIR=str(home),SHELL='/bin/zsh',PATH='/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',MOZ_NO_REMOTE='1')
 exe=args.app.resolve()/'Contents/MacOS/zen-terminal'
 log=open(run/'gecko.log','w');process=None;m=None;results=[];test_sessions=[];socket=None
 def record(name,detail=True):
@@ -48,9 +48,12 @@ def screen(name):
  m.set_context('chrome');(proof/(args.label+'-'+name+'.png')).write_bytes(m.screenshot(format='binary'))
 try:
  start();socket=js('return ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs").getTerminalTmuxSocket();');record('real Mac app opens clean profile')
+ assert js('return Services.dirsvc.get("UAppData", Ci.nsIFile).path;')==str(home/'app-data')
+ record('test forces app-data into its disposable folder')
  if args.label == 'packaged':
-  assert js('return Services.dirsvc.get("UAppData", Ci.nsIFile).path;').endswith('/zen-terminal')
-  record('personal app-data root is isolated from stock Zen')
+  assert 'Profile=zen-terminal' in (args.app.resolve()/'Contents/Resources/application.ini').read_text()
+  assert '155.0.1' in (args.app.resolve()/'Contents/Resources/platform.ini').read_text()
+  record('packaged app declares terminal profile identity and current engine')
  assert js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
  record('plain Terminal setup is available on first launch')
  security=js('const manager=Services.scriptSecurityManager;const uri=Services.io.newURI("chrome://browser/content/zen-terminal/terminal.xhtml");manager.checkLoadURIWithPrincipal(manager.getSystemPrincipal(),uri,Ci.nsIScriptSecurityManager.STANDARD);try{manager.checkLoadURIWithPrincipal(manager.createContentPrincipal(Services.io.newURI("https://example.invalid"),{}),uri,Ci.nsIScriptSecurityManager.STANDARD);return false;}catch(error){return error.name;}')
@@ -149,8 +152,26 @@ try:
  assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
  assert (home/'recipe-count').read_text()=='started'
  record('closing one duplicated terminal preserves its other viewer and process')
- # Use Zen's own static-label setter, then prove its saved value survives reload/restart.
- js('const tab=gBrowser.selectedTab;tab.zenStaticLabel="My renamed terminal";tab._zenChangeLabelFlag=true;gBrowser._setTabLabel(tab,"My renamed terminal",{_zenChangeLabelFlag:true});delete tab._zenChangeLabelFlag;')
+ # Drive the actual native tab-title editor, not a direct label setter.
+ def rename_input(value):
+  js('TabContextMenu.contextTab=gBrowser.selectedTab;document.getElementById("context_zen-edit-tab-title").doCommand();')
+  editor=wait(lambda:m.find_element('id','tab-label-input'),'native tab rename input')
+  editor.send_keys(value)
+  return editor
+ rename_input('Entered terminal').send_keys(Keys.ENTER)
+ wait(lambda:js('return !document.getElementById("tab-label-input") && gBrowser.selectedTab.label==="Entered terminal";'),'Enter commits native rename')
+ record('native terminal rename saves on Enter')
+ rename_input('My renamed terminal')
+ js('return gURLBar.inputField;').click()
+ wait(lambda:js('return !document.getElementById("tab-label-input") && gBrowser.selectedTab.label==="My renamed terminal";'),'click-away commits native rename')
+ record('native terminal rename saves on click-away')
+ rename_input('Cancelled terminal').send_keys(Keys.ESCAPE)
+ wait(lambda:js('return !document.getElementById("tab-label-input");'),'Escape closes native rename editor')
+ escaped_label=js('return gBrowser.selectedTab.label;')
+ assert escaped_label=='My renamed terminal',{'expected':'My renamed terminal','actual':escaped_label}
+ record('Escape cancels native terminal rename')
+ assert 'input is null' not in (run/'gecko.log').read_text()
+ screen('native-rename-cancelled')
  js('gBrowser.selectedBrowser.reload();')
  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'reload reconnect')
  assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
@@ -162,10 +183,10 @@ try:
  js("Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit); return true;");m=None;process.wait(timeout=20)
  assert tmux('has-session','-t','='+name).returncode==0
  start()
- background=wait(lambda:js('const tab=[...gBrowser.tabs].find(t=>{try{return SessionStore.getTabState(t).includes(arguments[0]);}catch(_){return false;}});if(!tab||!tab.hasAttribute("zen-terminal-tab"))return null;return {selected:tab===gBrowser.selectedTab,label:tab.label,pending:tab.hasAttribute("pending")};',[sid]),'background terminal marked before selection')
+ background=wait(lambda:js('const tab=[...gBrowser.tabs].find(t=>{try{return JSON.parse(SessionStore.getTabState(t)).entries?.some(entry=>entry.url.includes(arguments[0]));}catch(_){return false;}});if(!tab||!tab.hasAttribute("zen-terminal-tab"))return null;return {selected:tab===gBrowser.selectedTab,label:tab.label,pending:tab.hasAttribute("pending")};',[sid]),'background terminal marked before selection')
  assert background['selected'] is False and background['label']=='My renamed terminal',background
  record('background restored terminal is marked and renamed before selection',background)
- js('const tab=[...gBrowser.tabs].find(t=>{try{return SessionStore.getTabState(t).includes(arguments[0]);}catch(_){return false;}});gBrowser.selectedTab=tab;',[sid])
+ js('const tab=[...gBrowser.tabs].find(t=>{try{return JSON.parse(SessionStore.getTabState(t)).entries?.some(entry=>entry.url.includes(arguments[0]));}catch(_){return false;}});gBrowser.selectedTab=tab;',[sid])
  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'quit/relaunch reconnect')
  assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
  assert (home/'recipe-count').read_text()=='started'
@@ -173,6 +194,30 @@ try:
  assert js('return gBrowser.selectedTab.label;')=='My renamed terminal'
  record('saved terminal name survives reload and relaunch')
  screen('restored')
+ # Simulate a real app crash: kill ONLY the browser process this test launched.
+ crashed_pid=process.pid
+ process.kill();assert process.wait(timeout=20)==-9;m=None
+ assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
+ start()
+ recovery=wait(lambda:js('if([...gBrowser.tabs].some(t=>t.linkedBrowser.currentURI.spec==="about:sessionrestore"))return "restore-page";if([...gBrowser.tabs].some(t=>{try{return JSON.parse(SessionStore.getTabState(t)).entries?.some(entry=>entry.url.includes(arguments[0]));}catch(_){return false;}}))return "automatic";return null;',[sid]),'saved tabs after actual browser crash')
+ if recovery=='restore-page':
+  # Use Firefox's genuine recovery button; never construct replacement tab state.
+  js('gBrowser.selectedTab=[...gBrowser.tabs].find(t=>t.linkedBrowser.currentURI.spec==="about:sessionrestore");')
+  m.set_context('content')
+  for handle in m.window_handles:
+   m.switch_to_window(handle)
+   if m.get_url()=='about:sessionrestore':break
+  wait(lambda:m.find_element('id','errorTryAgain'),'genuine crash recovery button').click()
+  m.set_context('chrome')
+  wait(lambda:len(m.chrome_window_handles)>0,'browser window after recovery')
+  m.switch_to_window(m.chrome_window_handles[-1])
+ wait(lambda:js('const tab=[...gBrowser.tabs].find(t=>{try{return JSON.parse(SessionStore.getTabState(t)).entries?.some(entry=>entry.url.includes(arguments[0]));}catch(_){return false;}});if(tab){gBrowser.selectedTab=tab;return true;}return false;',[sid]),'crash-restored terminal tab')
+ wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'crash reconnect to original shell')
+ assert process.pid!=crashed_pid
+ assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
+ assert (home/'recipe-count').read_text()=='started'
+ record('actual browser crash preserves same terminal process without repeating startup',{'browserRestarted':True,'recovery':recovery})
+ screen('crash-restored')
  js('gBrowser.removeTab(gBrowser.selectedTab,{animate:false});')
  wait(lambda:tmux('has-session','-t','='+name).returncode!=0,'explicit close cleanup')
  record('explicit tab close destroys only its session')

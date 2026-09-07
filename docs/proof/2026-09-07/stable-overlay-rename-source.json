@@ -1,0 +1,14 @@
+{
+  "scope": "Official stable1.22b engine with local overlay, not a fresh compiled release",
+  "module": "chrome/browser/content/browser/ZenUIManager.mjs",
+  "sourceMatchesBundledModule": true,
+  "moduleSha256": "55cfde0d9e68bffac24fe1ce0b7cd97519039d0e353f9874bc5bacfbbb53838a",
+  "browserArchiveSha256": "eb7fdf2e853c369883e7e1706e0ee233b19b9fc354801c15462739dd24651d9c",
+  "nativeRenameChecks": [
+    "Enter saves",
+    "click-away saves",
+    "Escape cancels"
+  ],
+  "nativeResults": "stable-overlay-macos-results.json",
+  "screenshot": "stable-overlay-native-rename-cancelled.png"
+}

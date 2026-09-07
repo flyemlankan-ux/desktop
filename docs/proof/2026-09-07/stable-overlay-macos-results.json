@@ -9,6 +9,11 @@
       "detail": true
     },
     {
+      "test": "test forces app-data into its disposable folder",
+      "result": "pass",
+      "detail": true
+    },
+    {
       "test": "plain Terminal setup is available on first launch",
       "result": "pass",
       "detail": true
@@ -79,6 +84,21 @@
       "detail": true
     },
     {
+      "test": "native terminal rename saves on Enter",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native terminal rename saves on click-away",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Escape cancels native terminal rename",
+      "result": "pass",
+      "detail": true
+    },
+    {
       "test": "reload keeps same process and does not rerun startup",
       "result": "pass",
       "detail": true
@@ -103,10 +123,18 @@
       "detail": true
     },
     {
+      "test": "actual browser crash preserves same terminal process without repeating startup",
+      "result": "pass",
+      "detail": {
+        "browserRestarted": true,
+        "recovery": "automatic"
+      }
+    },
+    {
       "test": "explicit tab close destroys only its session",
       "result": "pass",
       "detail": true
     }
   ],
-  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-81781acf/gecko.log"
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-7b042f3d/gecko.log"
 }

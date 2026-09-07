@@ -101,3 +101,8 @@ solve long-term security maintenance.
 The active build is now in `desktop-stable`, branch `release/zen-terminal-1.22b`, using stable Zen 1.22b / Firefox 155.0.1. The older branch remains a recoverable snapshot; its Mac screenshots prove the terminal work on that older app, not acceptance of the new installer. Cloud build34165359251 failed before compilation on an inherited upstream patch. The new Settings integration and final installer must pass again. Personal copying remains unperformed while original Zen is open. For the final copy use target engine155.0.1, never a downgrade override.
 
 The stock automatic updater is deliberately removed so it cannot overwrite the terminal edition. Until a dedicated signed update service exists, browser security updates require rebuilding and installing a tested terminal edition. This is a private development distribution, not an Apple-notarized public release.
+
+### Personal first-launch selection
+Use `--target-install-hash` from the final app's isolated first-launch probe when making the personal copy. Merely marking an old profile as default is not enough: Firefox deliberately avoids claiming a profile last opened by another installation. The copy tool sets the new app's own saved selection without altering compatibility files or bypassing downgrade protection. The probe uses explicit temporary app-data locations, not HOME alone (macOS directory lookup does not reliably honor HOME).
+
+After copying, the two apps are independent. Later browsing in the original Zen is not automatically mirrored into Zen Terminal. The original remains the untouched fallback. Do not copy a newly upgraded profile backwards into an older browser.

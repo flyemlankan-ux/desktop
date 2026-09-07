@@ -1,3 +1,5 @@
+> Historical record. Current build rules and acceptance checks are in `zen-terminal-contract.md` and `zen-terminal-backtests.md`. Later phase-two and September hardening decisions supersede conflicting text here.
+
 # Step-one handoff: one house (unified browser + terminal containers)
 
 This is a coordinator → build-tab handoff. Build in slices, prove each on a real Mac

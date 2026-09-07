@@ -146,6 +146,14 @@ with zipfile.ZipFile(io.BytesIO(data)) as archive:
         assert archive.read(entry) == expected_bytes, f"Missing or stale terminal asset: {entry}"
         count += 1
     assert count >= 10, "Terminal asset manifest is incomplete"
+    for bundled, source in [
+        ("ZenPreloadedScripts.js", "src/zen/common/ZenPreloadedScripts.js"),
+        ("ZenUIManager.mjs", "src/zen/common/modules/ZenUIManager.mjs"),
+    ]:
+        assert archive.read("chrome/browser/content/browser/" + bundled) == (root / source).read_bytes(), f"Stale browser integration: {bundled}"
+    browser_ui = archive.read("chrome/browser/content/browser/browser.xhtml")
+    assert b"gZenTerminalTabs.populateUnifiedContainerMenu(event)" in browser_ui, "Missing native terminal menu"
+
 print(f"Verified {count} shipped terminal assets and Firefox {expected}")
 VERIFY
 

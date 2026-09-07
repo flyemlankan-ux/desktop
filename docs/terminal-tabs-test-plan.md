@@ -1,3 +1,5 @@
+> Historical record. Current build rules and acceptance checks are in `zen-terminal-contract.md` and `zen-terminal-backtests.md`. Later phase-two and September hardening decisions supersede conflicting text here.
+
 # Zen Terminal tabs: real test plan
 
 ## Simple idea

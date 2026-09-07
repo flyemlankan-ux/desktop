@@ -1699,6 +1699,10 @@ window.gZenVerticalTabsManager = {
 
       this._tabEdited = null;
     } else if (event.key === "Escape") {
+      // Terminal names save on click-away. Escape must still cancel, like web tabs.
+      if (this._tabEdited?.hasAttribute("zen-terminal-tab")) {
+        event.target.value = event.target._originalValue;
+      }
       event.target.blur();
     }
   },
