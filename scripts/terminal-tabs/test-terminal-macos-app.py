@@ -2,7 +2,7 @@
 """Real Mac app proof using Mozilla Marionette. Always an isolated synthetic profile.
 Install test-only dependency: python -m pip install marionette_driver.
 """
-import argparse, json, os, subprocess, time, uuid
+import argparse, json, os, socket as net_socket, subprocess, time, uuid
 from pathlib import Path
 from marionette_driver.marionette import Marionette
 from marionette_driver.keys import Keys
@@ -17,7 +17,9 @@ run=root/'.terminal-test'/('mac-'+uuid.uuid4().hex[:8]);run.mkdir(parents=True)
 proof=root/'docs/proof/2026-09-07';proof.mkdir(parents=True,exist_ok=True)
 home=run/'home';home.mkdir();profile=run/'profile';profile.mkdir()
 (home/'.zshenv').write_text('export PATH=/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin\n')
-prefs={'marionette.port':2831,'browser.shell.checkDefaultBrowser':False,'browser.startup.page':3,'zen.welcome-screen.seen':True,'app.update.disabledForTesting':True,'app.update.auto':False,'app.update.enabled':False,'browser.startup.homepage':'about:blank','browser.aboutwelcome.enabled':False,'browser.sessionstore.resume_from_crash':True,'privacy.userContext.enabled':True,'privacy.userContext.ui.enabled':True}
+with net_socket.socket() as listener:
+ listener.bind(('127.0.0.1',0));marionette_port=listener.getsockname()[1]
+prefs={'marionette.port':marionette_port,'browser.shell.checkDefaultBrowser':False,'browser.startup.page':3,'zen.welcome-screen.seen':True,'app.update.disabledForTesting':True,'app.update.auto':False,'app.update.enabled':False,'browser.startup.homepage':'about:blank','browser.aboutwelcome.enabled':False,'browser.sessionstore.resume_from_crash':True,'privacy.userContext.enabled':True,'privacy.userContext.ui.enabled':True}
 (profile/'user.js').write_text('\n'.join('user_pref(%s, %s);'%(json.dumps(k),json.dumps(v)) for k,v in prefs.items()))
 env=dict(os.environ,HOME=str(home),ZDOTDIR=str(home),SHELL='/bin/zsh',PATH='/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',MOZ_NO_REMOTE='1')
 exe=args.app.resolve()/'Contents/MacOS/zen-terminal'
@@ -36,7 +38,7 @@ def wait(check,label,timeout=25):
 def start():
  global process,m
  process=subprocess.Popen([str(exe),'-no-remote','-marionette','--remote-allow-system-access','-profile',str(profile)],env=env,stdout=log,stderr=log)
- m=Marionette(host='127.0.0.1',port=2831,socket_timeout=30,startup_timeout=30)
+ m=Marionette(host='127.0.0.1',port=marionette_port,socket_timeout=30,startup_timeout=30)
  m.raise_for_port(timeout=30);m.start_session();m.set_context('chrome')
  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'browser ready')
 def js(script,args=None):return m.execute_script(script,script_args=args or [])
@@ -49,18 +51,23 @@ try:
  if args.label == 'packaged':
   assert js('return Services.dirsvc.get("UAppData", Ci.nsIFile).path;').endswith('/zen-terminal')
   record('personal app-data root is isolated from stock Zen')
- assert js('return ChromeUtils.importESModule("resource://gre/modules/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
+ assert js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
  record('plain Terminal setup is available on first launch')
  # Open Settings using browser navigation, then drive its native container form.
  js('gBrowser.selectedTab = gBrowser.addTab("about:preferences#containers", {triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
  m.set_context('content')
  m.switch_to_window(m.window_handles[-1])
- wait(lambda:m.find_element('id','containersAdd'),'container settings')
- m.find_element('id','containersAdd').click()
- frame=wait(lambda:m.find_element('css selector','browser.dialogFrame'),'native container dialog')
+ def deep_element(selector):
+  return m.execute_script('const find=root=>{const found=root.querySelector(arguments[0]);if(found)return found;for(const node of root.querySelectorAll("*")){if(node.shadowRoot){const found=find(node.shadowRoot);if(found)return found;}}return null;};return find(document);',script_args=[selector])
+ add_button=wait(lambda:deep_element('[data-l10n-id="containers-add-button2"]'),'stable container settings Add button')
+ time.sleep(.5)
+ add_button=m.execute_script('return arguments[0].shadowRoot?.querySelector("button") || arguments[0];',script_args=[add_button])
+ add_button.click()
+ frame=wait(lambda:m.execute_script('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/containers.xhtml");'),'native container dialog')
  m.switch_to_frame(frame)
  wait(lambda:m.find_element('id','zen-container-kind-terminal'),'kind chooser').click()
- m.find_element('id','name').send_keys('Terminal Proof')
+ name_input=wait(lambda:m.execute_script("return document.querySelector('moz-input-text[name=name]')?.shadowRoot?.querySelector('input');"),'native name input')
+ name_input.send_keys('Terminal Proof')
  m.find_element('id','zen-terminal-add-step').click()
  first_step=m.find_element('css selector','#zen-terminal-recipe-steps input')
  first_step.send_keys('ssh -vN invalid')
@@ -81,7 +88,7 @@ try:
  (proof/(args.label+'-container-dialog.png')).write_bytes(m.screenshot(format='binary'))
  m.execute_script('document.querySelector("dialog").getButton("accept").click();')
  m.switch_to_frame();m.set_context('chrome')
- cid=wait(lambda:js('return ChromeUtils.importESModule("resource://gre/modules/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().find(x=>x.name==="Terminal Proof")?.userContextId;'),'saved terminal container')
+ cid=wait(lambda:js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().find(x=>x.name==="Terminal Proof")?.userContextId;'),'saved terminal container')
  record('create terminal container through actual Settings',cid)
  # Exercise the actual unified menu command, not the opener directly.
  js('const menu=document.querySelector("#zenCreateBrowserContainerTabMenu menupopup");gZenTerminalTabs.populateUnifiedContainerMenu({target:menu});menu.querySelector(`[data-usercontextid="${arguments[0]}"]`).doCommand();',[cid])

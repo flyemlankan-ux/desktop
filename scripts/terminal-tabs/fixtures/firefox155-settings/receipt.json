@@ -21,6 +21,11 @@
       "path": "browser/components/preferences/dialogs/containers.js",
       "git_blob_sha": "52d38c8bddb53ff113013357f714d43381184502",
       "sha256": "bf30b1e5c715f938e9dbe9dc6c967caf2175036e837cda734e4f8c6049071879"
+    },
+    {
+      "path": "browser/installer/package-manifest.in",
+      "git_blob_sha": "9944fbec40229fe327cd311eb74be04f1d0f8b92",
+      "sha256": "3941302d7f49536c8e6c6cb310703fa02a730b2446d0708783a692ca74e83f5b"
     }
   ]
 }

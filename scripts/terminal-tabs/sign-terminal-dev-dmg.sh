@@ -23,6 +23,10 @@ ditto "$work/mount/Zen Terminal.app" "$app"
 hdiutil detach "$work/mount" >/dev/null
 mounted=false
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")" == app.zen-browser.zen-terminal ]] || exit 1
+# Finder metadata can be added by copying from a mounted disk image and is
+# forbidden in a sealed app. Remove only these attributes in OUR temporary copy.
+xattr -dr com.apple.FinderInfo "$app" 2>/dev/null || true
+xattr -dr com.apple.ResourceFork "$app" 2>/dev/null || true
 # Preserve the browser's existing capabilities. Never alter system security settings.
 codesign --force --deep --sign - --preserve-metadata=entitlements "$app"
 codesign --verify --deep --strict "$app"

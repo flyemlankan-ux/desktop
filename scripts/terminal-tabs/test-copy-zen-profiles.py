@@ -265,6 +265,30 @@ class CopyTests(unittest.TestCase):
             self.assertEqual(migration.main(), 0)
             self.assertTrue(action.call_args.args[-1])
 
+    def test_target_install_hash_maps_only_final_app_to_selected_profile(self):
+        before = self.hashes()
+        result = self.run_copy(copy=True, default_profile="Other setup", target_install_hash="1234abcd5678ef90")
+        profile_ini = migration.ini_file(self.destination / "profiles.ini")
+        install_ini = migration.ini_file(self.destination / "installs.ini")
+        self.assertEqual([s for s in profile_ini.sections() if s.startswith("Install")], ["Install1234ABCD5678EF90"])
+        self.assertEqual(dict(profile_ini["Install1234ABCD5678EF90"]), {"Default": "Profiles/other", "Locked": "1"})
+        self.assertEqual(install_ini.sections(), ["1234ABCD5678EF90"])
+        self.assertEqual(dict(install_ini["1234ABCD5678EF90"]), {"Default": "Profiles/other", "Locked": "1"})
+        self.assertEqual((self.destination / "installs.ini").stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.hashes(), before)
+        self.assertEqual((self.destination / "Profiles/main/compatibility.ini").read_bytes(), (self.profile / "compatibility.ini").read_bytes())
+        self.assertEqual(result["profile_selection"], "dedicated-install")
+        self.assertNotIn("warning", result)
+
+    def test_no_hash_explicitly_warns_about_manual_profile_selection(self):
+        result = self.run_copy()
+        self.assertEqual(result["profile_selection"], "explicit-selection-required")
+        self.assertIn("blank profile", result["warning"])
+
+    def test_invalid_target_install_hash_is_rejected_without_copying(self):
+        for value in ["", "A" * 15, "A" * 17, "G" * 16, "../1234567890123", "1234567890ABCDEF\n"]:
+            self.assert_stopped(target_install_hash=value)
+
     def test_repository_destination_is_rejected(self):
         repo = self.root / "repo"
         repo.mkdir()

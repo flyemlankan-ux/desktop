@@ -44,7 +44,7 @@ try {
   rmSync(temporary, { recursive: true, force: true });
 }
 console.log(
-  "✓ four production patches apply to hash-verified pristine Firefox 155.0.1 sources",
+  "✓ five production patches apply to hash-verified pristine Firefox 155.0.1 sources",
 );
 
 class FakeEvent {
@@ -467,5 +467,5 @@ for (const [name, run] of tests) {
   console.log(`✓ ${name}`);
 }
 console.log(
-  `\n${tests.length} Firefox 155 Settings behavior tests passed; source receipt and four patches verified.`,
+  `\n${tests.length} Firefox 155 Settings behavior tests passed; source receipt and five patches verified.`,
 );

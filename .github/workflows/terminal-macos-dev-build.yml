@@ -106,6 +106,7 @@ jobs:
           python3 scripts/terminal-tabs/test-copy-zen-profiles.py
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
+          python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py
 
       - name: Prepare terminal fork identity
         shell: bash
