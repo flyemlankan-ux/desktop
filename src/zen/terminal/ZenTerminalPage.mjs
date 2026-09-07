@@ -13,7 +13,8 @@ import {
   normalizeTerminalSessionId,
   registerTerminalSession,
   resizeTerminalTmuxSession,
-  terminalTmuxSessionExists,
+  prepareTerminalTmuxSession,
+  terminalShellScript,
   ZEN_TERMINAL_TMUX_SOCKET,
 } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
 
@@ -46,8 +47,9 @@ let activeTerminalSessionId = "";
 let pendingTmuxResize = null;
 let tmuxResizeTask = null;
 let lastTmuxResize = "";
-let lastInputWrite = "";
-let lastInputWriteTime = 0;
+let inputQueue = Promise.resolve();
+let queuedInputBytes = 0;
+let pendingHighSurrogate = "";
 let tmuxSessionWasNew = false;
 
 const MACOS_SUBPROCESS_OPTIONS =
@@ -111,100 +113,6 @@ function getHomeDirectory() {
   return Services.env.get("HOME") || "/";
 }
 
-const PYTHON_RESIZE_PREFIX = "\x1b]777;resize;";
-const PYTHON_RESIZE_SUFFIX = "\x07";
-const PYTHON_PTY_BRIDGE = String.raw`
-import errno
-import fcntl
-import os
-import pty
-import select
-import signal
-import struct
-import sys
-import termios
-
-rows = max(6, int(sys.argv[1]))
-cols = max(20, int(sys.argv[2]))
-shell = sys.argv[3]
-home = os.path.expanduser("~")
-
-def set_size(fd, new_rows, new_cols):
-    data = struct.pack("HHHH", max(6, new_rows), max(20, new_cols), 0, 0)
-    fcntl.ioctl(fd, termios.TIOCSWINSZ, data)
-
-pid, fd = pty.fork()
-if pid == 0:
-    try:
-        os.chdir(home)
-    except Exception:
-        pass
-    os.environ["TERM"] = "xterm-256color"
-    os.environ["COLORTERM"] = "truecolor"
-    os.environ["ZEN_TERMINAL"] = "1"
-    os.environ["SHELL_SESSIONS_DISABLE"] = "1"
-    os.environ["COLUMNS"] = str(cols)
-    os.environ["LINES"] = str(rows)
-    os.execv(shell, [shell, "-l"])
-
-set_size(fd, rows, cols)
-os.set_blocking(fd, False)
-os.set_blocking(sys.stdin.fileno(), False)
-stdin_open = True
-
-prefix = b"\x1b]777;resize;"
-suffix = b"\x07"
-
-def handle_input(data):
-    global rows, cols
-    if data.startswith(prefix) and data.endswith(suffix):
-        try:
-            payload = data[len(prefix):-len(suffix)].decode("ascii")
-            new_rows, new_cols = [int(part) for part in payload.split(";", 1)]
-            rows, cols = new_rows, new_cols
-            set_size(fd, rows, cols)
-            os.kill(pid, signal.SIGWINCH)
-            return
-        except Exception:
-            return
-    os.write(fd, data)
-
-while True:
-    read_targets = [fd]
-    if stdin_open:
-        read_targets.append(sys.stdin.fileno())
-    try:
-        readable, _, _ = select.select(read_targets, [], [])
-    except OSError:
-        break
-
-    if fd in readable:
-        try:
-            data = os.read(fd, 65536)
-        except OSError as error:
-            if error.errno in (errno.EIO, errno.EBADF):
-                break
-            raise
-        if not data:
-            break
-        os.write(sys.stdout.fileno(), data)
-
-    if stdin_open and sys.stdin.fileno() in readable:
-        try:
-            data = os.read(sys.stdin.fileno(), 65536)
-        except BlockingIOError:
-            data = b""
-        if not data:
-            stdin_open = False
-        else:
-            handle_input(data)
-
-try:
-    os.kill(pid, signal.SIGHUP)
-except Exception:
-    pass
-`;
-
 function setStatus(text, isReady = false) {
   terminalPrompt.textContent = isReady ? "›_" : "…";
   statusText.textContent = text;
@@ -216,90 +124,49 @@ function getShellCommand() {
   return envShell || "/bin/zsh";
 }
 
-function getShellLaunches({ tmuxCommand = "", sessionId = "" } = {}) {
-  const shell = getShellCommand();
-  const rows = String(terminal.rows);
-  const columns = String(terminal.cols);
-  const shellLoginCommand = `exec ${shellQuote(shell)} -l`;
-  const tmuxSessionName = getTerminalTmuxSessionName(sessionId);
-  const tmuxLoginCommand =
-    tmuxCommand && tmuxSessionName
-      ? `exec ${shellQuote(tmuxCommand)} -L ${shellQuote(
-          ZEN_TERMINAL_TMUX_SOCKET,
-        )} new-session -A -s ${shellQuote(tmuxSessionName)}`
-      : "";
-  const makeLoginCommand = (finalCommand) =>
-    `cd ${shellQuote(
-      getHomeDirectory(),
-    )}; export SHELL_SESSIONS_DISABLE=1; stty rows ${rows} cols ${columns} 2>/dev/null; ${finalCommand}`;
-
-  const launches = [];
-
-  if (Services.appinfo.OS === "Darwin") {
-    if (tmuxLoginCommand) {
-      launches.push({
-        command: "/usr/bin/script",
-        arguments: [
-          "-q",
-          "/dev/null",
-          "/bin/zsh",
-          "-lc",
-          makeLoginCommand(tmuxLoginCommand),
-        ],
-        label: "persistent tmux session through the macOS pseudo-terminal",
-        persistent: true,
-        resizable: false,
-      });
-    }
-
-    launches.push({
-      command: "/usr/bin/script",
-      arguments: [
-        "-q",
-        "/dev/null",
-        "/bin/zsh",
-        "-lc",
-        makeLoginCommand(shellLoginCommand),
-      ],
-      label: "macOS script pseudo-terminal with initial size",
-      persistent: false,
-      resizable: false,
-    });
-
-    if (
-      Services.prefs.getBoolPref(
-        "zen.terminal.experimentalPythonPtyBridge",
-        false,
-      )
-    ) {
-      launches.push({
-        command: "/usr/bin/python3",
-        arguments: ["-u", "-c", PYTHON_PTY_BRIDGE, rows, columns, shell],
-        label: "experimental resizable PTY bridge",
-        persistent: false,
-        resizable: true,
-      });
-    }
-  } else {
-    if (tmuxLoginCommand) {
-      launches.push({
-        command: shell,
-        arguments: ["-lc", makeLoginCommand(tmuxLoginCommand)],
-        label: "persistent tmux session",
-        persistent: true,
-        resizable: false,
-      });
-    }
-    launches.push({
-      command: shell,
-      arguments: ["-lc", makeLoginCommand(shellLoginCommand)],
-      label: shell,
-      persistent: false,
-      resizable: false,
-    });
+function getShellLaunch({
+  tmuxCommand = "",
+  sessionId = "",
+  startupCommand = "",
+} = {}) {
+  if (Services.appinfo.OS !== "Darwin") {
+    throw new Error("This terminal build supports macOS only.");
   }
-
-  return launches;
+  const helper = Services.dirsvc.get("XREExeF", Ci.nsIFile).parent;
+  helper.append("zen-terminal-pty");
+  if (!helper.exists()) {
+    throw new Error(
+      "The terminal helper is missing. Reinstall Zen Terminal; your saved sessions have not been removed.",
+    );
+  }
+  const shell = getShellCommand();
+  const command = tmuxCommand || shell;
+  const args = tmuxCommand
+    ? [
+        "-L",
+        ZEN_TERMINAL_TMUX_SOCKET,
+        "-f",
+        "/dev/null",
+        "attach-session",
+        "-t",
+        `=${getTerminalTmuxSessionName(sessionId)}`,
+      ]
+    : ["-lic", terminalShellScript(shell, startupCommand)];
+  return {
+    command: helper.path,
+    arguments: [
+      "--rows",
+      String(terminal.rows),
+      "--cols",
+      String(terminal.cols),
+      "--",
+      command,
+      ...args,
+    ],
+    label: "native macOS pseudo-terminal",
+    persistent: Boolean(tmuxCommand),
+    resizable: true,
+  };
 }
 
 function fitTerminalToSurface() {
@@ -350,7 +217,8 @@ function initTerminal() {
     cursorBlink: true,
     cursorStyle: "bar",
     customGlyphs: false,
-    disableStdin: false,
+    disableStdin: true,
+    screenReaderMode: Services.appinfo.accessibilityEnabled || false,
     drawBoldTextInBrightColors: false,
     fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
     fontSize: 13,
@@ -388,6 +256,7 @@ function initTerminal() {
   fitAddon = new window.FitAddon.FitAddon();
   terminal.loadAddon(fitAddon);
   terminal.open(output);
+  // One screen and one subscription per page; never suppress valid repeated keys.
   fitTerminalToSurface();
   terminal.focus();
 
@@ -415,107 +284,103 @@ async function readPipe(pipe, className = "") {
 }
 
 async function startShell() {
-  setStatus("starting shell", false);
-  initTerminal();
-  const terminalSessionId = getTerminalSessionId();
-  activeTerminalSessionId = terminalSessionId;
-  registerTerminalSession(terminalSessionId, {
-    userContextId: getTerminalUserContextId(),
-    terminalContainerId: getTerminalContainerId(),
-  });
-  const tmuxCommand = await findTerminalTmuxCommand();
-  activeTmuxCommand = tmuxCommand;
-  if (tmuxCommand) {
-    tmuxSessionWasNew = !(await terminalTmuxSessionExists(
-      tmuxCommand,
-      terminalSessionId,
-    ));
-  }
-  const env = {
-    TERM: "xterm-256color",
-    COLORTERM: "truecolor",
-    ZEN_TERMINAL: "1",
-    SHELL_SESSIONS_DISABLE: "1",
-    COLUMNS: String(terminal.cols),
-    LINES: String(terminal.rows),
-    ZEN_TERMINAL_SESSION_ID: terminalSessionId,
-  };
-
   try {
-    let lastError = null;
-    for (const launch of getShellLaunches({
+    setStatus("starting terminal", false);
+    initTerminal();
+    if (!getStartupRecord()) {
+      throw new Error(
+        "Choose a terminal container from the new-tab menu to open a terminal.",
+      );
+    }
+    // Validate before creating a session or launching any command.
+    const startupCommand = getStartupCommand();
+    const terminalSessionId = getTerminalSessionId();
+    activeTerminalSessionId = terminalSessionId;
+    if (
+      !registerTerminalSession(terminalSessionId, {
+        userContextId: getTerminalUserContextId(),
+        terminalContainerId: getTerminalContainerId(),
+      })
+    ) {
+      throw new Error(
+        "This session is being closed. Open a new terminal tab instead.",
+      );
+    }
+    const tmuxCommand = await findTerminalTmuxCommand();
+    if (stopping) return;
+    activeTmuxCommand = tmuxCommand;
+    // Check the installation before any saved recipe can execute.
+    activeShellLaunch = getShellLaunch({
       tmuxCommand,
       sessionId: terminalSessionId,
-    })) {
-      try {
-        shellProcess = await Subprocess.call({
-          ...MACOS_SUBPROCESS_OPTIONS,
-          command: launch.command,
-          arguments: launch.arguments,
-          environmentAppend: true,
-          environment: env,
-          stderr: "pipe",
-        });
-        activeShellLaunch = launch;
-        break;
-      } catch (error) {
-        lastError = error;
-      }
+      startupCommand,
+    });
+    if (tmuxCommand) {
+      const result = await prepareTerminalTmuxSession(
+        tmuxCommand,
+        terminalSessionId,
+        {
+          shell: getShellCommand(),
+          home: getHomeDirectory(),
+          startupCommand,
+          rows: terminal.rows,
+          columns: terminal.cols,
+        },
+      );
+      if (stopping) return;
+      tmuxSessionWasNew = result.created;
     }
-
-    if (!shellProcess) {
-      throw lastError || new Error("No shell launcher worked");
+    const createdProcess = await Subprocess.call({
+      ...MACOS_SUBPROCESS_OPTIONS,
+      command: activeShellLaunch.command,
+      arguments: activeShellLaunch.arguments,
+      workdir: getHomeDirectory(),
+      environmentAppend: true,
+      environment: {
+        TERM: "xterm-256color",
+        COLORTERM: "truecolor",
+        ZEN_TERMINAL: "1",
+        SHELL_SESSIONS_DISABLE: "1",
+        ZEN_TERMINAL_SESSION_ID: terminalSessionId,
+      },
+      stderr: "pipe",
+    });
+    // A late subprocess result must not survive the page it belonged to.
+    if (stopping) {
+      createdProcess.kill(0);
+      return;
     }
-
+    shellProcess = createdProcess;
     shellReady = true;
+    terminal.options.disableStdin = false;
     queueTerminalResize(terminal.rows, terminal.cols);
-    if (activeShellLaunch.persistent) {
-      setStatus(
-        tmuxSessionWasNew ? "ready · session saved" : "ready · reattached",
-        true,
-      );
-    } else {
-      setStatus("ready · session saving unavailable", true);
-      terminal.writeln(
-        "\x1b[33mSession saving is unavailable because tmux was not found or could not start.\x1b[0m",
-      );
-    }
+    setStatus(
+      activeShellLaunch.persistent
+        ? tmuxSessionWasNew
+          ? "session saved · ready"
+          : "saved session reconnected"
+        : "not saved · install tmux to keep work after quitting",
+      true,
+    );
     terminal.focus();
-
-    readPipe(shellProcess.stdout);
-    if (shellProcess.stderr) {
-      readPipe(shellProcess.stderr, "terminal-error");
-    }
-
-    if (!activeShellLaunch.persistent || tmuxSessionWasNew) {
-      await runStartupCommands();
-    }
-
+    const readers = [readPipe(shellProcess.stdout)];
+    if (shellProcess.stderr) readers.push(readPipe(shellProcess.stderr));
     const result = await shellProcess.wait();
+    await Promise.all(readers);
     shellReady = false;
+    terminal.options.disableStdin = true;
     if (!stopping) {
-      terminal.writeln(`Shell exited with code ${result.exitCode}`);
-      setStatus("shell exited", false);
+      terminal.writeln(`\r\nTerminal disconnected (exit ${result.exitCode}).`);
+      setStatus("disconnected · saved work has not been deleted", false);
+      document.getElementById("zen-terminal-reconnect").hidden = false;
     }
   } catch (error) {
     shellReady = false;
-    terminal?.writeln(`Could not start shell: ${error.message}`);
-    setStatus("shell failed", false);
-  }
-}
-
-async function runStartupCommands() {
-  try {
-    const command = getStartupCommand();
-    if (command) {
-      await writeToShell(`${command}\n`);
-    }
-  } catch (error) {
-    const step =
-      Number.isInteger(error.stepIndex) && error.stepIndex >= 0
-        ? ` in step ${error.stepIndex + 1}`
-        : "";
-    terminal?.writeln(`Startup recipe stopped${step}: ${error.message}`);
+    if (stopping) return;
+    if (terminal) terminal.options.disableStdin = true;
+    terminal?.writeln(`Could not open terminal: ${error.message}`);
+    setStatus("could not connect · saved work has not been deleted", false);
+    document.getElementById("zen-terminal-reconnect").hidden = false;
   }
 }
 
@@ -533,12 +398,8 @@ function queueTerminalResize(rows = terminal?.rows, columns = terminal?.cols) {
     return;
   }
 
-  if (!activeShellLaunch?.persistent) {
-    if (activeShellLaunch?.resizable) {
-      void writeToShell(
-        `${PYTHON_RESIZE_PREFIX}${rows};${columns}${PYTHON_RESIZE_SUFFIX}`,
-      );
-    }
+  if (activeShellLaunch?.resizable) {
+    void writeFrame(`R${rows} ${columns}\n`);
     return;
   }
 
@@ -570,35 +431,61 @@ async function flushTmuxResizeQueue() {
   }
 }
 
-function shouldDropDuplicateInput(text) {
-  if (typeof text !== "string" || text.length !== 1) {
-    return false;
+function writeFrame(frame) {
+  const bytes = new TextEncoder().encode(frame).length;
+  if (!shellProcess || !shellReady || stopping) return Promise.resolve();
+  if (queuedInputBytes + bytes > 4 * 1024 * 1024) {
+    setStatus("input is busy · wait before pasting more", false);
+    return Promise.resolve();
   }
-
-  const now = performance.now();
-  const isDuplicate = text === lastInputWrite && now - lastInputWriteTime < 25;
-  lastInputWrite = text;
-  lastInputWriteTime = now;
-  return isDuplicate;
+  queuedInputBytes += bytes;
+  const task = inputQueue.then(async () => {
+    if (!stopping && shellReady) await shellProcess.stdin.write(frame);
+  });
+  inputQueue = task
+    .catch((error) => {
+      if (!stopping) setStatus(`input failed: ${error.message}`, false);
+    })
+    .finally(() => {
+      queuedInputBytes -= bytes;
+    });
+  return inputQueue;
 }
 
-async function writeToShell(text) {
-  if (shouldDropDuplicateInput(text)) {
-    return;
+function writeToShell(text) {
+  if (!text || !shellReady || stopping) return Promise.resolve();
+  // Input methods and automation can deliver a UTF-16 pair in two events.
+  // Keep the first half until its partner arrives instead of encoding two replacement glyphs.
+  text = pendingHighSurrogate + text;
+  pendingHighSurrogate = "";
+  if (/[\uD800-\uDBFF]/u.test(text.at(-1))) {
+    pendingHighSurrogate = text.at(-1);
+    text = text.slice(0, -1);
   }
-
-  if (!shellProcess || !shellReady) {
-    return;
+  if (!text) return Promise.resolve();
+  const encoder = new TextEncoder();
+  // Reject an oversized paste as a whole, never execute a truncated command.
+  if (encoder.encode(text).length + queuedInputBytes > 4 * 1024 * 1024) {
+    setStatus("paste too large · limit is 4 MB", false);
+    return Promise.resolve();
   }
-
-  try {
-    await shellProcess.stdin.write(text);
-  } catch (error) {
-    terminal?.writeln(`Could not write to shell: ${error.message}`);
+  let framed = "";
+  for (let offset = 0; offset < text.length; ) {
+    let end = Math.min(offset + 16384, text.length);
+    if (end < text.length && /[\uD800-\uDBFF]/u.test(text[end - 1])) end--;
+    const chunk = text.slice(offset, end);
+    framed += `I${encoder.encode(chunk).length}\n${chunk}`;
+    offset = end;
   }
+  return writeFrame(framed);
 }
 
-surface.addEventListener("mousedown", () => terminal?.focus());
+surface.addEventListener("mousedown", (event) => {
+  if (!event.target.closest("button")) terminal?.focus();
+});
+document
+  .getElementById("zen-terminal-reconnect")
+  .addEventListener("click", () => window.location.reload());
 window.addEventListener("pagehide", stopShell, { once: true });
 window.addEventListener("beforeunload", stopShell, { once: true });
 window.addEventListener("pageshow", () => {

@@ -102,7 +102,7 @@ body {
 
 #zen-terminal-status {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
   padding: 6px 12px 8px;
@@ -117,4 +117,28 @@ body {
 
 #zen-terminal-surface[terminal-ready] #zen-terminal-status-text {
   color: rgba(244, 247, 239, 0.74);
+}
+
+#zen-terminal-reconnect {
+  color: #eeeeee;
+  background: #262626;
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+#zen-terminal-reconnect:focus-visible {
+  outline: 2px solid #8fe769;
+  outline-offset: 2px;
+}
+#zen-terminal-reconnect[hidden] {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
 }

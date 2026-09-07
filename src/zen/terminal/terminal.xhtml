@@ -30,7 +30,12 @@
         <div id="zen-terminal-output"></div>
         <footer id="zen-terminal-status">
           <span id="zen-terminal-prompt">…</span>
-          <span id="zen-terminal-status-text">starting shell</span>
+          <span id="zen-terminal-status-text" role="status" aria-live="polite"
+            >starting shell</span
+          >
+          <button id="zen-terminal-reconnect" type="button" hidden="hidden">
+            Reconnect
+          </button>
         </footer>
       </section>
     </main>

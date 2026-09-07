@@ -4,8 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import assert from "node:assert/strict";
-import { execFileSync, execSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync, execSync, spawnSync } from "node:child_process";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -171,7 +177,10 @@ test("ordinary local steps run in order and stop on failure", () => {
     "false",
     "printf never",
   ]);
-  assert.equal(command, "printf first && false && printf never");
+  assert.equal(
+    command,
+    "eval 'printf first' && eval 'false' && eval 'printf never'",
+  );
   assert.throws(() =>
     execFileSync("/bin/sh", ["-c", command], { encoding: "utf8" }),
   );
@@ -242,7 +251,18 @@ test("SSH shell operators and substitutions are rejected", () => {
 });
 
 test("conflicting SSH modes are rejected before later steps", () => {
-  for (const option of ["-T", "-N", "-s", "-G", "-V"]) {
+  for (const option of [
+    "-T",
+    "-N",
+    "-s",
+    "-G",
+    "-V",
+    "-f",
+    "-n",
+    "-vvN",
+    "-vT",
+    "-vfn",
+  ]) {
     expectRecipeError(
       () => compileTerminalRecipeSteps([`ssh ${option} chubs`, "claude"]),
       /cannot be used/u,
@@ -256,6 +276,12 @@ test("SSH config that conflicts with a remote recipe is rejected", () => {
     "ssh -oRemoteCommand=hostname chubs",
     "ssh -o SessionType=none chubs",
     "ssh -o RequestTTY=no chubs",
+    "ssh -o 'RemoteCommand hostname' chubs",
+    "ssh -voRemoteCommand=hostname chubs",
+    "ssh -o 'SessionType subsystem' chubs",
+    "ssh -o 'RequestTTY = no' chubs",
+    "ssh -o 'StdinNull yes' chubs",
+    "ssh -oForkAfterAuthentication=yes chubs",
   ]) {
     expectRecipeError(
       () => compileTerminalRecipeSteps([command, "claude"]),
@@ -323,6 +349,135 @@ test("empty rows are ignored and multi-line rows are rejected", () => {
     () => compileTerminalRecipeSteps(["pwd\nwhoami"]),
     /one command on one line/u,
   );
+});
+
+test("each row keeps semicolons, OR operators and comments inside its boundary", () => {
+  for (const shell of ["/bin/sh", "/bin/zsh", "/bin/bash"]) {
+    for (const laterStep of [
+      "printf first; printf escaped",
+      "false || printf escaped",
+    ]) {
+      const result = spawnSync(
+        shell,
+        ["-c", compileTerminalRecipeSteps(["false", laterStep])],
+        { encoding: "utf8" },
+      );
+      assert.notEqual(result.status, 0, shell);
+      assert.equal(result.stdout, "", shell);
+    }
+    const command = compileTerminalRecipeSteps([
+      "printf first # this comment must not swallow the next row",
+      "printf second",
+      "false # neither may this comment swallow failure handling",
+      "printf never",
+    ]);
+    const result = spawnSync(shell, ["-c", command], { encoding: "utf8" });
+    assert.notEqual(result.status, 0, shell);
+    assert.equal(result.stdout, "firstsecond", shell);
+  }
+});
+
+test("rows preserve working directory, exports, quotes and shell variables", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "zen-recipe-state-"));
+  try {
+    for (const shell of ["/bin/sh", "/bin/zsh", "/bin/bash"]) {
+      const command = compileTerminalRecipeSteps([
+        `cd '${directory}'`,
+        "export ZEN_RECIPE_TEST='hello world'",
+        'printf \'%s:%s\' "$PWD" "$ZEN_RECIPE_TEST"',
+      ]);
+      assert.equal(
+        execFileSync(shell, ["-c", command], { encoding: "utf8" }),
+        `${directory}:hello world`,
+      );
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("safe combined SSH flags and attached values are preserved", () => {
+  assert.deepEqual(
+    parseSshConnectionStep("ssh -vvAp2222 -o 'RequestTTY force' host"),
+    {
+      executable: "ssh",
+      argumentsBeforeDestination: ["-vvAp2222", "-o", "RequestTTY force"],
+      destination: "host",
+    },
+  );
+  for (const command of [
+    "ssh ''",
+    'ssh "   "',
+    "ssh -p",
+    "ssh -vZ host",
+    "ssh -vWtarget host",
+  ]) {
+    expectRecipeError(
+      () => compileTerminalRecipeSteps([command, "printf never"]),
+      /needs|Unsupported|cannot/u,
+    );
+  }
+});
+
+test("fake SSH executes following rows only in the remote shell, including nested connections", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "zen-recipe-remote-"));
+  try {
+    const fakeSsh = path.join(directory, "ssh");
+    // The fixture supports the compiler's simple -tt host remote-command form.
+    // It replaces the remote login-shell wrapper with a disposable local shell,
+    // avoiding all real network connections and user login configuration.
+    writeFileSync(
+      fakeSsh,
+      `#!/bin/sh
+[ "$1" = "-tt" ] || exit 90
+shift
+host=$1
+shift
+export ZEN_FAKE_HOST="$host"
+exec "$ZEN_FAKE_SHELL" -c "$1"
+`,
+    );
+    chmodSync(fakeSsh, 0o755);
+    const fakeShell = path.join(directory, "remote-shell");
+    writeFileSync(
+      fakeShell,
+      '#!/bin/sh\n[ "$1" = "-lic" ] && shift\nexec /bin/sh -c "$1"\n',
+    );
+    chmodSync(fakeShell, 0o755);
+    const env = {
+      ...process.env,
+      PATH: `${directory}:${process.env.PATH}`,
+      SHELL: fakeShell,
+      ZEN_FAKE_SHELL: "/bin/sh",
+    };
+    const command = compileTerminalRecipeSteps([
+      "ssh outer",
+      "printf '%s:' \"$ZEN_FAKE_HOST\" # remote comment",
+      "ssh inner",
+      "export ZEN_REMOTE_VALUE=kept",
+      'printf \'%s:%s\' "$ZEN_FAKE_HOST" "$ZEN_REMOTE_VALUE"',
+    ]);
+    assert.equal(
+      execFileSync("/bin/sh", ["-c", command], { env, encoding: "utf8" }),
+      "outer:inner:kept",
+    );
+    const failed = spawnSync(
+      "/bin/sh",
+      [
+        "-c",
+        compileTerminalRecipeSteps([
+          "ssh outer",
+          "false",
+          "printf never; printf escaped",
+        ]),
+      ],
+      { env, encoding: "utf8" },
+    );
+    assert.notEqual(failed.status, 0);
+    assert.equal(failed.stdout, "");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 let failures = 0;

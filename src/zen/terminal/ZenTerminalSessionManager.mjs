@@ -2,77 +2,81 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- * Keeps the small amount of information needed to reconnect a browser tab to
- * its tmux session.
- *
- * The tmux session itself is the live process keeper. This pref is only a
- * directory: terminal tab id -> tmux name + Firefox container id. A pending
- * deletion is written before tmux is called so a fast browser quit cannot turn
- * an explicitly closed tab into an abandoned background session.
- */
-
+/** Small durable reconnect records; tmux, not the browser, owns live shells. */
 export const ZEN_TERMINAL_SESSIONS_PREF = "zen.terminal.sessions";
 export const ZEN_TERMINAL_TMUX_SOCKET = "zen-terminal";
 export const ZEN_TERMINAL_TMUX_SESSION_PREFIX = "zt_";
+const operations = new Map();
 
 function getSubprocess() {
   return ChromeUtils.importESModule("resource://gre/modules/Subprocess.sys.mjs")
     .Subprocess;
 }
-
-function getMacSubprocessOptions() {
+function macOptions() {
   return Services.appinfo?.OS === "Darwin" ? { disclaim: true } : {};
 }
-
+function timers() {
+  return ChromeUtils.importESModule("resource://gre/modules/Timer.sys.mjs");
+}
 export function normalizeTerminalSessionId(value) {
-  const clean = String(value || "")
+  const id = String(value || "")
     .trim()
     .toLowerCase();
-  if (!/^[a-z0-9][a-z0-9-]{0,95}$/.test(clean)) {
-    return "";
-  }
-  return clean;
+  return /^[a-z0-9][a-z0-9-]{0,95}$/.test(id) &&
+    !["constructor", "prototype"].includes(id)
+    ? id
+    : "";
 }
-
-export function getTerminalTmuxSessionName(sessionId) {
-  const clean = normalizeTerminalSessionId(sessionId);
+export function getTerminalTmuxSessionName(id) {
+  const clean = normalizeTerminalSessionId(id);
   return clean ? `${ZEN_TERMINAL_TMUX_SESSION_PREFIX}${clean}` : "";
 }
-
 export function readTerminalSessionRecords() {
+  const records = Object.create(null);
   try {
     const parsed = JSON.parse(
       Services.prefs.getStringPref(ZEN_TERMINAL_SESSIONS_PREF, "{}"),
     );
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return records;
+    }
+    for (const [id, record] of Object.entries(parsed)) {
+      if (
+        normalizeTerminalSessionId(id) !== id ||
+        !record ||
+        typeof record !== "object" ||
+        Array.isArray(record)
+      ) {
+        continue;
+      }
+      records[id] = {
+        ...record,
+        id,
+        tmuxSessionName: getTerminalTmuxSessionName(id),
+      };
     }
   } catch (_) {
-    // A damaged preference must not stop the browser from opening a terminal.
+    // A broken record is not permission to kill a process.
   }
-  return {};
+  return records;
 }
-
 export function writeTerminalSessionRecords(records) {
   Services.prefs.setStringPref(
     ZEN_TERMINAL_SESSIONS_PREF,
     JSON.stringify(records || {}),
   );
 }
-
 export function registerTerminalSession(
   sessionId,
   { userContextId = "", terminalContainerId = "" } = {},
 ) {
   const id = normalizeTerminalSessionId(sessionId);
-  if (!id) {
-    return null;
-  }
-
-  const now = Date.now();
+  if (!id) return null;
   const records = readTerminalSessionRecords();
   const previous = records[id] || {};
+  // A reload/late startup cannot cancel an explicit deletion request.
+  if (previous.pendingDelete) return null;
+  const now = Date.now();
   records[id] = {
     version: 1,
     id,
@@ -88,222 +92,290 @@ export function registerTerminalSession(
   writeTerminalSessionRecords(records);
   return records[id];
 }
-
-export function getTerminalSessionRecord(sessionId) {
-  const id = normalizeTerminalSessionId(sessionId);
-  return id ? readTerminalSessionRecords()[id] || null : null;
+export function getTerminalSessionRecord(id) {
+  const clean = normalizeTerminalSessionId(id);
+  return clean ? readTerminalSessionRecords()[clean] || null : null;
 }
-
 export function listTerminalSessionsForUserContextId(userContextId) {
   const wanted = String(userContextId || "");
-  if (!wanted) {
-    return [];
-  }
-  return Object.values(readTerminalSessionRecords()).filter(
-    (record) => String(record?.userContextId || "") === wanted,
-  );
+  return wanted
+    ? Object.values(readTerminalSessionRecords()).filter(
+        (record) => String(record.userContextId || "") === wanted,
+      )
+    : [];
 }
-
-function markTerminalSessionPendingDelete(sessionId) {
+function markPending(sessionId) {
   const id = normalizeTerminalSessionId(sessionId);
-  if (!id) {
-    return null;
-  }
-
+  if (!id) return null;
   const records = readTerminalSessionRecords();
-  const previous = records[id] || {
-    version: 1,
+  records[id] = {
+    ...(records[id] || {}),
     id,
     tmuxSessionName: getTerminalTmuxSessionName(id),
-    userContextId: "",
-    terminalContainerId: "",
-    createdAt: Date.now(),
-    lastSeenAt: Date.now(),
-  };
-  records[id] = {
-    ...previous,
     pendingDelete: true,
     deleteRequestedAt: Date.now(),
   };
   writeTerminalSessionRecords(records);
+  // Write the intent now, before asynchronous cleanup or a fast app quit.
+  Services.prefs.savePrefFile?.(null);
   return records[id];
 }
-
-function removeTerminalSessionRecord(sessionId) {
-  const id = normalizeTerminalSessionId(sessionId);
+function removeRecord(id) {
   const records = readTerminalSessionRecords();
-  if (id && Object.hasOwn(records, id)) {
-    delete records[id];
-    writeTerminalSessionRecords(records);
-  }
+  delete records[id];
+  writeTerminalSessionRecords(records);
+}
+function serial(id, action) {
+  const previous = operations.get(id) || Promise.resolve();
+  const task = previous.catch(() => {}).then(action);
+  operations.set(id, task);
+  const clear = () => {
+    if (operations.get(id) === task) operations.delete(id);
+  };
+  task.then(clear, clear);
+  return task;
 }
 
-async function readProcessOutput(process) {
-  let output = "";
-  try {
-    let chunk;
-    while ((chunk = await process.stdout?.readString())) {
-      output += chunk;
-    }
-  } catch (_) {
-    // The exit code below remains the source of truth.
-  }
-  const result = await process.wait();
-  return { output: output.trim(), exitCode: result.exitCode };
-}
-
-/**
- * Finds tmux through the user's login shell. Apps opened from Finder often do
- * not inherit Homebrew's PATH, while a login shell normally does.
- */
-export async function findTerminalTmuxCommand() {
-  try {
-    const process = await getSubprocess().call({
-      ...getMacSubprocessOptions(),
-      command: "/bin/zsh",
-      arguments: ["-lc", "command -v tmux"],
-      environmentAppend: true,
-      stderr: "pipe",
-    });
-    const result = await readProcessOutput(process);
-    if (result.exitCode === 0) {
-      const command = result.output
-        .split(/\r?\n/)
-        .find((line) => /^\/\S*\/tmux$/u.test(line.trim()));
-      if (command) {
-        return command.trim();
-      }
-    }
-  } catch (_) {
-    // The caller will use the honest non-persistent fallback.
-  }
-  return "";
-}
-
-async function callTmux(tmuxCommand, argumentsList) {
+/** Drain both pipes concurrently. A broken/hung tool is unknown, never absent. */
+async function runCommand(options, timeoutMs = 8000) {
   const process = await getSubprocess().call({
-    ...getMacSubprocessOptions(),
-    command: tmuxCommand,
-    arguments: ["-L", ZEN_TERMINAL_TMUX_SOCKET, ...argumentsList],
+    ...macOptions(),
     environmentAppend: true,
+    ...options,
     stderr: "pipe",
   });
-  return readProcessOutput(process);
+  const { setTimeout, clearTimeout } = timers();
+  let timedOut = false;
+  let truncated = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    try {
+      process.kill(0);
+    } catch (_) {}
+  }, timeoutMs);
+  async function drain(pipe) {
+    let result = "";
+    let chunk;
+    while (pipe && (chunk = await pipe.readString())) {
+      if (result.length + chunk.length > 65536) truncated = true;
+      if (result.length < 65536)
+        result += chunk.slice(0, 65536 - result.length);
+    }
+    return result.trim();
+  }
+  try {
+    const [output, error, result] = await Promise.all([
+      drain(process.stdout),
+      drain(process.stderr),
+      process.wait(),
+    ]);
+    if (timedOut) throw new Error("Terminal helper timed out");
+    return { output, error, exitCode: result.exitCode, truncated };
+  } catch (error) {
+    if (!timedOut) {
+      try {
+        process.kill(0);
+      } catch (_) {}
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
-
-/**
- * Resizes the saved tmux window through tmux itself. This deliberately avoids
- * writing resize control text into the interactive shell or a running CLI.
- */
+export async function findTerminalTmuxCommand() {
+  try {
+    const result = await runCommand(
+      { command: "/bin/zsh", arguments: ["-lc", "command -v tmux"] },
+      5000,
+    );
+    if (result.exitCode === 0) {
+      return (
+        result.output
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .find((line) => /^\/[^\r\n]*\/tmux$/u.test(line)) || ""
+      );
+    }
+  } catch (_) {}
+  return "";
+}
+function callTmux(command, args) {
+  return runCommand({
+    command,
+    arguments: ["-L", ZEN_TERMINAL_TMUX_SOCKET, "-f", "/dev/null", ...args],
+    environment: {
+      LC_ALL: "C",
+      TERM: "xterm-256color",
+      SHELL_SESSIONS_DISABLE: "1",
+    },
+  });
+}
+/** Exact inventory distinguishes a missing session from inaccessible tmux. */
+export async function terminalTmuxSessionState(command, id) {
+  const name = getTerminalTmuxSessionName(id);
+  if (!command || !name) return "unknown";
+  try {
+    const result = await callTmux(command, [
+      "list-sessions",
+      "-F",
+      "#{session_name}",
+    ]);
+    if (result.truncated) return "unknown";
+    if (result.exitCode === 0)
+      return result.output.split(/\r?\n/).includes(name) ? "present" : "absent";
+    if (
+      result.exitCode === 1 &&
+      /^(?:no server running on |error connecting to [^\n]+ \(No such file or directory\))/u.test(
+        result.error,
+      )
+    )
+      return "absent";
+  } catch (_) {}
+  return "unknown";
+}
+export async function terminalTmuxSessionExists(command, id) {
+  return (await terminalTmuxSessionState(command, id)) === "present";
+}
+function quote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+export function terminalShellScript(shell, command = "") {
+  // Recipe is passed as a command argument, never typed into an unready prompt.
+  // An interactive login shell loads the same user tools as a normal terminal.
+  return command
+    ? `${command}\nzen_terminal_exit=$?\nif [ "$zen_terminal_exit" -ne 0 ]; then printf '\\nStartup steps stopped (exit %s).\\n' "$zen_terminal_exit"; fi\nexec ${quote(shell)} -l`
+    : `exec ${quote(shell)} -l`;
+}
+export async function prepareTerminalTmuxSession(
+  command,
+  id,
+  { shell, home, startupCommand = "", rows = 24, columns = 80 },
+) {
+  const name = getTerminalTmuxSessionName(id);
+  if (!command || !name || !shell?.startsWith("/") || !home?.startsWith("/"))
+    throw new Error("Invalid terminal startup settings");
+  return serial(id, async () => {
+    if (
+      !getTerminalSessionRecord(id) ||
+      getTerminalSessionRecord(id).pendingDelete
+    )
+      throw new Error("This terminal was closed");
+    let state = await terminalTmuxSessionState(command, id);
+    if (state === "unknown")
+      throw new Error(
+        "Cannot check the saved session. It has not been replaced.",
+      );
+    if (state === "present") return { created: false };
+    if (getTerminalSessionRecord(id)?.pendingDelete)
+      throw new Error("This terminal was closed");
+    const result = await callTmux(command, [
+      "new-session",
+      "-d",
+      "-s",
+      name,
+      "-x",
+      String(Math.max(2, Math.min(1000, columns))),
+      "-y",
+      String(Math.max(1, Math.min(1000, rows))),
+      "-c",
+      home,
+      shell,
+      "-lic",
+      terminalShellScript(shell, startupCommand),
+    ]);
+    state = await terminalTmuxSessionState(command, id);
+    if (state !== "present")
+      throw new Error(result.error || "The saved terminal could not start");
+    // A competing browser process may have created it first; only tmux's winner ran the recipe.
+    for (const [option, value] of [
+      ["status", "off"],
+      ["prefix", "None"],
+      ["prefix2", "None"],
+      ["mouse", "on"],
+    ]) {
+      const configured = await callTmux(command, [
+        "set-option",
+        "-t",
+        name,
+        option,
+        value,
+      ]);
+      if (configured.exitCode !== 0)
+        throw new Error(
+          configured.error || "Could not configure the saved terminal",
+        );
+    }
+    return { created: result.exitCode === 0 };
+  });
+}
 export async function resizeTerminalTmuxSession(
-  tmuxCommand,
-  sessionId,
+  command,
+  id,
   { rows, columns } = {},
 ) {
-  const name = getTerminalTmuxSessionName(sessionId);
-  rows = Number(rows);
-  columns = Number(columns);
+  const name = getTerminalTmuxSessionName(id);
   if (
-    !tmuxCommand ||
+    !command ||
     !name ||
     !Number.isInteger(rows) ||
     !Number.isInteger(columns) ||
     rows < 1 ||
-    columns < 2
-  ) {
+    rows > 1000 ||
+    columns < 2 ||
+    columns > 1000
+  )
     return false;
-  }
-
   try {
-    const result = await callTmux(tmuxCommand, [
-      "resize-window",
-      "-t",
-      `=${name}`,
-      "-x",
-      String(columns),
-      "-y",
-      String(rows),
-    ]);
-    return result.exitCode === 0;
+    return (
+      (
+        await callTmux(command, [
+          "resize-window",
+          "-t",
+          `=${name}`,
+          "-x",
+          String(columns),
+          "-y",
+          String(rows),
+        ])
+      ).exitCode === 0
+    );
   } catch (_) {
     return false;
   }
 }
-
-export async function terminalTmuxSessionExists(tmuxCommand, sessionId) {
-  const name = getTerminalTmuxSessionName(sessionId);
-  if (!tmuxCommand || !name) {
-    return false;
-  }
-  try {
-    const result = await callTmux(tmuxCommand, [
-      "has-session",
-      "-t",
-      `=${name}`,
-    ]);
-    return result.exitCode === 0;
-  } catch (_) {
-    return false;
-  }
-}
-
-/**
- * Destroys one terminal session after an explicit user action.
- *
- * Missing tmux sessions count as already destroyed. If tmux itself cannot be
- * found, the pending record remains and retryPendingTerminalSessionDeletes()
- * will try again on the next browser start.
- */
-export async function destroyTerminalSession(
-  sessionId,
-  { tmuxCommand = "" } = {},
-) {
-  const record = markTerminalSessionPendingDelete(sessionId);
-  if (!record) {
+export async function destroyTerminalSession(id, { tmuxCommand = "" } = {}) {
+  const record = markPending(id);
+  if (!record) return true;
+  return serial(record.id, async () => {
+    const command = tmuxCommand || (await findTerminalTmuxCommand());
+    if (!command) return false;
+    let state = await terminalTmuxSessionState(command, record.id);
+    if (state === "unknown") return false;
+    if (state === "present") {
+      try {
+        await callTmux(command, [
+          "kill-session",
+          "-t",
+          `=${getTerminalTmuxSessionName(record.id)}`,
+        ]);
+      } catch (_) {
+        return false;
+      }
+      state = await terminalTmuxSessionState(command, record.id);
+    }
+    if (state !== "absent") return false;
+    removeRecord(record.id);
     return true;
-  }
-
-  const command = tmuxCommand || (await findTerminalTmuxCommand());
-  if (!command) {
-    return false;
-  }
-
-  const exists = await terminalTmuxSessionExists(command, record.id);
-  if (!exists) {
-    removeTerminalSessionRecord(record.id);
-    return true;
-  }
-
-  try {
-    await callTmux(command, [
-      "kill-session",
-      "-t",
-      `=${record.tmuxSessionName}`,
-    ]);
-  } catch (_) {
-    // Verify below. A raced session exit is also a successful cleanup.
-  }
-
-  if (await terminalTmuxSessionExists(command, record.id)) {
-    return false;
-  }
-  removeTerminalSessionRecord(record.id);
-  return true;
+  });
 }
-
 export async function retryPendingTerminalSessionDeletes() {
   const pending = Object.values(readTerminalSessionRecords()).filter(
-    (record) => record?.pendingDelete,
+    (record) => record.pendingDelete,
   );
-  if (!pending.length) {
-    return [];
-  }
-
+  if (!pending.length) return [];
   const tmuxCommand = await findTerminalTmuxCommand();
-  if (!tmuxCommand) {
+  if (!tmuxCommand)
     return pending.map((record) => ({ id: record.id, deleted: false }));
-  }
-
   return Promise.all(
     pending.map(async (record) => ({
       id: record.id,
@@ -311,16 +383,9 @@ export async function retryPendingTerminalSessionDeletes() {
     })),
   );
 }
-
-/**
- * Settings/container deletion can call this before removing the recipe.
- * Keeping this function here avoids making the Settings code understand tmux.
- */
 export async function destroyTerminalSessionsForUserContextId(userContextId) {
   const records = listTerminalSessionsForUserContextId(userContextId);
-  for (const record of records) {
-    markTerminalSessionPendingDelete(record.id);
-  }
+  for (const record of records) markPending(record.id);
   return Promise.all(
     records.map((record) => destroyTerminalSession(record.id)),
   );

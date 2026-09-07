@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           echo "id=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-          echo "version=1.0.0-terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+          echo "version=152.0.5-terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -96,6 +96,14 @@ jobs:
 
       - name: Install JavaScript dependencies
         run: npm ci
+
+      - name: Test terminal logic and native helper
+        run: |
+          node scripts/terminal-tabs/test-terminal-recipes.mjs
+          node scripts/terminal-tabs/test-terminal-session-persistence.mjs
+          node scripts/terminal-tabs/test-terminal-polish.mjs
+          scripts/terminal-tabs/build-terminal-pty.sh
+          python3 scripts/terminal-tabs/test-terminal-pty.py
 
       - name: Prepare terminal fork identity
         shell: bash
@@ -147,6 +155,15 @@ jobs:
           export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
           npm run build
 
+      - name: Bundle the native terminal helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path="$(find engine/obj-* -path '*/dist/*.app' -maxdepth 4 -type d -print -quit)"
+          test -n "$app_path"
+          ZEN_TERMINAL_ARCH="${{ inputs.arch }}" scripts/terminal-tabs/build-terminal-pty.sh "$app_path/Contents/MacOS/zen-terminal-pty"
+          codesign --force --sign - "$app_path/Contents/MacOS/zen-terminal-pty"
+
       - name: Package macOS app
         shell: bash
         run: |
@@ -186,4 +203,4 @@ jobs:
         with:
           name: zen-terminal-${{ inputs.arch }}-dmg
           path: terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg
-          retention-days: 30
+          retention-days: 90

@@ -1,0 +1,43 @@
+{
+  "app": ".terminal-test/Zen Terminal Test.app",
+  "label": "local-integration",
+  "test_data": "isolated synthetic profile, no founder data",
+  "results": [
+    {
+      "test": "real Mac app opens clean profile",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "create terminal container through actual Settings",
+      "result": "pass",
+      "detail": 6
+    },
+    {
+      "test": "menu opens real saved terminal",
+      "result": "pass",
+      "detail": "session saved \u00b7 ready"
+    },
+    {
+      "test": "actual keyboard reaches local shell exactly",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "reload keeps same process and does not rerun startup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "quit and relaunch restore same terminal process",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "explicit tab close destroys only its session",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop/.terminal-test/mac-5d110f6f/gecko.log"
+}

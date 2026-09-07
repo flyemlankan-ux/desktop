@@ -1,10 +1,15 @@
 diff --git a/browser/components/preferences/dialogs/containers.js b/browser/components/preferences/dialogs/containers.js
 --- a/browser/components/preferences/dialogs/containers.js
 +++ b/browser/components/preferences/dialogs/containers.js
-@@ -6,6 +6,112 @@
+@@ -5,6 +5,116 @@
+ const { ContextualIdentityService } = ChromeUtils.importESModule(
    "resource://gre/modules/ContextualIdentityService.sys.mjs"
  );
- 
++
++const { compileTerminalRecipeSteps } = ChromeUtils.importESModule(
++  "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs"
++);
++
 +const ZEN_TERMINAL_CONTAINER_RECIPES_PREF = "zen.terminal.containerRecipes";
 +const { destroyTerminalSessionsForUserContextId } = ChromeUtils.importESModule(
 +  "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs"
@@ -110,11 +115,10 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +  delete recipes[String(userContextId)];
 +  writeZenTerminalContainerRecipes(recipes);
 +}
-+
+
  /**
   * We want to set the window title immediately to prevent flickers.
-  */
-@@ -61,7 +167,19 @@
+@@ -61,6 +171,18 @@
      this._dialog = document.querySelector("dialog");
      this.userContextId = aParams.userContextId || null;
      this.identity = aParams.identity;
@@ -127,22 +131,29 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    this.terminalRecipeSteps = terminalRecipe?.recipe?.steps || [];
 +    this.terminalStepIdCounter = this.terminalRecipeSteps.length;
 +    this.wasTerminalContainer = Boolean(terminalRecipe);
- 
++
 +    this.createKindChooser();
 +    this.createTerminalFields();
-+
+
      const iconWrapper = document.getElementById("iconWrapper");
      iconWrapper.appendChild(this.createIconButtons());
- 
-@@ -83,15 +201,220 @@
-     document.addEventListener("dialogaccept", () => this.onApplyChanges());
- 
+@@ -80,16 +202,229 @@
+       .getElementById("key_close")
+       .addEventListener("command", () => window.close());
+
+-    document.addEventListener("dialogaccept", () => this.onApplyChanges());
++    document.addEventListener("dialogaccept", event => {
++      if (this.onApplyChanges() === false) event.preventDefault();
++    });
+
      // This is to prevent layout jank caused by the svgs and outlines rendering at different times
 -    document.getElementById("containers-content").removeAttribute("hidden");
-+    this.updateKindView();
-   },
- 
+-  },
+-
 -  // Check if name is provided to determine if the form can be submitted
++    this.updateKindView();
++  },
++
 +  // Check if a kind and name are provided to determine if the form can be submitted
    checkForm() {
      const name = document.getElementById("name");
@@ -183,8 +194,8 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +
 +    chooser.appendChild(row);
 +    content.parentNode.insertBefore(chooser, content);
-   },
- 
++  },
++
 +  createTerminalFields() {
 +    const content = document.getElementById("containers-content");
 +    const fields = document.createXULElement("vbox");
@@ -201,6 +212,12 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +      "Steps run from top to bottom. A connection step moves the following steps onto that computer.";
 +    help.style.marginBlock = "4px 10px";
 +    fields.appendChild(help);
++    const error = document.createXULElement("description");
++    error.id = "zen-terminal-recipe-error";
++    error.setAttribute("role", "alert");
++    error.style.color = "var(--text-color-error, #c33)";
++    error.hidden = true;
++    fields.appendChild(error);
 +
 +    const stepList = document.createXULElement("vbox");
 +    stepList.setAttribute("id", "zen-terminal-recipe-steps");
@@ -353,15 +370,37 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +    terminal?.toggleAttribute("default", this.containerKind == "terminal");
 +    content.toggleAttribute("hidden", !this.containerKind);
 +    terminalFields?.toggleAttribute("hidden", this.containerKind != "terminal");
-+  },
-+
+   },
+
    createIconButtons() {
-     let radiogroup = document.createXULElement("radiogroup");
-     radiogroup.setAttribute("id", "icon");
-@@ -161,11 +484,26 @@
+@@ -149,6 +484,23 @@
+   },
+
+   onApplyChanges() {
++    const error = document.getElementById("zen-terminal-recipe-error");
++    error.hidden = true;
++    if (this.containerKind == "terminal") {
++      try {
++        compileTerminalRecipeSteps(this.getTerminalRecipeSteps());
++      } catch (failure) {
++        error.textContent = `Check your startup steps: ${failure.message}`;
++        error.hidden = false;
++        return false;
++      }
++    } else if (this.wasTerminalContainer && !Services.prompt.confirm(
++      window,
++      "Stop this container's terminals?",
++      "Changing this container to Web will stop its running terminals and their work. This cannot be undone. Keep Terminal selected to preserve them."
++    )) {
++      return false;
++    }
+     let icon = document.getElementById("icon").value;
+     let color = document.getElementById("color").value;
+     let name = document.getElementById("name").value;
+@@ -161,11 +513,26 @@
        throw new Error("Internal error. The color value doesn't match.");
      }
- 
+
 -    if (this.userContextId) {
 -      ContextualIdentityService.update(this.userContextId, name, icon, color);
 +    let userContextId = this.userContextId;
@@ -369,9 +408,10 @@ diff --git a/browser/components/preferences/dialogs/containers.js b/browser/comp
 +      ContextualIdentityService.update(userContextId, name, icon, color);
      } else {
 -      ContextualIdentityService.create(name, icon, color);
+-    }
 +      const identity = ContextualIdentityService.create(name, icon, color);
 +      userContextId = identity.userContextId;
-     }
++    }
 +
 +    if (this.containerKind == "terminal") {
 +      setZenTerminalContainerRecipe(

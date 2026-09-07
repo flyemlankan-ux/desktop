@@ -157,16 +157,6 @@ function isSshExecutable(word) {
   return word === "ssh" || word === "/usr/bin/ssh";
 }
 
-function optionNeedsSeparateValue(option) {
-  return SSH_OPTIONS_WITH_VALUE.has(option);
-}
-
-function optionHasAttachedValue(option) {
-  return [...SSH_OPTIONS_WITH_VALUE].some(
-    (name) => option.startsWith(name) && option.length > name.length,
-  );
-}
-
 function validateSshOptionValue(option, value, stepIndex) {
   if (["-O", "-Q", "-W"].includes(option)) {
     throw new TerminalRecipeError(
@@ -178,11 +168,16 @@ function validateSshOptionValue(option, value, stepIndex) {
     return;
   }
 
-  const setting = value.replaceAll(/\s/gu, "").toLowerCase();
+  const setting = value.trim().toLowerCase();
+  const match = /^([^\s=]+)(?:\s*=\s*|\s+)(.*)$/u.exec(setting);
+  const key = match?.[1];
+  const optionValue = match?.[2]?.trim();
   if (
-    setting.startsWith("remotecommand=") ||
-    setting === "sessiontype=none" ||
-    setting === "requesttty=no"
+    key === "remotecommand" ||
+    (key === "sessiontype" && optionValue !== "default") ||
+    (key === "requesttty" && optionValue === "no") ||
+    (key === "stdinnull" && optionValue === "yes") ||
+    (key === "forkafterauthentication" && optionValue === "yes")
   ) {
     throw new TerminalRecipeError(
       `${value} conflicts with later startup steps.`,
@@ -210,58 +205,38 @@ export function parseSshConnectionStep(command, stepIndex = -1) {
       continue;
     }
     if (!optionsEnded && word.startsWith("-") && word !== "-") {
-      if (["-G", "-N", "-O", "-Q", "-T", "-V", "-W", "-s"].includes(word)) {
-        throw new TerminalRecipeError(
-          `${word} cannot be used before later startup steps.`,
-          stepIndex,
-        );
-      }
-      if (optionNeedsSeparateValue(word)) {
-        index++;
-        if (index >= words.length) {
+      // OpenSSH accepts combined flags (for example -vvN) and attached
+      // values (-vp2222). Walk the flags until a value-taking option consumes
+      // the rest; never mistake its value for more flags.
+      for (let offset = 1; offset < word.length; offset++) {
+        const option = `-${word[offset]}`;
+        if (
+          ["-G", "-N", "-O", "-Q", "-T", "-V", "-W", "-s", "-f", "-n"].includes(
+            option,
+          )
+        ) {
           throw new TerminalRecipeError(
-            `${word} needs a value in the SSH connection step.`,
+            `${option} cannot be used before later startup steps.`,
             stepIndex,
           );
         }
-        validateSshOptionValue(word, words[index], stepIndex);
-      } else if (!optionHasAttachedValue(word) && /^-[A-Za-z]$/u.test(word)) {
-        // Unknown single-letter options are rejected rather than guessing
-        // whether the next word is their value or the destination.
-        const knownFlags = new Set([
-          "-4",
-          "-6",
-          "-A",
-          "-a",
-          "-C",
-          "-f",
-          "-G",
-          "-g",
-          "-K",
-          "-k",
-          "-M",
-          "-n",
-          "-q",
-          "-t",
-          "-V",
-          "-v",
-          "-X",
-          "-x",
-          "-Y",
-          "-y",
-        ]);
-        if (!knownFlags.has(word)) {
+        if (SSH_OPTIONS_WITH_VALUE.has(option)) {
+          const attached = word.slice(offset + 1);
+          const value = attached || words[++index];
+          if (!value) {
+            throw new TerminalRecipeError(
+              `${option} needs a value in the SSH connection step.`,
+              stepIndex,
+            );
+          }
+          validateSshOptionValue(option, value, stepIndex);
+          break;
+        }
+        if (!"46AaCgKkMqtvXxYy".includes(word[offset])) {
           throw new TerminalRecipeError(
-            `Unsupported SSH option ${word}.`,
+            `Unsupported SSH option ${option}.`,
             stepIndex,
           );
-        }
-      } else {
-        const option = [...SSH_OPTIONS_WITH_VALUE].find(
-          (name) => word.startsWith(name) && word.length > name.length,
-        );
-        if (option) {
-          validateSshOptionValue(option, word.slice(option.length), stepIndex);
         }
       }
       continue;
@@ -271,7 +246,7 @@ export function parseSshConnectionStep(command, stepIndex = -1) {
     break;
   }
 
-  if (destinationIndex < 0) {
+  if (destinationIndex < 0 || !words[destinationIndex].trim()) {
     throw new TerminalRecipeError(
       "The SSH connection step needs a computer name or address.",
       stepIndex,
@@ -293,17 +268,24 @@ export function parseSshConnectionStep(command, stepIndex = -1) {
 
 function compileFrom(commands, startIndex = 0) {
   const compiled = [];
+  // Evaluate each row separately in the current shell. Quoting keeps comments
+  // and operators inside their row; using the same shell preserves cd/export.
+  // Keep a standalone command unchanged for existing one-command recipes.
+  const localStep = (command) =>
+    commands.length - startIndex === 1
+      ? command
+      : `eval ${shellQuote(command)}`;
 
   for (let index = startIndex; index < commands.length; index++) {
     const command = commands[index];
     if (index === commands.length - 1) {
-      compiled.push(command);
+      compiled.push(localStep(command));
       continue;
     }
 
     const ssh = parseSshConnectionStep(command, index);
     if (!ssh) {
-      compiled.push(command);
+      compiled.push(localStep(command));
       continue;
     }
 

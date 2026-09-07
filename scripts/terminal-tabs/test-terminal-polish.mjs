@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 
 const read = (path) => readFileSync(path, "utf8");
 const page = read("src/zen/terminal/ZenTerminalPage.mjs");
@@ -58,7 +59,8 @@ globalThis.Services = {
   },
 };
 globalThis.ChromeUtils = {
-  importESModule() {
+  importESModule(name) {
+    if (name.endsWith("/Timer.sys.mjs")) return { setTimeout, clearTimeout };
     return {
       Subprocess: {
         async call(options) {
@@ -92,6 +94,8 @@ assert.equal(subprocessCalls[0].disclaim, true);
 assert.deepEqual(subprocessCalls[0].arguments, [
   "-L",
   "zen-terminal",
+  "-f",
+  "/dev/null",
   "resize-window",
   "-t",
   "=zt_11111111-1111-4111-8111-111111111111",
@@ -101,4 +105,157 @@ assert.deepEqual(subprocessCalls[0].arguments, [
   "31",
 ]);
 
-console.log("Terminal polish tests passed.");
+for (const dimensions of [
+  { rows: 0, columns: 80 },
+  { rows: 24, columns: 1 },
+  { rows: 1001, columns: 80 },
+  { rows: 24, columns: 1001 },
+  { rows: 2.5, columns: 80 },
+  { rows: NaN, columns: 80 },
+]) {
+  assert.equal(
+    await manager.resizeTerminalTmuxSession("/mock/tmux", "test", dimensions),
+    false,
+  );
+}
+assert.equal(
+  subprocessCalls.length,
+  1,
+  "invalid dimensions must never invoke a process",
+);
+
+// Execute the actual page functions in a small fake page, rather than just
+// searching source text. No browser or shell is opened by these checks.
+const written = [];
+const statuses = [];
+let helperExists = true;
+const helper = {
+  path: "/Applications/Zen Terminal.app/Contents/MacOS",
+  append(name) {
+    this.path += `/${name}`;
+  },
+  exists() {
+    return helperExists;
+  },
+};
+const context = vm.createContext({
+  Services: {
+    appinfo: { OS: "Darwin" },
+    env: { get: () => "/bin/zsh" },
+    dirsvc: { get: () => ({ parent: { ...helper } }) },
+  },
+  Ci: { nsIFile: {} },
+  terminal: { rows: 24, cols: 80 },
+  getTerminalTmuxSessionName: manager.getTerminalTmuxSessionName,
+  terminalShellScript: manager.terminalShellScript,
+  ZEN_TERMINAL_TMUX_SOCKET: manager.ZEN_TERMINAL_TMUX_SOCKET,
+  TextEncoder,
+  shellReady: true,
+  stopping: false,
+  queuedInputBytes: 0,
+  pendingHighSurrogate: "",
+  inputQueue: Promise.resolve(),
+  activeShellLaunch: { resizable: true },
+  shellProcess: {
+    stdin: {
+      async write(frame) {
+        written.push(frame);
+      },
+    },
+  },
+  setStatus: (text) => statuses.push(text),
+});
+const section = (start, end) =>
+  page.slice(page.indexOf(start), page.indexOf(end));
+vm.runInContext(
+  section("function getShellCommand()", "function fitTerminalToSurface()"),
+  context,
+);
+vm.runInContext(
+  section("function writeFrame(", "surface.addEventListener("),
+  context,
+);
+vm.runInContext(
+  section(
+    "function queueTerminalResize(",
+    "async function flushTmuxResizeQueue(",
+  ),
+  context,
+);
+const launch = vm.runInContext(
+  'getShellLaunch({ tmuxCommand: "/opt/homebrew/bin/tmux", sessionId: "test" })',
+  context,
+);
+assert.equal(
+  launch.command,
+  "/Applications/Zen Terminal.app/Contents/MacOS/zen-terminal-pty",
+);
+assert.deepEqual(Array.from(launch.arguments), [
+  "--rows",
+  "24",
+  "--cols",
+  "80",
+  "--",
+  "/opt/homebrew/bin/tmux",
+  "-L",
+  "zen-terminal",
+  "-f",
+  "/dev/null",
+  "attach-session",
+  "-t",
+  "=zt_test",
+]);
+assert.equal(launch.resizable, true);
+helperExists = false;
+assert.throws(
+  () => vm.runInContext("getShellLaunch()", context),
+  /helper is missing/,
+);
+helperExists = true;
+const fallback = vm.runInContext(
+  'getShellLaunch({ startupCommand: "printf safe" })',
+  context,
+);
+assert.equal(fallback.persistent, false);
+assert.ok(fallback.arguments.includes("-lic"));
+assert.ok(fallback.arguments.some((arg) => arg.includes("printf safe")));
+
+await vm.runInContext(
+  'writeToShell("a"); writeToShell("a"); inputQueue',
+  context,
+);
+assert.deepEqual(
+  written.splice(0),
+  ["I1\na", "I1\na"],
+  "rapid equal keystrokes are not discarded",
+);
+await vm.runInContext('writeToShell("😀é")', context);
+assert.deepEqual(
+  written.splice(0),
+  ["I6\n😀é"],
+  "length is UTF-8 bytes, not JavaScript characters",
+);
+vm.runInContext("queueTerminalResize(31, 101)", context);
+await context.inputQueue;
+assert.deepEqual(
+  written.splice(0),
+  ["R31 101\n"],
+  "resize is a separate helper frame, never shell text",
+);
+await vm.runInContext('writeToShell("x".repeat(4 * 1024 * 1024 + 1))', context);
+assert.equal(written.length, 0, "oversized paste is rejected whole");
+assert.match(statuses.at(-1), /paste too large/);
+const beforeSplitPair = written.length;
+await vm.runInContext(
+  'writeToShell("\\ud83d"); writeToShell("\\ude00"); inputQueue',
+  context,
+);
+assert.equal(written.length, beforeSplitPair + 1);
+assert.equal(written.pop(), "I4\n😀");
+
+context.stopping = true;
+await vm.runInContext('writeToShell("must not reach a closed shell")', context);
+assert.equal(written.length, 0);
+console.log(
+  "Terminal polish tests passed: vendor integrity, native helper launch, resize, Unicode input, repeated keys and whole-paste limits.",
+);

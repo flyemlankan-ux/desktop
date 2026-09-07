@@ -87,6 +87,11 @@ if [[ -e "$APP_PATH/Contents/Library/LaunchServices/org.mozilla.updater" ]]; the
   fail "the privileged Mozilla updater is still packaged"
 fi
 
+[[ -x "$APP_PATH/Contents/MacOS/zen-terminal-pty" ]] ||
+  fail "native terminal helper is missing"
+codesign --verify "$APP_PATH/Contents/MacOS/zen-terminal-pty" ||
+  fail "native terminal helper signature is invalid"
+
 readonly APPLICATION_INI="$APP_PATH/Contents/Resources/application.ini"
 [[ -f "$APPLICATION_INI" ]] || fail "application.ini is missing"
 

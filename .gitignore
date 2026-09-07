@@ -35,3 +35,7 @@ build/signing/private_key.pem
 build/signing/private_key.p12
 
 bloat-dump.log
+
+# Isolated local terminal app/test profiles; never ship user data.
+.terminal-test/
+build/terminal-native/

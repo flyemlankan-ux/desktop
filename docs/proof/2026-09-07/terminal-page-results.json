@@ -1,0 +1,52 @@
+{
+  "scope": "Real production terminal page/xterm/CSS in Chromium with test-only Firefox service adapter; real native PTY helper and isolated tmux. NOT installed Zen/native menu proof.",
+  "date": "2026-09-07T21:57:32.479Z",
+  "checks": [
+    {
+      "name": "Real helper and tmux start the rendered production terminal page",
+      "passed": true,
+      "durationMs": 55
+    },
+    {
+      "name": "Rapid repeated keyboard letters are delivered exactly once",
+      "passed": true,
+      "durationMs": 493
+    },
+    {
+      "name": "Unicode keyboard insertion and terminal paste preserve exact text",
+      "passed": true,
+      "durationMs": 114
+    },
+    {
+      "name": "Actual stty follows visible terminal resizing",
+      "passed": true,
+      "durationMs": 452
+    },
+    {
+      "name": "Large output stays bounded and the last rendered line is present",
+      "passed": true,
+      "durationMs": 540
+    },
+    {
+      "name": "Reload reconnects to the same shell and does not repeat startup",
+      "passed": true,
+      "durationMs": 357
+    },
+    {
+      "name": "Disconnect offers reconnect without deleting the saved shell",
+      "passed": true,
+      "durationMs": 206
+    },
+    {
+      "name": "Missing helper shows a recoverable error and preserves saved work",
+      "passed": true,
+      "durationMs": 205
+    },
+    {
+      "name": "Without tmux, live resizing and real scrollback remain usable and bounded",
+      "passed": true,
+      "durationMs": 1298
+    }
+  ],
+  "pageErrors": []
+}
