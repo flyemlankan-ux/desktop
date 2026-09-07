@@ -53,6 +53,9 @@ try:
   record('personal app-data root is isolated from stock Zen')
  assert js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
  record('plain Terminal setup is available on first launch')
+ security=js('const manager=Services.scriptSecurityManager;const uri=Services.io.newURI("chrome://browser/content/zen-terminal/terminal.xhtml");manager.checkLoadURIWithPrincipal(manager.getSystemPrincipal(),uri,Ci.nsIScriptSecurityManager.STANDARD);try{manager.checkLoadURIWithPrincipal(manager.createContentPrincipal(Services.io.newURI("https://example.invalid"),{}),uri,Ci.nsIScriptSecurityManager.STANDARD);return false;}catch(error){return error.name;}')
+ assert security=='NS_ERROR_DOM_BAD_URI',security
+ record('ordinary websites cannot load the privileged terminal page',security)
  # Open Settings using browser navigation, then drive its native container form.
  js('gBrowser.selectedTab = gBrowser.addTab("about:preferences#containers", {triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
  m.set_context('content')
@@ -76,6 +79,7 @@ try:
  inputs[1].send_keys('printf never')
  m.execute_script('document.querySelector("dialog").getButton("accept").click();')
  wait(lambda:m.find_element('id','zen-terminal-recipe-error').is_displayed(),'invalid recipe feedback')
+ assert m.execute_script('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().every(identity=>identity.name!=="Terminal Proof");')
  record('invalid remote recipe stays in dialog without saving')
  inputs=m.find_elements('css selector','#zen-terminal-recipe-steps input')
  inputs[0].clear();inputs[0].send_keys('printf started >> "$HOME/recipe-count"')
@@ -83,7 +87,12 @@ try:
  # Move second step up and down through real buttons; order must return intact.
  m.find_elements('css selector','#zen-terminal-recipe-steps button')[3].click()
  m.find_elements('css selector','#zen-terminal-recipe-steps button')[1].click()
+ assert m.execute_script('return [...document.querySelectorAll("#zen-terminal-recipe-steps input")].map(input=>input.value);') == ['printf started >> "$HOME/recipe-count"', 'printf second >> "$HOME/step-order"']
  record('ordered step editor supports reordering')
+ # Functional controls must also fit the real native dialog, without sideways scrolling.
+ layout=m.execute_script('return [...document.querySelectorAll("#containerEditorHost, .container-editor, #zen-terminal-container-fields, #zen-terminal-recipe-steps")].map(el=>({name:el.id||el.className,width:el.clientWidth,scroll:el.scrollWidth}));')
+ assert all(item['scroll'] <= item['width'] + 1 for item in layout), layout
+ record('native step editor fits without horizontal scrolling')
  # Real rendered dialog screenshot.
  (proof/(args.label+'-container-dialog.png')).write_bytes(m.screenshot(format='binary'))
  m.execute_script('document.querySelector("dialog").getButton("accept").click();')
@@ -130,6 +139,16 @@ try:
  record('real Mac window resize changes the shell dimensions')
  assert (home/'step-order').read_text()=='second' 
  m.set_context('chrome');screen('terminal')
+ # Duplicating a terminal creates another viewer, not another startup process.
+ js('window.__zenProofOriginalTab=gBrowser.selectedTab;gBrowser.selectedTab=gBrowser.duplicateTab(gBrowser.selectedTab,true);')
+ wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'duplicate terminal viewer')
+ assert js('return gBrowser.selectedTab.getAttribute("zen-terminal-session-id");')==sid
+ js('gBrowser.removeTab(window.__zenProofOriginalTab,{animate:false});')
+ wait(lambda:js('return ![...gBrowser.tabs].includes(window.__zenProofOriginalTab);'),'original viewer closes')
+ time.sleep(.2)
+ assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
+ assert (home/'recipe-count').read_text()=='started'
+ record('closing one duplicated terminal preserves its other viewer and process')
  # Use Zen's own static-label setter, then prove its saved value survives reload/restart.
  js('const tab=gBrowser.selectedTab;tab.zenStaticLabel="My renamed terminal";tab._zenChangeLabelFlag=true;gBrowser._setTabLabel(tab,"My renamed terminal",{_zenChangeLabelFlag:true});delete tab._zenChangeLabelFlag;')
  js('gBrowser.selectedBrowser.reload();')
@@ -137,11 +156,16 @@ try:
  assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
  assert (home/'recipe-count').read_text()=='started'
  record('reload keeps same process and does not rerun startup')
+ # Keep the terminal in the background so its lazy restoration is tested.
+ js('gBrowser.selectedTab=gBrowser.addTab("about:blank",{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
  # Quit the browser normally; relaunch the same isolated profile.
  js("Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit); return true;");m=None;process.wait(timeout=20)
  assert tmux('has-session','-t','='+name).returncode==0
  start()
- tab=wait(lambda:js('const tab=[...gBrowser.tabs].find(t=>t.linkedBrowser.currentURI.spec.includes(arguments[0]));if(tab){gBrowser.selectedTab=tab;return true;}return false;',[sid]),'restored terminal tab')
+ background=wait(lambda:js('const tab=[...gBrowser.tabs].find(t=>{try{return SessionStore.getTabState(t).includes(arguments[0]);}catch(_){return false;}});if(!tab||!tab.hasAttribute("zen-terminal-tab"))return null;return {selected:tab===gBrowser.selectedTab,label:tab.label,pending:tab.hasAttribute("pending")};',[sid]),'background terminal marked before selection')
+ assert background['selected'] is False and background['label']=='My renamed terminal',background
+ record('background restored terminal is marked and renamed before selection',background)
+ js('const tab=[...gBrowser.tabs].find(t=>{try{return SessionStore.getTabState(t).includes(arguments[0]);}catch(_){return false;}});gBrowser.selectedTab=tab;',[sid])
  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'quit/relaunch reconnect')
  assert tmux('display-message','-p','-t',name,'#{pane_pid}').stdout.strip()==pid
  assert (home/'recipe-count').read_text()=='started'

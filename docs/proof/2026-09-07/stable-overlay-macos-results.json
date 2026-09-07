@@ -14,12 +14,22 @@
       "detail": true
     },
     {
+      "test": "ordinary websites cannot load the privileged terminal page",
+      "result": "pass",
+      "detail": "NS_ERROR_DOM_BAD_URI"
+    },
+    {
       "test": "invalid remote recipe stays in dialog without saving",
       "result": "pass",
       "detail": true
     },
     {
       "test": "ordered step editor supports reordering",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native step editor fits without horizontal scrolling",
       "result": "pass",
       "detail": true
     },
@@ -49,7 +59,22 @@
       "detail": true
     },
     {
+      "test": "installed CLI starts inside actual terminal",
+      "result": "pass",
+      "detail": "codex"
+    },
+    {
+      "test": "installed CLI starts inside actual terminal",
+      "result": "pass",
+      "detail": "claude"
+    },
+    {
       "test": "real Mac window resize changes the shell dimensions",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing one duplicated terminal preserves its other viewer and process",
       "result": "pass",
       "detail": true
     },
@@ -57,6 +82,15 @@
       "test": "reload keeps same process and does not rerun startup",
       "result": "pass",
       "detail": true
+    },
+    {
+      "test": "background restored terminal is marked and renamed before selection",
+      "result": "pass",
+      "detail": {
+        "selected": false,
+        "label": "My renamed terminal",
+        "pending": true
+      }
     },
     {
       "test": "quit and relaunch restore same terminal process",
@@ -74,5 +108,5 @@
       "detail": true
     }
   ],
-  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-d925355d/gecko.log"
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-81781acf/gecko.log"
 }
