@@ -7,7 +7,14 @@
   <menuitem data-l10n-id="zen-panel-ui-folder-create" command="cmd_zenOpenFolderCreation" image="chrome://browser/skin/zen-icons/folder.svg" />
   <menuseparator/>
   <menuitem data-l10n-id="zen-panel-ui-new-empty-split" command="cmd_zenNewEmptySplit" image="chrome://browser/skin/zen-icons/split.svg" />
-  <menuitem data-l10n-id="tabs-toolbar-new-tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
+  <menuitem label="Browser Tab" command="cmd_newNavigatorTab" image="chrome://browser/skin/zen-icons/plus.svg" />
+  <menu id="zenCreateBrowserContainerTabMenu"
+    label="Container Tab"
+    image="chrome://browser/skin/zen-icons/container-tab.svg"
+    hide-if-private-browsing="true"
+    hide-if-usercontext-disabled="true">
+    <menupopup onpopupshowing="return gZenTerminalTabs.populateUnifiedContainerMenu(event);" />
+  </menu>
 </menupopup>
 
 <menupopup id="zenWorkspaceMoreActions">

@@ -1,0 +1,12 @@
+diff --git a/browser/components/preferences/dialogs/containers.js b/browser/components/preferences/dialogs/containers.js
+--- a/browser/components/preferences/dialogs/containers.js
++++ b/browser/components/preferences/dialogs/containers.js
+@@ -39,5 +39,7 @@
+   editor.form.addEventListener("input", updateValidity);
+   updateValidity();
+ 
+-  document.addEventListener("dialogaccept", () => editor.commit());
++  document.addEventListener("dialogaccept", event => {
++    if (editor.commit() === false) event.preventDefault();
++  });
+ });

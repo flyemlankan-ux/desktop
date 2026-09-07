@@ -1,0 +1,220 @@
+diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b/browser/components/contextualidentity/content/ContainerEditor.mjs
+--- a/browser/components/contextualidentity/content/ContainerEditor.mjs
++++ b/browser/components/contextualidentity/content/ContainerEditor.mjs
+@@ -1,6 +1,14 @@
+ /* This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++import {
++  getTerminalContainerRecipe,
++  setTerminalContainerRecipe,
++  removeTerminalContainerRecipe,
++} from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
++import { compileTerminalRecipeSteps } from "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs";
++import { destroyTerminalSessionsForUserContextId } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
+ 
+ const HTML_NS = "http://www.w3.org/1999/xhtml";
+ 
+@@ -31,6 +39,11 @@
+     this.host = host;
+     this.document = host.ownerDocument;
+     this.userContextId = userContextId;
++    const saved = getTerminalContainerRecipe(userContextId);
++    this.containerKind = userContextId ? (saved ? "terminal" : "web") : null;
++    this.wasTerminalContainer = Boolean(saved);
++    this.terminalRecipeSteps = saved?.recipe?.steps || [];
++    this.terminalStepIdCounter = 0;
+     this.identity = identity || {
+       name: "",
+       icon: lazy.ContextualIdentityService.containerIcons[0],
+@@ -58,6 +71,7 @@
+     this._iconPicker.classList.add("icon-swatches");
+ 
+     this.form.append(this._name, this._colorPicker, this._iconPicker);
++    this._renderTerminalFields();
+     this.host.append(this.form);
+ 
+     this._name.value = this.identity.name;
+@@ -75,6 +89,132 @@
+       icon => `identity-icon-${icon}`,
+       icon => lazy.ContextualIdentityService.getContainerIconLabel(icon)
+     );
++    this._updateTerminalKind();
++  }
++
++  _element(tag, text = "") {
++    const element = this.document.createElementNS(HTML_NS, tag);
++    if (text) element.textContent = text;
++    return element;
++  }
++
++  _button(text, action, id = "") {
++    const button = this._element("button", text);
++    button.type = "button";
++    if (id) button.id = id;
++    button.addEventListener("click", action);
++    return button;
++  }
++
++  _renderTerminalFields() {
++    const chooser = this._element("fieldset");
++    chooser.id = "zen-container-kind-chooser";
++    chooser.append(this._element("legend", "What kind of container is this?"));
++    this._webButton = this._button("Web", () => this.chooseKind("web"), "zen-container-kind-web");
++    this._terminalButton = this._button("Terminal", () => this.chooseKind("terminal"), "zen-container-kind-terminal");
++    chooser.append(this._webButton, this._terminalButton);
++    this.form.prepend(chooser);
++
++    this._terminalFields = this._element("fieldset");
++    this._terminalFields.id = "zen-terminal-container-fields";
++    this._terminalFields.append(this._element("legend", "Startup steps"));
++    this._terminalFields.append(this._element("p", "Steps run in order. A simple SSH connection moves following steps onto that computer. A failed step stops the following steps."));
++    this._stepList = this._element("div");
++    this._stepList.id = "zen-terminal-recipe-steps";
++    this._stepList.style.maxHeight = "min(45vh, 360px)";
++    this._stepList.style.overflowY = "auto";
++    this._terminalFields.append(this._stepList);
++    this._terminalFields.append(this._button("+ Add step", () => this.addTerminalRecipeStep(), "zen-terminal-add-step"));
++    this._recipeError = this._element("p");
++    this._recipeError.id = "zen-terminal-recipe-error";
++    this._recipeError.setAttribute("role", "alert");
++    this._recipeError.hidden = true;
++    this._terminalFields.append(this._recipeError);
++    this.form.append(this._terminalFields);
++    this.renderTerminalRecipeSteps();
++  }
++
++  _notifyTerminalChange() {
++    this.form.dispatchEvent(new this.document.defaultView.Event("input", { bubbles: true }));
++    this.document.defaultView.requestAnimationFrame(() => this.document.defaultView.resizeDialog?.());
++  }
++
++  chooseKind(kind) {
++    if (!["web", "terminal"].includes(kind)) return;
++    this.containerKind = kind;
++    this._updateTerminalKind();
++    this._notifyTerminalChange();
++  }
++
++  _updateTerminalKind() {
++    this._webButton.setAttribute("aria-pressed", String(this.containerKind == "web"));
++    this._terminalButton.setAttribute("aria-pressed", String(this.containerKind == "terminal"));
++    for (const field of [this._name, this._colorPicker, this._iconPicker]) field.hidden = !this.containerKind;
++    this._terminalFields.hidden = this.containerKind != "terminal";
++  }
++
++  addTerminalRecipeStep() {
++    let id;
++    do { id = `step-${++this.terminalStepIdCounter}`; }
++    while (this.terminalRecipeSteps.some(step => step.id == id));
++    this.terminalRecipeSteps.push({ id, command: "" });
++    this.renderTerminalRecipeSteps();
++    this._lastStepInput?.focus();
++    this._notifyTerminalChange();
++  }
++
++  removeTerminalRecipeStep(id) {
++    this.terminalRecipeSteps = this.terminalRecipeSteps.filter(step => step.id != id);
++    this.renderTerminalRecipeSteps();
++    this._notifyTerminalChange();
++  }
++
++  moveTerminalRecipeStep(id, offset) {
++    const index = this.terminalRecipeSteps.findIndex(step => step.id == id);
++    const target = index + offset;
++    if (index < 0 || target < 0 || target >= this.terminalRecipeSteps.length) return;
++    const [step] = this.terminalRecipeSteps.splice(index, 1);
++    this.terminalRecipeSteps.splice(target, 0, step);
++    this.renderTerminalRecipeSteps();
++    this._notifyTerminalChange();
++  }
++
++  renderTerminalRecipeSteps() {
++    this._stepList.replaceChildren();
++    this._lastStepInput = null;
++    if (!this.terminalRecipeSteps.length) {
++      this._stepList.append(this._element("p", "No startup steps. This opens a plain terminal."));
++      return;
++    }
++    this.terminalRecipeSteps.forEach((step, index) => {
++      const row = this._element("div");
++      row.style.display = "flex";
++      row.style.gap = "6px";
++      row.style.marginBlockEnd = "8px";
++      row.append(this._element("span", `${index + 1}.`));
++      const input = this._element("input");
++      input.type = "text";
++      input.value = step.command;
++      input.style.minWidth = "0";
++      input.style.flex = "1";
++      input.setAttribute("aria-label", `Startup step ${index + 1}`);
++      input.placeholder = index == 0 ? "ssh person@computer" : "claude";
++      input.addEventListener("input", () => { step.command = input.value; });
++      row.append(input);
++      this._lastStepInput = input;
++      const up = this._button("↑", () => this.moveTerminalRecipeStep(step.id, -1));
++      up.setAttribute("aria-label", `Move step ${index + 1} up`);
++      up.disabled = index == 0;
++      const down = this._button("↓", () => this.moveTerminalRecipeStep(step.id, 1));
++      down.setAttribute("aria-label", `Move step ${index + 1} down`);
++      down.disabled = index == this.terminalRecipeSteps.length - 1;
++      row.append(up, down, this._button("Remove", () => this.removeTerminalRecipeStep(step.id)));
++      this._stepList.append(row);
++    });
++  }
++
++  getTerminalRecipeSteps() {
++    return this.terminalRecipeSteps.map(step => ({ id: step.id, command: step.command.trim() })).filter(step => step.command);
+   }
+ 
+   _createPicker(pickerName, l10nId) {
+@@ -112,10 +252,28 @@
+   }
+ 
+   get isValid() {
+-    return !!this._name.value.trim();
++    return !!this.containerKind && !!this._name.value.trim();
+   }
+ 
+   commit() {
++    if (!this.isValid) return false;
++    this._recipeError.hidden = true;
++    if (this.containerKind == "terminal") {
++      try {
++        compileTerminalRecipeSteps(this.getTerminalRecipeSteps());
++      } catch (error) {
++        this._recipeError.textContent = `Check your startup steps: ${error.message}`;
++        this._recipeError.hidden = false;
++        this._notifyTerminalChange();
++        return false;
++      }
++    } else if (this.wasTerminalContainer && !Services.prompt.confirm(
++      this.document.defaultView,
++      "Stop this container's terminals?",
++      "Changing this container to Web will stop its running terminals and their work. This cannot be undone. Cancel to keep them running."
++    )) {
++      return false;
++    }
+     let formData = new FormData(this.form);
+     let containerName = formData.get("name").trim();
+     let color = formData.get("color");
+@@ -136,7 +294,16 @@
+         color
+       );
+     } else {
+-      lazy.ContextualIdentityService.create(containerName, icon, color);
+-    }
++      const identity = lazy.ContextualIdentityService.create(containerName, icon, color);
++      this.userContextId = identity.userContextId;
++    }
++    if (this.containerKind == "terminal") {
++      setTerminalContainerRecipe(this.userContextId, { recipe: { steps: this.getTerminalRecipeSteps() } });
++    } else {
++      if (this.wasTerminalContainer) void destroyTerminalSessionsForUserContextId(this.userContextId);
++      removeTerminalContainerRecipe(this.userContextId);
++    }
++    this.wasTerminalContainer = this.containerKind == "terminal";
++    return true;
+   }
+ }

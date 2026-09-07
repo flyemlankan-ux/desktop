@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/mozilla-firefox/firefox",
+  "tag": "FIREFOX_155_0_1_RELEASE",
+  "files": [
+    {
+      "path": "browser/components/contextualidentity/content/ContainerEditor.mjs",
+      "git_blob_sha": "7d789c2a1d9b12e875ed0fa638036dd85d8827b4",
+      "sha256": "a8a57d0536c7e6f7cde110aed12c0bfcc5576ea3cb362b4a4c6d84e9c62d8f4b"
+    },
+    {
+      "path": "browser/components/contextualidentity/content/ContainerCreationPanel.mjs",
+      "git_blob_sha": "e04d7a4738192703e8f7f8555f50aaf0a619a5bd",
+      "sha256": "0a69b28d558389f2fcac0d797237080fdd8a66f1eea0f43094fe1b29030e3865"
+    },
+    {
+      "path": "browser/components/preferences/config/containers.mjs",
+      "git_blob_sha": "e476aeabd1554b4d04294e1600686c00df9fefcb",
+      "sha256": "dfe8baaf1bc65eb942bf62e3c64c3d0a5605d7c13f3982ed51e5e8f0be95dfe4"
+    },
+    {
+      "path": "browser/components/preferences/dialogs/containers.js",
+      "git_blob_sha": "52d38c8bddb53ff113013357f714d43381184502",
+      "sha256": "bf30b1e5c715f938e9dbe9dc6c967caf2175036e837cda734e4f8c6049071879"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "project": "Zen Terminal",
+  "slug": "zen-terminal",
+  "host_lens": "Standalone macOS Zen Browser fork",
+  "mode": "rebuild",
+  "project_depth": "serious connected workflow",
+  "coverage_matrix_required": true,
+  "existing_project_path": "/Users/ar/zen-terminal-research/desktop",
+  "created_at": "2026-09-07T21:32:14Z",
+  "updated_at": "2026-09-07T22:15:20Z",
+  "checkpoint_every": 10,
+  "completed_pairs": 0,
+  "last_checkpoint_at_pair": 0,
+  "project_root": "/Users/ar/zen-terminal-research/desktop",
+  "docs_dir": "/Users/ar/zen-terminal-research/desktop-stable/docs",
+  "cd_path": "/Users/ar/zen-terminal-research/desktop",
+  "qna_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a.md",
+  "structural_gap_register_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-structural-gaps.md",
+  "ready_for_build": true,
+  "ready_for_build_marked_at": "2026-09-07T21:34:14Z",
+  "ready_for_build_reason": "Recovered original handoffs and actual code; founder authorized autonomous completion and self-testing September 7. Specific rules and negative tests mapped; standalone Mac host.",
+  "artifact_chain": {
+    "initialized_at": "2026-09-07T21:32:14Z",
+    "artifacts": {
+      "plan": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-plan.md",
+      "contract": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-contract.md",
+      "index": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-index.md",
+      "backtests": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-backtests.md"
+    },
+    "source_qna_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a.md"
+  },
+  "coverage_matrix_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-coverage-matrix.md",
+  "coverage_matrix_initialized_at": "2026-09-07T21:32:14Z",
+  "build_run": {
+    "started_at": "2026-09-07T21:34:14Z",
+    "ledger_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-build-ledger.md",
+    "checklist_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-build-checklist.md",
+    "completed_steps": 5,
+    "last_contract_ref": "C13",
+    "last_index_tag": "ZT-MIGRATE",
+    "pending_change_mode": null,
+    "pending_change_reason": null,
+    "pending_change_at": null,
+    "needs_artifact_refresh": false,
+    "last_clarification_number": 0,
+    "last_clarification_reason": "R13 direct founder instruction supplies complete personal migration intent; no new question needed.",
+    "artifact_refresh_completed_at": "2026-09-07T21:51:57Z",
+    "updated_at": "2026-09-07T22:15:20Z"
+  },
+  "change_request": {
+    "count": 1,
+    "change_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-change-requests.md",
+    "last_mode": "clarification-extension",
+    "last_reason": "Founder explicitly requires private copying of all existing Zen profiles/logins/session data into personal installation; distributable remains blank, stock Zen remains untouched. No unanswered product decision: copy to isolated profile root, validate compatibility and fail safely on active source.",
+    "last_recorded_at": "2026-09-07T21:50:04Z",
+    "impacted_artifacts": [
+      "plan",
+      "contract",
+      "index",
+      "backtests"
+    ],
+    "impacted_index_tags": [
+      "ZT-MIGRATE"
+    ],
+    "requires_qna_extension": false,
+    "requires_artifact_refresh": false,
+    "last_completed_at": "2026-09-07T21:51:57Z"
+  },
+  "clarification": {
+    "status": "resolved",
+    "mode": "clarification-extension",
+    "reason": "Founder explicitly requires private copying of all existing Zen profiles/logins/session data into personal installation; distributable remains blank, stock Zen remains untouched. No unanswered product decision: copy to isolated profile root, validate compatibility and fail safely on active source.",
+    "opened_at": "2026-09-07T21:50:04Z",
+    "last_updated_at": "2026-09-07T21:51:57Z",
+    "entries_added": 1,
+    "requires_single_question": true,
+    "artifact_refresh_required": false,
+    "source_entry": "R13: direct founder instruction appended to canonical Q&A recovery file; no invented question and no increment to completed_pairs",
+    "last_refresh_marked_at": "2026-09-07T21:51:57Z",
+    "last_clarification_number": 0,
+    "resolved_at": "2026-09-07T21:51:57Z",
+    "resolution_note": "R13 is the user supplied change, fully mapped to C13 and B13. No invented interview exchange."
+  },
+  "artifact_refresh": {
+    "required": false,
+    "refresh_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-artifact-refresh.md",
+    "last_reason": "R13 direct founder instruction supplies complete personal migration intent; no new question needed.",
+    "last_clarification_number": 0,
+    "last_refresh_marked_at": "2026-09-07T21:51:57Z",
+    "impacted_artifacts": [
+      "plan",
+      "contract",
+      "index",
+      "backtests"
+    ],
+    "impacted_index_tags": [
+      "ZT-MIGRATE"
+    ],
+    "contradiction_review_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md",
+    "contradiction_status": "clean",
+    "completed_at": "2026-09-07T21:51:57Z",
+    "completion_note": "R13 is the user supplied change, fully mapped to C13 and B13. No invented interview exchange.",
+    "completed_artifacts": [
+      "plan",
+      "contract",
+      "index",
+      "backtests"
+    ],
+    "completed_index_tags": [
+      "ZT-MIGRATE"
+    ],
+    "artifact_mtimes_verified": {
+      "plan": "2026-09-07T21:51:57Z",
+      "contract": "2026-09-07T21:51:57Z",
+      "index": "2026-09-07T21:51:57Z",
+      "backtests": "2026-09-07T21:51:57Z"
+    },
+    "artifact_notes": {
+      "plan": "Added isolated personal copy after packaged app proof",
+      "contract": "C13 forbids shared profiles, overwrites, active copying and downgrade",
+      "index": "ZT-MIGRATE added with explicit proof obligations",
+      "backtests": "B13 synthetic failure cases and private hash verification"
+    }
+  }
+}

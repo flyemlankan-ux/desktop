@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Terminal</title>
+    <link
+      rel="stylesheet"
+      href="chrome://browser/content/zen-terminal/vendor/xterm.css"
+    />
+    <link
+      rel="stylesheet"
+      href="chrome://browser/content/zen-styles/zen-terminal-page.css"
+    />
+    <script src="chrome://browser/content/zen-terminal/vendor/xterm.js"></script>
+    <script src="chrome://browser/content/zen-terminal/vendor/addon-fit.js"></script>
+    <script
+      type="module"
+      src="chrome://browser/content/zen-terminal/ZenTerminalPage.mjs"
+    ></script>
+  </head>
+  <body>
+    <main id="zen-terminal-page">
+      <section id="zen-terminal-surface" aria-label="Terminal" tabindex="0">
+        <div id="zen-terminal-output"></div>
+        <footer id="zen-terminal-status">
+          <span id="zen-terminal-prompt">…</span>
+          <span id="zen-terminal-status-text" role="status" aria-live="polite"
+            >starting shell</span
+          >
+          <button id="zen-terminal-reconnect" type="button" hidden="hidden">
+            Reconnect
+          </button>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+diff --git a/browser/components/preferences/config/containers.mjs b/browser/components/preferences/config/containers.mjs
+--- a/browser/components/preferences/config/containers.mjs
++++ b/browser/components/preferences/config/containers.mjs
+@@ -4,6 +4,9 @@
+ 
+ import { Preferences } from "chrome://global/content/preferences/Preferences.mjs";
+ import { SettingGroupManager } from "chrome://browser/content/preferences/config/SettingGroupManager.mjs";
++
++import { getTerminalContainerRecipe, removeTerminalContainerRecipe } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
++import { destroyTerminalSessionsForUserContextId } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
+ 
+ const lazy = {};
+ ChromeUtils.defineESModuleGetters(lazy, {
+@@ -39,6 +42,11 @@
+ }
+ 
+ async function removeContainer(userContextId) {
++  if (getTerminalContainerRecipe(userContextId) && !Services.prompt.confirm(
++    window,
++    "Delete this terminal container?",
++    "Deleting this container will stop its running terminals, including saved background sessions. This cannot be undone. Cancel to keep them running."
++  )) return;
+   let count = lazy.ContextualIdentityService.countContainerTabs(userContextId);
+   if (count > 0) {
+     let [title, message, okButton, cancelButton] =
+@@ -69,7 +77,10 @@
+     }
+     await lazy.ContextualIdentityService.closeContainerTabs(userContextId);
+   }
++  // The manager records cleanup immediately, before these settings disappear.
++  void destroyTerminalSessionsForUserContextId(userContextId);
+   lazy.ContextualIdentityService.remove(userContextId);
++  removeTerminalContainerRecipe(userContextId);
+ }
+ 
+ Preferences.addSetting(

@@ -1,5 +1,4 @@
 diff --git a/browser/components/contextualidentity/content/ContainerCreationPanel.mjs b/browser/components/contextualidentity/content/ContainerCreationPanel.mjs
-index e04d7a4738192703e8f7f8555f50aaf0a619a5bd..b86e4853c421856f84ad8e017062f0d611b88aad 100644
 --- a/browser/components/contextualidentity/content/ContainerCreationPanel.mjs
 +++ b/browser/components/contextualidentity/content/ContainerCreationPanel.mjs
 @@ -4,7 +4,7 @@
@@ -11,7 +10,17 @@ index e04d7a4738192703e8f7f8555f50aaf0a619a5bd..b86e4853c421856f84ad8e017062f0d6
  const ANCHOR_PINNED_CLASS = "container-anchor-pinned";
  
  const lazy = {};
-@@ -95,6 +95,6 @@ export const ContainerCreationPanel = {
+@@ -69,8 +69,7 @@
+     updateValidity();
+ 
+     let onCreate = () => {
+-      editor.commit();
+-      panel.hidePopup();
++      if (editor.commit() !== false) panel.hidePopup();
+     };
+     let onCancel = () => panel.hidePopup();
+     createButton.addEventListener("click", onCreate);
+@@ -95,6 +94,6 @@
        anchor.hidden = false;
      }
  
