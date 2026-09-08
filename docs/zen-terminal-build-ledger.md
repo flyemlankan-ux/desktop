@@ -127,3 +127,111 @@ Cloud34169782381 completed the full Firefox155/Zen build, then packaging failed 
 
 ### Test-only isolation audit
 Removed inherited XRE profile/restart and selectable-profile-reset environment variables before launching synthetic tests, since Firefox reads these before -profile. Main Mac test now checks the automation process ID and actual profile directory against its own child and disposable directory. All25 native checks passed again. Profile-selection script has the same pre-launch protection; its actual final-app run remains pending. No production source change or build restart needed. Active source build34183056904 uses19f7539.
+
+
+## September 8 recovered build: inherited helper destination fixed
+
+C10 / ZT-RELEASE. Cloud34183056904 (source19f7539) completed the browser compile
+and uploaded the153MB raw-app recovery download, then failed the native helper
+location check. The helper was compiled, but under
+`Contents/Resources/browser/zen-terminal-pty`, not `Contents/MacOS`.
+This was not an assembly-order race. Firefox's `browser/moz.build` exports
+`DIST_SUBDIR = "browser"`; our `browser/base -> zen -> terminal` build inherited
+it. My previous focused test supplied `dist/bin` directly and therefore missed
+the real inherited setting. Its passing result did not prove full integration.
+
+The terminal build now clears `DIST_SUBDIR` on Darwin, following pristine
+Firefox155 `browser/app/moz.build`. The regression executes the exact pinned
+upstream inherited-setting and destination-computation excerpts, then executes
+our declaration. It uses the resulting directory when compiling the disposable
+helper for the real upstream assembler, rather than inventing a staging path.
+Before the production correction this test reproduced both the wrong destination
+and missing main-app helper. Afterward all4 packaging tests passed, including two
+bundle assemblies;10 PTY tests and wiring checks also passed. A negative control
+still reproduces `dist/bin/browser` when the reset is removed.
+
+Files changed in this slice: `src/zen/terminal/moz.build`,
+`scripts/terminal-tabs/test-terminal-build-packaging.py`, this ledger. No commit
+or full browser rebuild was performed in this slice. No personal data touched.
+The recovered cloud helper is a regular0755 ARM64 executable, links only Apple's
+libSystem, and can be moved into the correct location before re-signing and
+full app testing. Recovery-helper SHA256:
+`7c388b05baf8edb1514b1f55633f8d93d1647e59d98bc8e75eeacb65ac59fbb9`.
+
+Next: parent owns recovery packaging and final native acceptance; these focused
+checks do not substitute for those proofs. Recommended reasoning: high; proof:
+whole-app signature/asset inspection plus actual native app behavior. Scope stays
+Zen plus terminal; this slice adds no features or migration behavior.
+
+
+## September 8 — recovered build packed, installed and proved; personal copy waits
+
+Source receipt for C10/C11/C13: the agreed result is a separate blank app plus a
+private copy of the founder's complete Zen setup. The full cloud compile19f7539
+was saved successfully but needed real packaging. Build rule: never touch the
+original Zen, never treat a merely signed raw app as native acceptance, and never
+copy active profiles.
+
+Recovered8406 files were verified against cloud run34183056904's saved archive.
+The first recovered attempt exposed a real startup crash: Firefox's sandbox
+setup tried to find the absent cloud build directory. Independent inspection
+matched crash line2395. Removing plist keys alone is NOT sufficient: Firefox's
+packaged-build check requires the genuine GRE resource archive. Pinned Firefox
+155 mozpack now produces actual GRE+browser archives, removes the two upstream
+developer-only plist keys and self-deleting cache marker, omits two exact fake
+test-plugin directories, preserves43 native binaries before signing, and writes
+provenance. Original archive and extracted input remain byte-identical. This is
+not the complete mach package/multilocale release pipeline; retained native
+build utilities and development signing are explicitly disclosed in provenance.
+No sandbox permission was weakened and no dummy archive was used.
+
+The source build also clears inherited DIST_SUBDIR so future full builds put the
+helper in the correct main-app location. The independent regression reproduces
+the original wrong-folder failure before that fix.
+
+The inspector now requires both real archives with valid CRCs, engine resource
+registration,12 exact terminal assets, exact native integration files, no build
+machine plist keys, no self-deleting cache marker, isolated identity/profile,
+no updater/private profile files, and whole-app strict signature. Eight targeted
+verifier tests pass, including optimized Python rejecting invalid inputs.
+Nine recovery tests pass. Pinned tool fetching was reproduced independently with
+28 verified public source files. No uncompressed-layout acceptance remains.
+
+Native browser proof initially clicked the form before Firefox's dialog-ready
+promise settled. The test now awaits actual readiness plus layout frames, not a
+forced click or arbitrary delay.26 native checks pass on the finished app AND
+again on `/Applications/Zen Terminal.app`, installed directly from the inspected
+DMG with file-by-file equality and atomic no-overwrite publication. Strict app
+signature still passes after launch, quit, restart and crash tests. Ten rendered
+page checks and10 cloud-compiled-helper process checks pass. CLI checks launch
+Codex/Claude version commands only, not authenticated or paid agent work.
+
+The final-path synthetic profile test exposed another real bug: Python emitted
+`Name = value`, but Firefox's nsINIParser preserves those spaces. Firefox ignored
+the intended profile and created a blank replacement. The copier now writes
+both INIs without delimiter spaces.26 synthetic safety tests pass; a byte-level
+regression fails with the old writer. Actual ordinary launch at the final app
+path now chooses the intended copied profile, retains all three synthetic
+profiles, and leaves the synthetic source unchanged. Target install hash:
+`CA24B52DD8BD79BC`. This hash applies to this final installed path on this Mac.
+
+Evidence: docs/proof/2026-09-07/packaged-macos-results.json,
+installed-app.json, installed-profile-selection.json,
+recovered-package-provenance.json, packaged-dmg-inspection.txt and source audit.
+Historical failures are retained and explicitly labelled, not promoted to passes.
+
+ZT-IO/LIFE/RECIPE/UI/RELEASE are proved for this private development distribution.
+ZT-MIGRATE remains blocked on original Zen closing normally (PID699 last check).
+No personal data has been copied. Destination `~/Library/Application Support/zen-terminal`
+still does not exist; all app tests used explicitly isolated synthetic storage.
+Do not launch the new app with ordinary personal settings before the copy unless
+prepared to handle the copier's intentional no-overwrite refusal.
+
+Next handoff: high reasoning, full private hash/source-preservation proof and
+normal launch after copying with source engine152.0.5,target155.0.1 and the saved
+install hash. Recheck source closure, versions and destination absence first.
+Never quit the founder's original Zen automatically. Some sites may require
+reauthentication. No Apple notarization or automatic update service is claimed;
+manual tested browser rebuilds remain necessary for security updates.
+Scope remains normal Zen plus terminal tabs; no Core integration or agent
+permission bypass was added.

@@ -212,13 +212,13 @@ def main():
                 (profile / "times.json").write_text('{"created":1,"synthetic":true}\n')
                 if relative != "unused":
                     with (profile / "compatibility.ini").open("w") as stream:
-                        compatibility.write(stream)
+                        compatibility.write(stream, space_around_delimiters=False)
                     (profile / ".parentlock").touch()
                     value = marker if relative == "intended" else "synthetic-other-profile"
                     (profile / "prefs.js").write_text(f'user_pref("zen.terminal.profileSelectionTestMarker", {json.dumps(value)});\n')
             source_ini["Install0000000000000000"] = {"Default": "Profiles/intended", "Locked": "1"}
             with (source / "profiles.ini").open("w") as stream:
-                source_ini.write(stream)
+                source_ini.write(stream, space_around_delimiters=False)
             source_hashes = {p.relative_to(source).as_posix(): migration.digest(p) for p in source.rglob("*") if p.is_file()}
             real_run = subprocess.run
 
@@ -243,7 +243,7 @@ def main():
             assert result["profile_selection"] == "dedicated-install"
             report["checks"].append("production copier generated the final installation mapping with real locks and open-file checks")
             second = launch()
-            assert Path(second["profile"]).resolve() == data / "Profiles/intended"
+            assert Path(second["profile"]).resolve() == data / "Profiles/intended", json.dumps({"actual":second,"install_hash":install_hash,"copier":result,"profiles_ini":(data / "profiles.ini").read_text(),"installs_ini":(data / "installs.ini").read_text()})
             assert js('return Services.prefs.getStringPref("zen.terminal.profileSelectionTestMarker", "missing");') == marker
             registered = js("const service=Cc['@mozilla.org/toolkit/profile-service;1'].getService(Ci.nsIToolkitProfileService);const names=[];const e=service.profiles;while(e.hasMoreElements()){names.push(e.getNext().QueryInterface(Ci.nsIToolkitProfile).name);}return names;")
             assert sorted(registered) == sorted(names.values()), "Some copied profiles were lost or a blank replacement was created"

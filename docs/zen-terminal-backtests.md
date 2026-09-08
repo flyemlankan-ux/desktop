@@ -67,3 +67,14 @@ Synthetic multi-profile fixture preserves names, default selection, nested profi
 - Update note: B13 synthetic failure cases and private hash verification
 - Impacted index tags: `ZT-MIGRATE`
 - Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`
+
+
+## September 8 current acceptance
+
+26 checks pass on the actual installed development package;10 rendered-page
+checks pass. Both real resource archives,12 exact terminal assets, no private
+profile data, correct isolated identity, no updater, strict signatures and
+file-by-file install equality pass.26 synthetic copy tests plus actual final-path
+ordinary profile selection pass. The INI delimiter-space regression proves the
+old bad writer is rejected. Personal copy itself is still unperformed: original
+Zen is open. Evidence and limitations: `proof/2026-09-07/README.md`.

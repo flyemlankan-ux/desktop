@@ -1,0 +1,9 @@
+{
+  "result": "pass",
+  "installed_app": "/Applications/Zen Terminal.app",
+  "source_dmg_sha256": "1aa6058600bf326180ed6e867d5afd808f6c6b675348eda01eaba1d5ceaae8d1",
+  "disk_image_bytes_preserved": true,
+  "strict_signature": true,
+  "stock_zen_modified": false,
+  "personal_profiles_copied": false
+}

@@ -7,7 +7,7 @@
   "coverage_matrix_required": true,
   "existing_project_path": "/Users/ar/zen-terminal-research/desktop-stable",
   "created_at": "2026-09-07T21:32:14Z",
-  "updated_at": "2026-09-07T22:15:20Z",
+  "updated_at": "2026-09-08T10:19:27.128492+00:00",
   "checkpoint_every": 10,
   "completed_pairs": 0,
   "last_checkpoint_at_pair": 0,
@@ -35,7 +35,7 @@
     "started_at": "2026-09-07T21:34:14Z",
     "ledger_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-build-ledger.md",
     "checklist_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-build-checklist.md",
-    "completed_steps": 5,
+    "completed_steps": 7,
     "last_contract_ref": "C13",
     "last_index_tag": "ZT-MIGRATE",
     "pending_change_mode": null,
@@ -45,7 +45,8 @@
     "last_clarification_number": 0,
     "last_clarification_reason": "R13 direct founder instruction supplies complete personal migration intent; no new question needed.",
     "artifact_refresh_completed_at": "2026-09-07T21:51:57Z",
-    "updated_at": "2026-09-07T22:15:20Z"
+    "updated_at": "2026-09-07T22:15:20Z",
+    "remaining_work": "Original Zen must close normally before private profile copy; installed private development app and synthetic final-path profile selection proved."
   },
   "change_request": {
     "count": 1,

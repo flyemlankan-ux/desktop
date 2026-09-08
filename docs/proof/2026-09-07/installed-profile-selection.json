@@ -1,0 +1,17 @@
+{
+  "app": "/Applications/Zen Terminal.app",
+  "engine": "155.0.1",
+  "test_data": "synthetic only; no personal profile access",
+  "profile_selection_flags": "none on either launch",
+  "isolation": "HOME plus explicit MOZ_APP_DATA and MOZ_LOCAL_APP_DATA",
+  "copy_guard_difference": "only global Zen process-name rejection bypassed; real lsof and profile locks retained",
+  "checks": [
+    "blank ordinary launch stayed inside synthetic profile storage",
+    "production copier generated the final installation mapping with real locks and open-file checks",
+    "ordinary relaunch selected the intended copied profile despite a different source LastAppDir",
+    "all three copied profiles remained registered, including the unused profile",
+    "synthetic source bytes remained unchanged"
+  ],
+  "target_install_hash": "CA24B52DD8BD79BC",
+  "result": "pass"
+}

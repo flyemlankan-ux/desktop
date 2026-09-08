@@ -77,8 +77,12 @@ try:
  add_button=m.execute_script('return arguments[0].shadowRoot?.querySelector("button") || arguments[0];',script_args=[add_button])
  add_button.click()
  frame=wait(lambda:m.execute_script('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/containers.xhtml");'),'native container dialog')
+ # The frame exists before Firefox finishes localization and dialog sizing.
+ # Wait for its real readiness promise, not an arbitrary delay or forced click.
+ m.execute_async_script('const done=arguments[arguments.length-1];arguments[0]._dialogReady.then(()=>done(true));',script_args=[frame])
  m.switch_to_frame(frame)
  wait(lambda:m.find_element('id','zen-container-kind-terminal'),'kind chooser').click()
+ m.execute_async_script('const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));')
  name_input=wait(lambda:m.execute_script("return document.querySelector('moz-input-text[name=name]')?.shadowRoot?.querySelector('input');"),'native name input')
  name_input.send_keys('Terminal Proof')
  m.find_element('id','zen-terminal-add-step').click()

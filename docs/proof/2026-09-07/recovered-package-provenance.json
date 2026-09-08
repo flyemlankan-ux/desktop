@@ -1,0 +1,162 @@
+{
+  "createdAtUtc": "2026-09-08T10:09:46.984147+00:00",
+  "scope": "Recovered cloud-compiled development app with real Firefox mozpack omnijars; NOT full upstream mach package and NOT Apple-notarized.",
+  "limitations": [
+    "Native developer extras outside the two explicitly excluded fake plugins remain; this is not full upstream package-manifest selection.",
+    "Disk image is a plain development image with an Applications shortcut, not upstream installer styling.",
+    "Signing and archive checks do not prove browser behavior; separate actual-app testing is required."
+  ],
+  "originalArchive": {
+    "path": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/recovery-34183056904/compiled-app.tar.gz",
+    "sha256": "ddc9a641b2fd5912097cd32ce51f278ecb849858101be556b07f3327755bac80"
+  },
+  "originalApp": {
+    "path": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/recovery-34183056904/extracted/Zen Terminal.app",
+    "fileCount": 8406,
+    "matchesArchive": true,
+    "unchangedAfterRecovery": true
+  },
+  "identity": {
+    "bundleIdentifier": "app.zen-browser.zen-terminal",
+    "executable": "zen-terminal",
+    "profile": "zen-terminal",
+    "engine": "155.0.1",
+    "sourceRevision": "19f7539e30b9fc8663934e132731ac849214f240",
+    "buildId": "20260908031843",
+    "version": "155.0.1-terminal-dev-20260908031843"
+  },
+  "reviewedDevelopmentPackagingCleanup": {
+    "removedDevelopmentCacheMarkers": [
+      {
+        "path": "Contents/Resources/browser/.purgecaches",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    ],
+    "removedDeveloperPathPlistKeys": [
+      {
+        "path": "Contents/Info.plist",
+        "removedKeys": [
+          "MozillaDeveloperObjPath",
+          "MozillaDeveloperRepoPath"
+        ],
+        "beforeSha256": "84df4e94b65cd28a00c85dc3ef63b4e012f5622504b0ff5adb9bf3493ad900b6",
+        "afterSha256": "c0e9381d60757aabe64807be7ac55c5547ed359f180b28496618cc44651763ad",
+        "otherValuesPreserved": true
+      },
+      {
+        "path": "Contents/MacOS/gpu-helper.app/Contents/Info.plist",
+        "removedKeys": [
+          "MozillaDeveloperObjPath",
+          "MozillaDeveloperRepoPath"
+        ],
+        "beforeSha256": "e3e531b105d0d7112437118ff2270dd4c4388f3e2429f6587d051b08bf68e41c",
+        "afterSha256": "21ff793eb021ebb8207c4d857baa360d49f7017fbb383f240c5320aa45af17d9",
+        "otherValuesPreserved": true
+      },
+      {
+        "path": "Contents/MacOS/media-plugin-helper.app/Contents/Info.plist",
+        "removedKeys": [
+          "MozillaDeveloperObjPath",
+          "MozillaDeveloperRepoPath"
+        ],
+        "beforeSha256": "2bda9af02e07dcab020fc4f7eaf0e1bf27b0a5a04d528ce0a331b13bc6716ac7",
+        "afterSha256": "d9b8ac50317eff5469b9633b8c76a52d271a537f765053c2fcd85aca3238d713",
+        "otherValuesPreserved": true
+      },
+      {
+        "path": "Contents/MacOS/plugin-container.app/Contents/Info.plist",
+        "removedKeys": [
+          "MozillaDeveloperObjPath",
+          "MozillaDeveloperRepoPath"
+        ],
+        "beforeSha256": "236a5a263684a6d7ec4e2f1047ef7ce4437c7b68df2be3b0eabd4cdc697c70c6",
+        "afterSha256": "5cbe838fd159fc5239ff4eab4af3b92d1b2ea2a1991d8f89209122aca5364928",
+        "otherValuesPreserved": true
+      }
+    ],
+    "removedTestOnlyPlugins": [
+      {
+        "path": "Contents/Resources/gmp-fake",
+        "filesSha256": {
+          "1.0/.mkdir.done": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "1.0/libfake.dylib": "cb125f3316ed9521d63cfe210b233c5781542ff32261509394291b5e615cbe0f",
+          "1.0/manifest.json": "13a6170e26899d5499e4f2c0523793354a25c86fd6d8f5c7016e625c01b6f6a0"
+        }
+      },
+      {
+        "path": "Contents/Resources/gmp-fakeopenh264",
+        "filesSha256": {
+          "1.0/.mkdir.done": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "1.0/fakeopenh264.info": "5bd1560668b9bba11c5512a723d02f8291147856faa8c40b5d98e4aaa4a53427",
+          "1.0/libfakeopenh264.dylib": "1ef92da3a800171f9d130407ff3ae3fa169b7a37665b3b1235f975ed4eaf375d"
+        }
+      }
+    ],
+    "testPluginExclusionPolicySha256": "3941302d7f49536c8e6c6cb310703fa02a730b2446d0708783a692ca74e83f5b"
+  },
+  "upstreamResourcePacking": {
+    "tool": "Firefox155.0.1 mozpack SimplePackager + OmniJarFormatter (default resource rules)",
+    "pinnedToolReceiptSha256": "a6a4ec55a99638197d7048e187e04b84ddf8daabd53b1bb42ccc0f55d253dce7",
+    "omnijars": {
+      "Contents/Resources/omni.ja": {
+        "sha256": "765066e94fa1a2b099a6535dd1a0b78b02fbc546b759b2477c0bcf52b5c8b495",
+        "entries": 2525
+      },
+      "Contents/Resources/browser/omni.ja": {
+        "sha256": "7ba94f2765ad58424405bf08e94d8c30a27d547b7ab7abf5db610c05a7c8ac11",
+        "entries": 5746
+      }
+    },
+    "nativeBinaryFilesByteVerifiedBeforeSigning": 43
+  },
+  "helper": {
+    "originalRelativePath": "Contents/Resources/browser/zen-terminal-pty",
+    "newRelativePath": "Contents/MacOS/zen-terminal-pty",
+    "originalSha256": "7c388b05baf8edb1514b1f55633f8d93d1647e59d98bc8e75eeacb65ac59fbb9",
+    "afterRelocationSha256": "7c388b05baf8edb1514b1f55633f8d93d1647e59d98bc8e75eeacb65ac59fbb9",
+    "afterDevelopmentSigningSha256": "46be61a99b63da6ad208798163766ebe2ab85636f25af583d1b0ce9a2ff3491d",
+    "relocationPreservedBytes": true
+  },
+  "developmentSignature": {
+    "wholeBundleStrictVerification": true,
+    "entitlementNames": [],
+    "signatureModifiedFiles": [
+      "Contents/Frameworks/ChannelPrefs.framework/ChannelPrefs",
+      "Contents/Frameworks/ChannelPrefs.framework/_CodeSignature/CodeResources",
+      "Contents/MacOS/XUL",
+      "Contents/MacOS/certutil",
+      "Contents/MacOS/gpu-helper.app/Contents/MacOS/Zen Terminal GPU Helper",
+      "Contents/MacOS/gpu-helper.app/Contents/_CodeSignature/CodeResources",
+      "Contents/MacOS/libEGL.dylib",
+      "Contents/MacOS/libGLESv2.dylib",
+      "Contents/MacOS/libfreebl3.dylib",
+      "Contents/MacOS/libgkcodecs.dylib",
+      "Contents/MacOS/liblgpllibs.dylib",
+      "Contents/MacOS/libmozavcodec.dylib",
+      "Contents/MacOS/libmozavutil.dylib",
+      "Contents/MacOS/libmozglue.dylib",
+      "Contents/MacOS/libmozinference.dylib",
+      "Contents/MacOS/libnss3.dylib",
+      "Contents/MacOS/libonnxruntime.dylib",
+      "Contents/MacOS/libsoftokn3.dylib",
+      "Contents/MacOS/media-plugin-helper.app/Contents/MacOS/Zen Terminal Media Plugin Helper",
+      "Contents/MacOS/media-plugin-helper.app/Contents/_CodeSignature/CodeResources",
+      "Contents/MacOS/nmhproxy",
+      "Contents/MacOS/pingsender",
+      "Contents/MacOS/pk12util",
+      "Contents/MacOS/plugin-container.app/Contents/MacOS/plugin-container",
+      "Contents/MacOS/plugin-container.app/Contents/_CodeSignature/CodeResources",
+      "Contents/MacOS/xpcshell",
+      "Contents/MacOS/zen-terminal",
+      "Contents/MacOS/zen-terminal-pty",
+      "Contents/_CodeSignature/CodeResources"
+    ],
+    "onlyMachOOrSignatureMetadataChanged": true
+  },
+  "diskImage": {
+    "name": "Zen-Terminal-recovered-development.dmg",
+    "sha256": "1aa6058600bf326180ed6e867d5afd808f6c6b675348eda01eaba1d5ceaae8d1",
+    "verified": true
+  },
+  "installed": false
+}

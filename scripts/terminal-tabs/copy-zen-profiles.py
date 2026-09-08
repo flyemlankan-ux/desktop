@@ -329,12 +329,12 @@ def copy_setup(source_root, destination_root, source_engine_version, target_engi
                 install_output.optionxform = str
                 install_output[target_install_hash] = install_mapping
                 with (stage / "installs.ini").open("x", encoding="utf-8") as stream:
-                    install_output.write(stream)
+                    install_output.write(stream, space_around_delimiters=False)
                     stream.flush()
                     os.fsync(stream.fileno())
                 (stage / "installs.ini").chmod(0o600)
             with (stage / "profiles.ini").open("x", encoding="utf-8") as stream:
-                output.write(stream)
+                output.write(stream, space_around_delimiters=False)
                 stream.flush()
                 os.fsync(stream.fileno())
             (stage / "profiles.ini").chmod(0o600)

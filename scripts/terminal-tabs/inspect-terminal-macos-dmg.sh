@@ -116,46 +116,7 @@ if grep -aFq \
 fi
 
 # Verify the shipped terminal assets, not merely the app's name.
-python3 - "$APP_PATH" <<'VERIFY'
-from pathlib import Path
-import configparser, io, json, re, struct, sys, zipfile
-app = Path(sys.argv[1])
-root = Path.cwd()
-config = configparser.ConfigParser()
-config.read(app / "Contents/Resources/platform.ini")
-expected = json.loads((root / "surfer.json").read_text())["version"]["version"]
-assert config["Build"]["Milestone"] == expected, "Packaged Firefox engine does not match source"
-data = (app / "Contents/Resources/browser/omni.ja").read_bytes()
-if data[4:8] == b"PK\x01\x02":
-    # Mozilla places the ZIP directory first. Normalize only an in-memory copy.
-    footer = list(struct.unpack("<4s4H2IH", data[-22:]))
-    assert footer[0] == b"PK\x05\x06" and footer[-1] == 0
-    size, offset = footer[5:7]
-    assert offset == 4
-    directory = data[offset:offset + size]
-    footer[6] = len(data) - 22
-    data = data[:-22] + directory + struct.pack("<4s4H2IH", *footer)
-with zipfile.ZipFile(io.BytesIO(data)) as archive:
-    count = 0
-    for line in (root / "src/zen/terminal/jar.inc.mn").read_text().splitlines():
-        match = re.search(r"content/browser/(\S+)\s+\(../../zen/terminal/(.+)\)", line)
-        if not match:
-            continue
-        entry = "chrome/browser/content/browser/" + match[1]
-        expected_bytes = (root / "src/zen/terminal" / match[2]).read_bytes()
-        assert archive.read(entry) == expected_bytes, f"Missing or stale terminal asset: {entry}"
-        count += 1
-    assert count >= 10, "Terminal asset manifest is incomplete"
-    for bundled, source in [
-        ("ZenPreloadedScripts.js", "src/zen/common/ZenPreloadedScripts.js"),
-        ("ZenUIManager.mjs", "src/zen/common/modules/ZenUIManager.mjs"),
-    ]:
-        assert archive.read("chrome/browser/content/browser/" + bundled) == (root / source).read_bytes(), f"Stale browser integration: {bundled}"
-    browser_ui = archive.read("chrome/browser/content/browser/browser.xhtml")
-    assert b"gZenTerminalTabs.populateUnifiedContainerMenu(event)" in browser_ui, "Missing native terminal menu"
-
-print(f"Verified {count} shipped terminal assets and Firefox {expected}")
-VERIFY
+python3 scripts/terminal-tabs/verify-terminal-app-assets.py "$APP_PATH"
 
 echo "DMG inspection passed:"
 echo "- app: $EXPECTED_APP_NAME"

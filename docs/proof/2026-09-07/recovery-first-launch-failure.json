@@ -1,0 +1,13 @@
+{
+  "app": ".terminal-test/recovery-34183056904/finished/Zen Terminal.app",
+  "label": "packaged",
+  "test_data": "isolated synthetic profile, no founder data",
+  "results": [
+    {
+      "test": "app proof",
+      "result": "fail",
+      "detail": "Timed out waiting for connection on 127.0.0.1:62192!"
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-8542d665/gecko.log"
+}

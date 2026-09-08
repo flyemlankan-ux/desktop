@@ -1,0 +1,38 @@
+{
+  "app": ".terminal-test/recovery-34183056904/finished-v2/Zen Terminal.app",
+  "label": "packaged",
+  "test_data": "isolated synthetic profile, no founder data",
+  "results": [
+    {
+      "test": "real Mac app opens clean profile",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "test forces app-data into its disposable folder",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "packaged app declares terminal profile identity and current engine",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "plain Terminal setup is available on first launch",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "ordinary websites cannot load the privileged terminal page",
+      "result": "pass",
+      "detail": "NS_ERROR_DOM_BAD_URI"
+    },
+    {
+      "test": "app proof",
+      "result": "fail",
+      "detail": "Element <button id=\"zen-terminal-add-step\" type=\"button\"> could not be scrolled into view\nstacktrace:\n\tRemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8\n\tWebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:169:5\n\tElementNotInteractableError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:338:5\n\twebdriverClickElement@chrome://remote/content/marionette/interaction.sys.mjs:165:11\n\tinteraction.clickElement@chrome://remote/content/marionette/interaction.sys.mjs:134:11\n\tclickElement@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:333:29\n\treceiveMessage@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:205:31\n"
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-e49eb876/gecko.log"
+}

@@ -1,0 +1,118 @@
+{
+  "repository": "repos/mozilla-firefox/firefox",
+  "ref": "FIREFOX_155_0_1_RELEASE",
+  "files": {
+    "python/mozbuild/mozpack/__init__.py": {
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python/mozbuild/mozpack/apple_pkg/Distribution.template": {
+      "git_blob_sha1": "b94b947c96d538e0e4499e5f52cd9e7657334c54",
+      "sha256": "789b55611fcca8a7444474866f45cadc41bfcf52213e9b2ff82a060cb7a85a5a"
+    },
+    "python/mozbuild/mozpack/apple_pkg/PackageInfo.template": {
+      "git_blob_sha1": "74d47e396cf94966ad7362d9eeb6af73a85e848b",
+      "sha256": "1f49b5a29c43e09aa14b9d8ef5bbc02e69468d0828ffbbc3c161f68ff0bd6fc4"
+    },
+    "python/mozbuild/mozpack/archive.py": {
+      "git_blob_sha1": "70502519e475bdda8d03a3c9e8daf7b28f26cfdf",
+      "sha256": "1fb76f3b983e59580f267773d596af819df5c7983ae91f504de73bec02f45b12"
+    },
+    "python/mozbuild/mozpack/chrome/__init__.py": {
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python/mozbuild/mozpack/chrome/flags.py": {
+      "git_blob_sha1": "671b055d8947d2c4baa16286b2e765822109b72f",
+      "sha256": "91879ef11b6ca6e094b6a4beff36151c26853ba72f74dab4d12714b574b43604"
+    },
+    "python/mozbuild/mozpack/chrome/manifest.py": {
+      "git_blob_sha1": "ef1675cc271412dd696409aa105f2cc31e0141f5",
+      "sha256": "a1fa78c5b07f1ab1d05b689110a055b69fb799fa04120a9b30f1f6adb1ce5476"
+    },
+    "python/mozbuild/mozpack/copier.py": {
+      "git_blob_sha1": "f51b8a552af278bc29021a3d8cd6792d7bbaa6a8",
+      "sha256": "85039f0a35d57fce690525d068a264cdc2d52e147550b5f46d5f72ee192dc92b"
+    },
+    "python/mozbuild/mozpack/dmg.py": {
+      "git_blob_sha1": "e959624b544865efd4412f1ebe548fa837ed48aa",
+      "sha256": "6a05a6021823c0978196c1dd6c84a0bda4e42f0ba7a15943b49c4734a404a088"
+    },
+    "python/mozbuild/mozpack/errors.py": {
+      "git_blob_sha1": "58118491b3524c2212944a729424facd88dd0d2e",
+      "sha256": "898e1f97dbee9faa094178b278e8fb9140eb8f00b4dabed6339c9f1f6e06982a"
+    },
+    "python/mozbuild/mozpack/executables.py": {
+      "git_blob_sha1": "38f09028264a0065182b7784d9a83d6efe6c325f",
+      "sha256": "3a11c913f8e5b1c41c3689456bad5fbbc161b67bb5500f55a3f96640749daf8d"
+    },
+    "python/mozbuild/mozpack/files.py": {
+      "git_blob_sha1": "dac5466e29ceb03879c81ac1a742350a2a9c49d1",
+      "sha256": "6eebe9668c2e56b937dea4b29cc789da878cddc25888c5d5e3de86baa311bc5b"
+    },
+    "python/mozbuild/mozpack/macpkg.py": {
+      "git_blob_sha1": "f4cd5062eda9d10d1fb1be29ecff72c3e04fa156",
+      "sha256": "2301c0ba9f84d9428ecd58552d53a27493495dede975c17c6c719741cbc5baa7"
+    },
+    "python/mozbuild/mozpack/manifests.py": {
+      "git_blob_sha1": "8b61285c254e5cb2929179be3e2b21823034e73c",
+      "sha256": "b316e457059cb58b3b865cc9a49d7d67b44d4d2fac3aa6e1072eb8afcb7eef0e"
+    },
+    "python/mozbuild/mozpack/mozjar.py": {
+      "git_blob_sha1": "f2f7b6555e1d0cf5f0b7496e75294a5f88116d60",
+      "sha256": "3717441a10f7b9544840d3314dc5410d6d79dbaab67740d52d6a9c3f2a893e0c"
+    },
+    "python/mozbuild/mozpack/packager/__init__.py": {
+      "git_blob_sha1": "147e471f7bd5ec7917e658f6df49799c64f0c112",
+      "sha256": "1058d965bb124ae0c02635ef9a254172ef6c519fe340c4df0b1fd2dfd6f7c459"
+    },
+    "python/mozbuild/mozpack/packager/formats.py": {
+      "git_blob_sha1": "b8c5ab0257d76f6a66cfb5fc50b9633bd9fc99cd",
+      "sha256": "eddda86c08bb7e3784bc58f702e47b5583490ecc67ae4b8a6d81c6409be75175"
+    },
+    "python/mozbuild/mozpack/packager/l10n.py": {
+      "git_blob_sha1": "caff3d9fdfb1933d6cbfc0f7b4ec74bbda4a602b",
+      "sha256": "59a71221e1b5b376564fe7c49af4845f301bd222441cdce80043f05c5d8fe104"
+    },
+    "python/mozbuild/mozpack/packager/unpack.py": {
+      "git_blob_sha1": "32c6c44c8f04dae77e44072fcfe6a63835f63fa1",
+      "sha256": "f998357b6b31f19cbb146122b92073d757cdb8e74743e441e10c15b1affd0240"
+    },
+    "python/mozbuild/mozpack/path.py": {
+      "git_blob_sha1": "4fe14d3a36350fcbb810b1990c7a89b09450b999",
+      "sha256": "a4fda4453be5729d3ba2cdaf9d88c84e508985d255f0a752eedf18a54b26aa51"
+    },
+    "python/mozbuild/mozpack/pkg.py": {
+      "git_blob_sha1": "cd8ec14ddf6ca7edfb669c3f18c20917bb5a0db6",
+      "sha256": "c6e1ed1f7d466d6c0dd11fcede50353a17e883213fc2a2637d7d78013ab14dd3"
+    },
+    "python/mozbuild/mozpack/unify.py": {
+      "git_blob_sha1": "b8d8a24f4fa7dddeb708c2757ba424e61d018de4",
+      "sha256": "24e8d3529df0c2ec43a0ddf2bc0b20740372617aca287fb6e4e341dbb4e79146"
+    },
+    "python/mozbuild/mozbuild/__init__.py": {
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "python/mozbuild/mozbuild/util.py": {
+      "git_blob_sha1": "1a0cbf322da58dd6989952fc4bf36f4ff1b193f0",
+      "sha256": "7ff4f29e18ac19a609ea962251fc14a8485bf881799d395b5cb5120103ba9d5d"
+    },
+    "python/mozbuild/mozbuild/preprocessor.py": {
+      "git_blob_sha1": "961ae4d8d199e8e765c39882c6b3f7d7975a6053",
+      "sha256": "9681c48645dbaaf85d023af17ad246b70f8a4014833a8698ba04c3257698d1d0"
+    },
+    "toolkit/mozapps/installer/packager.py": {
+      "git_blob_sha1": "77024f044b9dab7f1b5e67f6c177c67577c8078a",
+      "sha256": "7a4993323df72c4309b11f1d3fc8edc247a4232d10b9b26fc2783e995599ee98"
+    },
+    "python/mozbuild/mozbuild/makeutil.py": {
+      "git_blob_sha1": "32d2cf6356320fe2392c77391b50668d71802711",
+      "sha256": "ec38bdfdcf265d0200b5ce2b6333892439742391e0d12a935d9450b0b54b403b"
+    },
+    "python/mozbuild/mozbuild/dirutils.py": {
+      "git_blob_sha1": "a571f6b7d6f9dbf1fe451917647371f6c25b9f28",
+      "sha256": "c6928571dc5f668c432b0af83db7a4e55fec5ff685c4e0e3f527e63a37f38b07"
+    }
+  }
+}

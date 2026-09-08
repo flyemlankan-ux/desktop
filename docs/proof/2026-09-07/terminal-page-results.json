@@ -1,56 +1,56 @@
 {
   "scope": "Real production terminal page/xterm/CSS in Chromium with test-only Firefox service adapter; real native PTY helper and isolated tmux. NOT installed Zen/native menu proof.",
-  "date": "2026-09-07T22:58:56.273Z",
+  "date": "2026-09-08T09:59:37.430Z",
   "checks": [
     {
       "name": "Real helper and tmux start the rendered production terminal page",
       "passed": true,
-      "durationMs": 16
+      "durationMs": 14
     },
     {
       "name": "Rapid repeated keyboard letters are delivered exactly once",
       "passed": true,
-      "durationMs": 257
+      "durationMs": 289
     },
     {
       "name": "Unicode keyboard insertion and terminal paste preserve exact text",
       "passed": true,
-      "durationMs": 102
+      "durationMs": 191
     },
     {
       "name": "Actual stty follows visible terminal resizing",
       "passed": true,
-      "durationMs": 351
+      "durationMs": 372
     },
     {
       "name": "Large output stays bounded and the last rendered line is present",
       "passed": true,
-      "durationMs": 206
+      "durationMs": 260
     },
     {
       "name": "Reload reconnects to the same shell and does not repeat startup",
       "passed": true,
-      "durationMs": 105
+      "durationMs": 130
     },
     {
       "name": "Disconnect offers reconnect without deleting the saved shell",
       "passed": true,
-      "durationMs": 156
+      "durationMs": 151
     },
     {
       "name": "Missing helper shows a recoverable error and preserves saved work",
       "passed": true,
-      "durationMs": 174
+      "durationMs": 190
     },
     {
       "name": "Copied profile uses its own tmux shell even with the same saved session id",
       "passed": true,
-      "durationMs": 192
+      "durationMs": 214
     },
     {
       "name": "Without tmux, live resizing and real scrollback remain usable and bounded",
       "passed": true,
-      "durationMs": 1625
+      "durationMs": 1097
     }
   ],
   "pageErrors": []

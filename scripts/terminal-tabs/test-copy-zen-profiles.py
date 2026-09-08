@@ -280,6 +280,45 @@ class CopyTests(unittest.TestCase):
         self.assertEqual(result["profile_selection"], "dedicated-install")
         self.assertNotIn("warning", result)
 
+    def test_generated_ini_bytes_use_firefox_exact_key_value_syntax(self):
+        # Firefox155 xpcom/base/nsINIParser.cpp (blob
+        # 0a56f3df026ddb2d4805a0f360aedf384c8674df), lines99-109,
+        # splits on '=' but does not trim key/value whitespace. ConfigParser's
+        # own roundtrip hides this incompatibility, so inspect actual bytes.
+        before = self.hashes()
+        self.run_copy(copy=True, default_profile="Other setup",
+                      target_install_hash="1234abcd5678ef90")
+        documents = {}
+        for filename in ["profiles.ini", "installs.ini"]:
+            content = (self.destination / filename).read_bytes()
+            sections = {}
+            current = None
+            for line in content.splitlines():
+                if not line:
+                    continue
+                if line.startswith(b"[") and line.endswith(b"]"):
+                    current = line[1:-1]
+                    sections[current] = {}
+                    continue
+                key, separator, value = line.partition(b"=")
+                self.assertEqual(separator, b"=", (filename, line))
+                self.assertEqual(key, key.strip(), (filename, line))
+                self.assertEqual(value, value.strip(), (filename, line))
+                self.assertIsNotNone(current)
+                sections[current][key] = value
+            documents[filename] = sections
+        profiles = documents["profiles.ini"]
+        self.assertEqual(profiles[b"General"][b"StartWithLastProfile"], b"1")
+        self.assertEqual(profiles[b"General"][b"Version"], b"2")
+        self.assertEqual(profiles[b"Profile0"][b"IsRelative"], b"1")
+        self.assertEqual(profiles[b"Profile1"][b"Name"], b"Other setup")
+        self.assertEqual(profiles[b"Profile1"][b"Path"], b"Profiles/other")
+        self.assertEqual(profiles[b"Profile1"][b"Default"], b"1")
+        mapping = {b"Default": b"Profiles/other", b"Locked": b"1"}
+        self.assertEqual(profiles[b"Install1234ABCD5678EF90"], mapping)
+        self.assertEqual(documents["installs.ini"][b"1234ABCD5678EF90"], mapping)
+        self.assertEqual(self.hashes(), before)
+
     def test_no_hash_explicitly_warns_about_manual_profile_selection(self):
         result = self.run_copy()
         self.assertEqual(result["profile_selection"], "explicit-selection-required")

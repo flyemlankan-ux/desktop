@@ -1,0 +1,145 @@
+{
+  "app": "/Applications/Zen Terminal.app",
+  "label": "packaged",
+  "test_data": "isolated synthetic profile, no founder data",
+  "results": [
+    {
+      "test": "real Mac app opens clean profile",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "test forces app-data into its disposable folder",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "packaged app declares terminal profile identity and current engine",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "plain Terminal setup is available on first launch",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "ordinary websites cannot load the privileged terminal page",
+      "result": "pass",
+      "detail": "NS_ERROR_DOM_BAD_URI"
+    },
+    {
+      "test": "invalid remote recipe stays in dialog without saving",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "ordered step editor supports reordering",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native step editor fits without horizontal scrolling",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "create terminal container through actual Settings",
+      "result": "pass",
+      "detail": 7
+    },
+    {
+      "test": "menu opens real saved terminal",
+      "result": "pass",
+      "detail": "session saved \u00b7 ready"
+    },
+    {
+      "test": "actual keyboard reaches local shell exactly",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Ctrl-C interrupts a foreground program",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "full-screen editor accepts text and exits cleanly",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "installed CLI starts inside actual terminal",
+      "result": "pass",
+      "detail": "codex"
+    },
+    {
+      "test": "installed CLI starts inside actual terminal",
+      "result": "pass",
+      "detail": "claude"
+    },
+    {
+      "test": "real Mac window resize changes the shell dimensions",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing one duplicated terminal preserves its other viewer and process",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native terminal rename saves on Enter",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native terminal rename saves on click-away",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Escape cancels native terminal rename",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "reload keeps same process and does not rerun startup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "background restored terminal is marked and renamed before selection",
+      "result": "pass",
+      "detail": {
+        "selected": false,
+        "label": "My renamed terminal",
+        "pending": true
+      }
+    },
+    {
+      "test": "quit and relaunch restore same terminal process",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "saved terminal name survives reload and relaunch",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual browser crash preserves same terminal process without repeating startup",
+      "result": "pass",
+      "detail": {
+        "browserRestarted": true,
+        "recovery": "automatic"
+      }
+    },
+    {
+      "test": "explicit tab close destroys only its session",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-3d765a35/gecko.log"
+}

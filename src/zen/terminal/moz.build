@@ -5,5 +5,8 @@
 # Build into dist/bin, the input to every macOS bundle/repack operation.
 # This standalone C helper does not link Gecko or load browser libraries.
 if CONFIG["OS_ARCH"] == "Darwin":
+    # browser/moz.build exports "browser" to descendants, including zen.
+    # Match browser/app: this executable belongs to the main binary folder.
+    DIST_SUBDIR = ""
     Program("zen-terminal-pty")
     SOURCES += ["native/zen-terminal-pty.c"]

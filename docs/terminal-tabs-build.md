@@ -106,3 +106,37 @@ The stock automatic updater is deliberately removed so it cannot overwrite the t
 Use `--target-install-hash` from the final app's isolated first-launch probe when making the personal copy. Merely marking an old profile as default is not enough: Firefox deliberately avoids claiming a profile last opened by another installation. The copy tool sets the new app's own saved selection without altering compatibility files or bypassing downgrade protection. The probe uses explicit temporary app-data locations, not HOME alone (macOS directory lookup does not reliably honor HOME).
 
 After copying, the two apps are independent. Later browsing in the original Zen is not automatically mirrored into Zen Terminal. The original remains the untouched fallback. Do not copy a newly upgraded profile backwards into an older browser.
+
+
+## September 8 — installed development build, personal copy waiting
+
+`/Applications/Zen Terminal.app` is now installed from the inspected recovered
+cloud build.26 actual installed-app checks,10 rendered-page checks and the
+final-install-path synthetic profile selection pass. Original Zen is untouched.
+The personal `zen-terminal` profile folder has not been created or copied yet.
+Close original Zen normally before the personal copy. Do not open the new app
+normally first, because the copier intentionally refuses an existing destination.
+
+Reproduce recovery without recompiling the browser:
+
+```sh
+python3 scripts/terminal-tabs/fetch-terminal-mozpack.py --output .terminal-test/mozpack155
+python3 scripts/terminal-tabs/test-recover-terminal-macos.py
+python3 scripts/terminal-tabs/recover-terminal-macos.py \
+  --archive /path/to/compiled-app.tar.gz \
+  --source-app '/path/to/extracted/Zen Terminal.app' \
+  --output-dir /path/to/NEW-finished-directory \
+  --expected-revision 19f7539e30b9fc8663934e132731ac849214f240
+bash scripts/terminal-tabs/inspect-terminal-macos-dmg.sh /path/to/NEW-finished-directory/Zen-Terminal-recovered-development.dmg
+```
+
+The extracted app must match every file in the original cloud archive. Recovery
+uses actual pinned Firefox resource packing, not a fake archive or sandbox
+exception. It produces a development-signed disk image, not Apple notarization
+or the complete upstream multilocale release. See saved provenance for exact
+transformations and retained native build utilities.
+
+For the personal copy on this Mac at the installed path, the proved install hash
+is `CA24B52DD8BD79BC`. The copier must emit Firefox-compatible `Key=value` lines;
+spaces around `=` cause Firefox to ignore the mapping. The real browser test and
+byte-level regression now cover this failure, not just Python INI parsing.

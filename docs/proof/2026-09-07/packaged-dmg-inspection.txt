@@ -1,0 +1,13 @@
+Verifying DMG structure...
+hdiutil: verify: checksum of ".terminal-test/recovery-34183056904/finished-v2/Zen-Terminal-recovered-development.dmg" is VALID
+{
+  "terminal_assets": 12,
+  "engine": "155.0.1",
+  "layout": "real GRE and browser omnijar resources"
+}
+DMG inspection passed:
+- app: Zen Terminal.app
+- bundle id: app.zen-browser.zen-terminal
+- executable: zen-terminal
+- updater: absent
+- stock Zen update address: absent

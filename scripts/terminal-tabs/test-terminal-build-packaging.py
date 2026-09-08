@@ -23,6 +23,41 @@ ASSEMBLER = 'python/mozbuild/mozbuild/action/assemble_macos_bundle.py'
 MACOS_LIST = 'browser/app/macbuild/Contents/MacOS-files.in'
 
 
+# Exact excerpts from FIREFOX_155_0_1_RELEASE, read through GitHub contents.
+# browser/moz.build blob 5a03cfc6d3f8fe3a677d4d9e9894e69a98d0c01f:
+INHERITED_BROWSER_DECLARATION = 'DIST_SUBDIR = "browser"\nexport("DIST_SUBDIR")\n'
+# python/mozbuild/mozbuild/frontend/context.py blob
+# 977de6f1f25013fddeb293b91550a49d349944b0. Keep the actual destination rule,
+# not a hardcoded dist/bin stand-in that would conceal inherited subfolders.
+FINAL_TARGET_SOURCE = """
+class FinalTargetValue(ContextDerivedValue, str):
+    def __new__(cls, context, value=""):
+        if not value:
+            value = "dist/"
+            if context["XPI_NAME"]:
+                value += "xpi-stage/" + context["XPI_NAME"]
+            else:
+                value += "bin"
+            if context["DIST_SUBDIR"]:
+                value += "/" + context["DIST_SUBDIR"]
+        return str.__new__(cls, value)
+
+"""
+
+
+def declared_install_target(declaration):
+    exports = []
+    inherited = {'export': exports.append}
+    exec(INHERITED_BROWSER_DECLARATION, inherited)
+    context = {key: inherited[key] for key in exports}
+    context.update(CONFIG={'OS_ARCH': 'Darwin'}, SOURCES=[],
+                   Program=lambda name: None, XPI_NAME='')
+    exec(compile(declaration, 'terminal/moz.build', 'exec'), context)
+    definitions = {'ContextDerivedValue': type('ContextDerivedValue', (), {})}
+    exec(FINAL_TARGET_SOURCE, definitions)
+    return str(definitions['FinalTargetValue'](context))
+
+
 class PackagingTests(unittest.TestCase):
     def test_pristine_source_receipts(self):
         receipt = json.loads((FIXTURES / 'receipt.json').read_text())
@@ -59,7 +94,14 @@ class PackagingTests(unittest.TestCase):
         method.decorator_list = []
         context = {'mozpath': posixpath, 'ObjDirPath': lambda context, path: path}
         exec(compile(ast.Module(body=[method], type_ignores=[]), 'pristine-data.py', 'exec'), context)
-        program = SimpleNamespace(installed=True, _context={}, install_target='dist/bin', name='zen-terminal-pty')
+        declaration = (ROOT / 'src/zen/terminal/moz.build').read_text()
+        install_target = declared_install_target(declaration)
+        self.assertEqual(install_target, 'dist/bin')
+        # Negative control: the precise old declaration reproduces the cloud
+        # failure, placing the helper under browser instead of the main bin.
+        without_reset = declaration.replace('    DIST_SUBDIR = ""\n', '')
+        self.assertEqual(declared_install_target(without_reset), 'dist/bin/browser')
+        program = SimpleNamespace(installed=True, _context={}, install_target=install_target, name='zen-terminal-pty')
         self.assertEqual(context['output_path'](program), '!/dist/bin/zen-terminal-pty')
         app = (FIXTURES / 'browser/app/moz.build').read_text()
         self.assertIn('stage=f"!/{FINAL_TARGET}"', app)
@@ -79,7 +121,9 @@ class PackagingTests(unittest.TestCase):
             patterns = run / 'MacOS-files.txt'
             patterns.write_text('\n'.join(line for line in fixture.read_text().splitlines() if line.startswith('/')) + '\n')
             copy_patterns = run / 'MacOS-copy.txt'; copy_patterns.write_text('')
-            helper = staged / 'zen-terminal-pty'
+            install_target = declared_install_target((ROOT / 'src/zen/terminal/moz.build').read_text())
+            helper = run / install_target / 'zen-terminal-pty'
+            helper.parent.mkdir(parents=True, exist_ok=True)
             subprocess.run([str(ROOT / 'scripts/terminal-tabs/build-terminal-pty.sh'), str(helper)], check=True, capture_output=True)
             self.assertTrue(helper.stat().st_mode & 0o111)
             linkage = subprocess.check_output(['otool', '-L', str(helper)], text=True)
