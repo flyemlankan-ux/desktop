@@ -124,6 +124,9 @@ def main():
         for key in ["MOZ_PROFILE_PATH", "MOZ_PROFILE_LOCAL_PATH", "MOZ_PROFILE_NAME",
                     "MOZ_LEGACY_PROFILES", "MOZ_RESET_PROFILE_RESTART", "MOZ_RESTARTED"]:
             environment.pop(key, None)
+        for key in list(environment):
+            if key.startswith(("XRE_PROFILE_", "SELECTABLE_PROFILE_RESET_")) or key == "XRE_RESTARTED_BY_PROFILE_MANAGER":
+                environment.pop(key, None)
         environment.update(HOME=str(home), ZDOTDIR=str(home), SHELL="/bin/zsh",
                            MOZ_APP_DATA=str(data), MOZ_LOCAL_APP_DATA=str(local_data),
                            MOZ_NO_REMOTE="1", MOZ_MARIONETTE="1",

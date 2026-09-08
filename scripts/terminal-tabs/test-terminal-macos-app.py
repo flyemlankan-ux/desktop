@@ -22,6 +22,11 @@ with net_socket.socket() as listener:
 prefs={'marionette.port':marionette_port,'browser.shell.checkDefaultBrowser':False,'browser.startup.page':3,'zen.welcome-screen.seen':True,'app.update.disabledForTesting':True,'app.update.auto':False,'app.update.enabled':False,'browser.startup.homepage':'about:blank','browser.aboutwelcome.enabled':False,'browser.sessionstore.resume_from_crash':True,'privacy.userContext.enabled':True,'privacy.userContext.ui.enabled':True}
 (profile/'user.js').write_text('\n'.join('user_pref(%s, %s);'%(json.dumps(k),json.dumps(v)) for k,v in prefs.items()))
 env=dict(os.environ,MOZ_APP_DATA=str(home/'app-data'),MOZ_LOCAL_APP_DATA=str(home/'local-app-data'),HOME=str(home),ZDOTDIR=str(home),SHELL='/bin/zsh',PATH='/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',MOZ_NO_REMOTE='1')
+# Restart-only environment values take priority over -profile in Firefox.
+# Never inherit a real browser's selected profile into this synthetic test.
+for key in list(env):
+ if key.startswith(('XRE_PROFILE_', 'SELECTABLE_PROFILE_RESET_')) or key in {'XRE_RESTARTED_BY_PROFILE_MANAGER','MOZ_RESET_PROFILE_RESTART','MOZ_LEGACY_PROFILES'}:
+  env.pop(key,None)
 exe=args.app.resolve()/'Contents/MacOS/zen-terminal'
 log=open(run/'gecko.log','w');process=None;m=None;results=[];test_sessions=[];socket=None
 def record(name,detail=True):
@@ -40,6 +45,8 @@ def start():
  process=subprocess.Popen([str(exe),'-no-remote','-marionette','--remote-allow-system-access','-profile',str(profile)],env=env,stdout=log,stderr=log)
  m=Marionette(host='127.0.0.1',port=marionette_port,socket_timeout=30,startup_timeout=30)
  m.raise_for_port(timeout=30);m.start_session();m.set_context('chrome')
+ assert js('return Services.appinfo.processID;')==process.pid
+ assert Path(js('return Services.dirsvc.get("ProfD",Ci.nsIFile).path;')).resolve()==profile.resolve()
  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'browser ready')
 def js(script,args=None):return m.execute_script(script,script_args=args or [])
 def terminal_status():return js('return gBrowser.selectedBrowser.contentDocument?.getElementById("zen-terminal-status-text")?.textContent;')
