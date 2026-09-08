@@ -1,6 +1,6 @@
 # Zen Terminal — recovered decisions
 
-Canonical root: `/Users/ar/zen-terminal-research/desktop`. Host: standalone macOS Zen fork, not Empire Core.
+Canonical root: `/Users/ar/zen-terminal-research/desktop-stable`. Host: standalone macOS Zen fork, not Empire Core.
 
 This is recovery of the existing handoffs, not an invented interview. No new numbered Q&A pairs were asked. On September 7 the founder authorized autonomous completion and self-testing. Existing product choices remain in force.
 
@@ -63,3 +63,17 @@ None needed to harden the agreed Mac development app. Public release signing/not
 The founder explicitly requests all existing Zen logins, profiles and metadata copied to their own installation. The general app remains blank. Personal experience should match ordinary Zen with working terminal tabs added. This is a supplied requirement, not a fabricated interview answer.
 
 Implementation boundary: copy full profile data into an isolated app root, retain source and profile names, exclude only rebuildable caches/locks. Do not export credentials, print secrets, commit personal data, share live profile directories, or disable profile downgrade protection. Source Zen is currently running: final consistent copying waits for it to close; do not interrupt it silently. The terminal build must be at least compatible with the source Firefox engine.
+
+
+## R14 — direct founder correction, September 8
+The founder requires a thorough, top-level end-to-end product process: research,
+plan every aspect, build and test complete workflows, including terminal opening,
+saved terminal setups, grouping terminals with web pages and native visual quality.
+This is not an invented interview exchange. Much of it reiterates R01/R02 and the
+original handoffs. The existing26 checks do not establish complete acceptance.
+
+Action: reopen native-product acceptance, research existing Zen mechanisms, audit
+all journeys, and hold personal migration. Preserve existing decisions: one native
+container list; normal New Tab remains web; saved setups are separate from live
+shells; no automatic permission bypass; original Zen remains untouched.
+Detailed findings and workflow inventory: `zen-terminal-product-review.md`.

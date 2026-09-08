@@ -235,3 +235,37 @@ reauthentication. No Apple notarization or automatic update service is claimed;
 manual tested browser rebuilds remain necessary for security updates.
 Scope remains normal Zen plus terminal tabs; no Core integration or agent
 permission bypass was added.
+
+
+## September 8 — founder reopens full product acceptance (R14)
+
+The founder rejected functional-only completion and required every end-to-end
+workflow and native visual quality to be planned/researched/built properly.
+Recorded as an affected-area rewire, preserving prior decisions and evidence.
+Personal migration is now on hold for product readiness, not just source closure.
+Broad `proved` labels were reopened; ready_for_build is false during this review.
+
+Recovered the original handoffs: native folders, workspaces and a saved starting
+folder were already required. Checked official Zen workspaces, split-view,
+window-sync and shortcuts documentation against local pinned code. Recorded a
+complete workflow inventory and eight ordered delivery slices in
+`zen-terminal-product-review.md`, covering entry points, saved setups, mixed
+organization, recovery, visual/accessibility, security, load, packaging and migration.
+This is an audit/planning slice, not a claim those workflows are implemented.
+
+Actual installed-app diagnostic reproduced a concrete missed defect: after placing
+a web tab and terminal in a native folder, selecting the terminal unpins it and
+removes it from the folder. The web tab remains; shell remains alive. Native folder
+creation pins tabs; terminal restore/selection marking forcibly unpins them.
+Evidence: `proof/2026-09-08-product-audit/mixed-folder-diagnostic.json` and screenshot.
+Reproducer `audit-terminal-native-grouping.py` exits nonzero on the existing bug.
+It uses native methods, not pointer actions, and is explicitly labelled diagnostic.
+All browser/profile/session state was synthetic; only owned test sessions cleaned.
+No production source, installed app or personal profile was modified.
+
+Next: close affected-area product rules/coverage before implementation, then
+repair native organization with regression and actual drag/drop+restore proof.
+Recommended reasoning high; proof strong focused native lifecycle/organization
+checks, not unrelated broad Core regressions. Drift check: preserve Zen's single
+native model; do not create a second terminal dashboard or call failed old
+requirements new features.

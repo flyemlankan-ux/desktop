@@ -1,0 +1,19 @@
+{
+  "app": "/Applications/Zen Terminal.app",
+  "scope": "Native browser-method diagnostic on synthetic data, NOT drag-and-drop UI acceptance",
+  "before": {
+    "terminalPinned": true,
+    "webPinned": true,
+    "terminalInFolder": true,
+    "webInFolder": true,
+    "terminalSelected": true
+  },
+  "after": {
+    "terminalPinned": false,
+    "webPinned": true,
+    "terminalInFolder": false,
+    "webInFolder": true,
+    "terminalSelected": true
+  },
+  "shellStillAlive": true
+}

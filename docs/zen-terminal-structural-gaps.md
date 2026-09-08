@@ -1,13 +1,22 @@
-# Zen Terminal structural decisions
+# Zen Terminal — reopened product review
 
 ## Open
-- none recorded
+- R14 complete product acceptance: native entry points, saved-setup journey, mixed
+  groups/workspaces/splits/windows, visual/accessibility, security/load and delivery.
+- Confirmed mixed-folder failure: selecting terminal undoes pinning and membership.
+- Starting-folder control from original handoff not reconciled with command-row UI.
+- End-to-end grouping and native design acceptance missing from the26-test suite.
 
 ## Partial
-- none recorded
+- Technical shell, native recipe editor, basic restore and private development
+  installation are proved in named tests; full product workflows are not.
+- Migration utility/synthetic launch selection pass; personal copying is on hold.
 
-## Closed
-- Standalone macOS project, not a Core integration. Existing handoffs recover scope.
-- Phase 2 lifetime rule takes precedence over step-one close-to-reconnect wording.
-- User authorizes autonomous build and self-testing; isolated automated app proof replaces requests for repetitive manual checks.
-- Public release certification and engine security rebase are not silently claimed by terminal acceptance.
+## Settled boundaries retained
+- Standalone macOS Zen, one native container list, no parallel management dashboard.
+- Saved reusable terminal setup != live shell != browser login profile.
+- Explicit close kills final viewer's session; app quit preserves tmux-backed work.
+- Live Mac-reboot survival and automatic recipe recording were explicitly deferred.
+- Original Zen and personal data remain untouched; no permission bypass.
+
+Detailed audit and plan: zen-terminal-product-review.md.

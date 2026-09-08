@@ -78,3 +78,12 @@ file-by-file install equality pass.26 synthetic copy tests plus actual final-pat
 ordinary profile selection pass. The INI delimiter-space regression proves the
 old bad writer is rejected. Personal copy itself is still unperformed: original
 Zen is open. Evidence and limitations: `proof/2026-09-07/README.md`.
+
+
+## B14 — complete-product acceptance reopened
+Required matrix and slice sequence: `zen-terminal-product-review.md`. New confirmed
+failure: native mixed-folder membership is lost when the terminal is selected;
+`audit-terminal-native-grouping.py` reproduces it in the installed app with synthetic
+data. This diagnostic uses native methods, not drag/drop UI automation. Preserve the
+failure evidence, add a regression, then prove real interactions and restart on a
+newly built app.26 old passing cases are insufficient to close mixed organization.

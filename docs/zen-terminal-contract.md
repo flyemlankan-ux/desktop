@@ -53,3 +53,13 @@ Copy every registered existing Zen profile to the private personal installation,
 - Update note: C13 forbids shared profiles, overwrites, active copying and downgrade
 - Impacted index tags: `ZT-MIGRATE`
 - Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`
+
+
+## C14 — complete product acceptance (R14, strengthens C01/C02/C11)
+Passing isolated terminal checks does not establish the complete browser experience.
+Use the workflow inventory in zen-terminal-product-review.md. Preserve native mixed
+folders, workspaces, pins and split views; distinguish saved setups from running
+sessions and whole-browser profiles. Every relevant entry point, destructive action,
+recovery state and visual state requires scoped evidence or an explicit limitation.
+Reopen broad proved labels; do not erase historical passing evidence. Hold personal
+migration until the complete product review passes, even if original Zen closes.

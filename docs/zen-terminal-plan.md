@@ -30,3 +30,13 @@ Compatibility update: stock Zen reports Firefox 152.0.5. The prior terminal engi
 The 152.0.5 build failed because inherited upstream address-bar patches no longer applied. Independent source review found stable Zen 1.22b (pinned 4f3bcb2f3254c33a14ef7f16f6a125f27709b76d) uses Firefox 155.0.1. Under the user's autonomous completion instruction, ZT-RELEASE now explicitly includes a separate stable working copy, terminal-only transplant, native Settings port and complete fresh-app verification. This supersedes the earlier compatibility-parity plan, not the original-browser safety rules. Old branch remains preserved at 6fd14b2.
 
 Source receipt: C10–C13 require a distinct safe personal app and blank installer. The current terminal works in the old test app but its browser engine is outdated. Build rule: retain upstream stable browser code, add only terminal integration, preserve all profile-copy safeguards, and do not describe prior-app evidence as proof of this new build. Reasoning: high. Proof: focused logic/native tests, new Settings failure cases, packaged real-Mac tests and private-copy verification.
+
+
+## September 8 founder quality correction — current plan
+Earlier build milestones are historical, not full product acceptance. The current
+sequence and researched workflow inventory are in `zen-terminal-product-review.md`.
+First reproduce and repair native folder/pin behavior, then complete saved setups,
+all entry points, mixed-project organization/recovery, visual/accessibility checks,
+security/performance and clean delivery. Personal migration is last and on hold.
+Reasoning high for behavior and ownership; medium for styling-only changes.
+Proof: complete native journeys and negative cases, not code-presence checks.
