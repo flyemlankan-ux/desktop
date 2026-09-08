@@ -107,6 +107,8 @@ jobs:
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
           python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py
+          python3 scripts/terminal-tabs/test-terminal-build-packaging.py
+          python3 scripts/terminal-tabs/test-package-terminal-macos.py
 
       - name: Prepare terminal fork identity
         shell: bash
@@ -158,32 +160,42 @@ jobs:
           export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
           npm run build
 
-      - name: Bundle the native terminal helper
+      - name: Preserve compiled app before packaging
         shell: bash
         run: |
           set -euo pipefail
-          app_path="$(find engine/obj-* -path '*/dist/*.app' -maxdepth 4 -type d -print -quit)"
-          test -n "$app_path"
-          ZEN_TERMINAL_ARCH="${{ inputs.arch }}" scripts/terminal-tabs/build-terminal-pty.sh "$app_path/Contents/MacOS/zen-terminal-pty"
-          codesign --force --sign - "$app_path/Contents/MacOS/zen-terminal-pty"
+          app_path="engine/obj-${{ inputs.arch }}-apple-darwin/dist/Zen Terminal.app"
+          test -d "$app_path"
+          mkdir -p terminal-recovery/staging
+          # Dereference build-tree links so this recovery copy works off the runner.
+          cp -RL "$app_path" "terminal-recovery/staging/Zen Terminal.app"
+          tar -czf terminal-recovery/compiled-app.tar.gz -C terminal-recovery/staging "Zen Terminal.app"
+          printf 'Recovery copy of compiled source %s. Not a validated installer. No personal data.\n' "$GITHUB_SHA" > terminal-recovery/README.txt
+          rm -rf terminal-recovery/staging
+
+      - name: Upload compiled app recovery copy
+        uses: actions/upload-artifact@v4
+        with:
+          name: zen-terminal-${{ inputs.arch }}-compiled-recovery
+          path: terminal-recovery/
+          retention-days: 7
+          compression-level: 0
+
+      - name: Verify native helper staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          obj="engine/obj-${{ inputs.arch }}-apple-darwin"
+          test -x "$obj/dist/bin/zen-terminal-pty"
+          test -x "$obj/dist/Zen Terminal.app/Contents/MacOS/zen-terminal-pty"
+          codesign --force --sign - "$obj/dist/bin/zen-terminal-pty"
 
       - name: Package macOS app
         shell: bash
         run: |
           source "$HOME/.cargo/env"
           export MOZ_BUILD_DATE="${{ steps.buildid.outputs.id }}"
-          set +e
-          npm run package
-          package_status=$?
-          set -e
-          if [ "$package_status" -ne 0 ]; then
-            echo "surfer package failed after app packaging. Checking whether a DMG was still created."
-            if find engine/obj-* -path '*/dist/*.dmg' -print -quit | grep -q .; then
-              echo "DMG exists, continuing. This dev build does not need updater MAR files."
-            else
-              exit "$package_status"
-            fi
-          fi
+          python3 scripts/terminal-tabs/package-terminal-macos.py
 
       - name: Collect DMG
         shell: bash

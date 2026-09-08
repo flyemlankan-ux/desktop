@@ -1,3 +1,9 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Build into dist/bin, the input to every macOS bundle/repack operation.
+# This standalone C helper does not link Gecko or load browser libraries.
+if CONFIG["OS_ARCH"] == "Darwin":
+    Program("zen-terminal-pty")
+    SOURCES += ["native/zen-terminal-pty.c"]

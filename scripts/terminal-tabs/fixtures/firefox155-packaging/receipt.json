@@ -1,0 +1,26 @@
+{
+  "repository": "mozilla-firefox/firefox",
+  "ref": "FIREFOX_155_0_1_RELEASE",
+  "files": {
+    "browser/app/moz.build": {
+      "sha256": "a4c71c07a9ffe5e362432c11fff9f9ab5dbbff0cb5930f8263d469e4c5eab57c",
+      "git_blob_sha1": "db09aba7e9ec12bae11f3a8066b51d4c2ebdddec"
+    },
+    "browser/app/macbuild/Contents/MacOS-files.in": {
+      "sha256": "5d204ee401425113a0890eeab553d452bf5a8ca17d29d88a91d0a7f867e72d10",
+      "git_blob_sha1": "2f420f773610f6406c47ba8636cf476823ec49a3"
+    },
+    "python/mozbuild/mozbuild/action/assemble_macos_bundle.py": {
+      "sha256": "77dc8e1cb0f8d7bb81f177e694356c701118d69a564d61e805b74640a69cef0a",
+      "git_blob_sha1": "895ee69d11dbf25692644283ef36c82e0fcfa5fe"
+    },
+    "build/templates.mozbuild": {
+      "sha256": "1e9992773eb7dde3f42778b79033026e5967496ecae6ebe97d63e406b3e91ff5",
+      "git_blob_sha1": "24077f27215766e2225d2fd5a6826ee88fa9402d"
+    },
+    "python/mozbuild/mozbuild/frontend/data.py": {
+      "sha256": "0ef74c77a0e4b46b2afce2763c4822c4787875bdf2d0a6453e3c720a7b0dc716",
+      "git_blob_sha1": "919b2577e7e73746065b2aedf900351b80f2653b"
+    }
+  }
+}

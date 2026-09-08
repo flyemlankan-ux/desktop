@@ -18,6 +18,8 @@ for (const file of readdirSync(dir).filter((name) => name.endsWith(".mjs"))) {
 }
 for (const [path, text] of [
   ["src/zen/moz.build", '"terminal"'],
+  [dir + "moz.build", 'Program("zen-terminal-pty")'],
+  ["src/browser/app/macbuild/Contents/MacOS-files-in.patch", "/zen-terminal-pty"],
   [
     "src/browser/base/content/zen-assets.jar.inc.mn",
     "../../../zen/terminal/jar.inc.mn",
