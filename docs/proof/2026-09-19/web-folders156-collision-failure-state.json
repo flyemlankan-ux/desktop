@@ -1,0 +1,68 @@
+{
+  "activeWorkspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}",
+  "lastGroup": null,
+  "groups": [],
+  "folders": [
+    {
+      "id": "1789825109439-74",
+      "name": "Web-only parent",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789825109445-9a763a62-cb81-4a96-b874-7232b34d8481",
+          "empty": true,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        },
+        {
+          "id": "1789825109446-b7c19595-2d8c-4ba3-bb8c-dee109bbed71",
+          "empty": true,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        },
+        {
+          "id": "1789825109445-dc453e1f-4541-4553-b9f0-5ee794c5c87d",
+          "empty": false,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        },
+        {
+          "id": "1789825109444-083fa1df-7146-4659-babc-4f09408800fd",
+          "empty": false,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        }
+      ]
+    },
+    {
+      "id": "1789825109443-3",
+      "name": "Web-only child",
+      "parent": "1789825109439-74",
+      "tabs": [
+        {
+          "id": "1789825109446-b7c19595-2d8c-4ba3-bb8c-dee109bbed71",
+          "empty": true,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        },
+        {
+          "id": "1789825109445-dc453e1f-4541-4553-b9f0-5ee794c5c87d",
+          "empty": false,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        }
+      ]
+    },
+    {
+      "id": "1789825110369-60",
+      "name": "Must stay unchanged",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789825110610-638a4df0-eb31-490d-a158-da1beefc948e",
+          "empty": true,
+          "workspace": null
+        },
+        {
+          "id": "1789825110609-a47d8f24-da4d-4d83-b5bd-88a5dde4de6b",
+          "empty": false,
+          "workspace": "{8ab39f34-1a27-4e6d-b8fb-e01d5cbb64fd}"
+        }
+      ]
+    }
+  ]
+}

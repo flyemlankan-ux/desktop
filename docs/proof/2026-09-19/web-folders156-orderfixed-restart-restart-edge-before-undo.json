@@ -1,0 +1,88 @@
+{
+  "root": "1789827085419-53",
+  "lastGroup": "1789827085419-53",
+  "groups": [
+    {
+      "pinned": true,
+      "essential": null,
+      "splitView": false,
+      "id": "1789827085419-53",
+      "name": "Empty restart parent",
+      "color": "zen-workspace-color",
+      "collapsed": false,
+      "saveOnWindowClose": true,
+      "closedAt": 1789827085504,
+      "sourceWindowId": "window0",
+      "tabs": [],
+      "splitViews": [],
+      "zenFolderState": {
+        "version": 1,
+        "rootId": "1789827085419-53",
+        "folders": [
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789827085419-53",
+            "name": "Empty restart parent",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": null,
+            "prevSiblingInfo": {
+              "type": "start",
+              "id": null
+            },
+            "emptyTabIds": [
+              "1789827085428-c62e880c-8e65-42fd-84e8-7979e9e1b93e"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{42f0f1db-de3e-4d1b-af85-26afb1114d5e}"
+          },
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789827085423-46",
+            "name": "Empty restart child",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": "1789827085419-53",
+            "prevSiblingInfo": {
+              "type": "tab",
+              "id": "1789827085428-c62e880c-8e65-42fd-84e8-7979e9e1b93e"
+            },
+            "emptyTabIds": [
+              "1789827085428-9ca61a56-0095-4373-bdbe-7cb9e8dff890"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{42f0f1db-de3e-4d1b-af85-26afb1114d5e}"
+          }
+        ],
+        "groups": [
+          {
+            "id": "1789827085419-53",
+            "name": "Empty restart parent",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          },
+          {
+            "id": "1789827085423-46",
+            "name": "Empty restart child",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          }
+        ],
+        "emptyOnly": true
+      },
+      "zenEmptyClosedId": 2
+    }
+  ]
+}

@@ -1,0 +1,318 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual pointer drag reordered terminal before web inside folder",
+      "result": "pass",
+      "detail": {
+        "mechanism": "Gecko own NSApp NSEvent",
+        "events": [
+          {
+            "type": "mousedown",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": null,
+            "types": []
+          },
+          {
+            "type": "dragstart",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": null,
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "none",
+            "types": []
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028406-323eb651-65a8-401c-a2a8-e7c346a1352d",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "drop",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028406-323eb651-65a8-401c-a2a8-e7c346a1352d",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragend",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789827028259-a78a8961-8550-4c03-b37b-66227d9dc057",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          }
+        ],
+        "geometry": {
+          "start": [
+            129,
+            292
+          ],
+          "end": [
+            129,
+            204
+          ],
+          "outer": {
+            "x": 4,
+            "y": 25,
+            "width": 1280,
+            "height": 714
+          },
+          "ratio": 2,
+          "sent": [
+            {
+              "message": 3,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 1,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 2,
+              "x": 129,
+              "y": 204
+            }
+          ],
+          "acceptedOver": {
+            "trusted": true,
+            "target": "1789827028406-323eb651-65a8-401c-a2a8-e7c346a1352d",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ],
+            "dropEffect": "move",
+            "screenX": 129,
+            "screenY": 204
+          },
+          "scope": "own NSApp NSEvent down/move/up; shared cursor moved"
+        }
+      }
+    },
+    {
+      "test": "native tab reorder retains folder and live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "whole mixed folder moves to new workspace without restarting jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed split and window resize retain shell and resize terminal",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "unsplit retains live jobs and recipe counts",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "second native window mirrors both terminal tabs without rerunning recipes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing one mirrored window preserves original live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing last view destroys only its matching shell",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-dda41598"
+}

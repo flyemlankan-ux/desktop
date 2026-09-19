@@ -1,0 +1,50 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Native-method setup: two mixed folders nested using the same placement as upstream folder test; three jobs unchanged",
+      "result": "pass",
+      "detail": {
+        "pointer_drag_proved": false
+      }
+    },
+    {
+      "test": "Actual folder context-menu Rename and inline input preserve both nested jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual workspace menu item and inline rename preserve jobs; popup opened by native method",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual parent-folder Delete closes nested web/terminal tabs and stops only their exact jobs; same-setup neighbor survives",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual user Undo restores both terminal receipts; loading each shows ended/Start again without rerunning setup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual Cmd+Shift+T Undo restores nested organization but never silently restarts either closed terminal",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual Start again button runs exactly one setup; untouched restored tab remains ended",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Native-method workspace deletion stops its job and preserves neighboring workspace/job; confirmation UI not exercised",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-4421c78e",
+  "scope": "synthetic native menu cases and explicitly labelled native-method cases; no pointer drag or confirmation acceptance claim"
+}

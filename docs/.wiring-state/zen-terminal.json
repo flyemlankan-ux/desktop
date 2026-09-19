@@ -136,7 +136,7 @@
   "product_review_location": {
     "host": "chubs@100.92.30.93",
     "path": "/home/chubs/zen-terminal/docs/zen-terminal-product-review.md",
-    "sha256": "209f45fb383c4cc11bcb1ea4a02b3379dd9a2b215c87f333eec9dc0d415bad04",
+    "sha256": "ce554802e53aa69d0799d63ee3c713298ad73832b821ab174529edda7772fde2",
     "local_working_copy_removed": true,
     "scope": "Product review plan only; source project remains on Mac. Prior Git history not rewritten."
   }

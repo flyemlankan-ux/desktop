@@ -1,0 +1,18 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Web-only nested folder setup uses native method fixture; zero terminal jobs created",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual parent-folder Delete closes nested ordinary web tabs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "Timed out: actual shortcut restores both ordinary web tab receipts; None",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-7436b331",
+  "scope": "ordinary web tabs only, actual folder Delete and Cmd+Shift+T; no terminal jobs"
+}

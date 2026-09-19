@@ -42,6 +42,8 @@ def open_omni(path):
 def expected_native_assets(root):
     """Compile only pinned small Firefox UI patches; compare actual shipped bytes."""
     items = [
+        ('browser/components/sessionstore/SessionStore.sys.mjs', 'moz-src/browser/components/sessionstore/SessionStore.sys.mjs', 'firefox156-sessionstore'),
+        ('browser/components/tabbrowser/Tabbrowser.sys.mjs', 'moz-src/browser/components/tabbrowser/Tabbrowser.sys.mjs', 'firefox156-sessionstore'),
         ('browser/components/contextualidentity/content/ContainerEditor.mjs', 'chrome/browser/content/browser/usercontext/ContainerEditor.mjs', 'firefox156-settings'),
         ('browser/components/contextualidentity/content/ContainerCreationPanel.mjs', 'chrome/browser/content/browser/usercontext/ContainerCreationPanel.mjs', 'firefox156-settings'),
         ('browser/components/preferences/config/containers.mjs', 'chrome/browser/content/browser/preferences/config/containers.mjs', 'firefox156-settings'),
@@ -73,8 +75,12 @@ def verify(app, root):
     config.read(app / 'Contents/Resources/platform.ini')
     expected = json.loads((root / 'surfer.json').read_text())['version']['version']
     require(config['Build']['Milestone'] == expected, 'Packaged Firefox engine does not match source')
+    native_assets = expected_native_assets(root)
     with open_omni(app / 'Contents/Resources/omni.ja') as gre:
         require({'chrome.manifest', 'modules/AppConstants.sys.mjs'}.issubset(gre.namelist()), 'Missing engine resource registration')
+        for bundled, expected_bytes in native_assets.items():
+            if bundled.startswith('moz-src/'):
+                require(gre.read(bundled) == expected_bytes, f'Stale native engine patch: {bundled}')
     archive = open_omni(app / 'Contents/Resources/browser/omni.ja')
     read = archive.read
     try:
@@ -91,6 +97,8 @@ def verify(app, root):
             ('chrome/browser/content/browser/ZenPreloadedScripts.js', 'src/zen/common/ZenPreloadedScripts.js'),
             ('chrome/browser/content/browser/ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
             ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenFolder.mjs', 'src/zen/folders/ZenFolder.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenFolders.mjs', 'src/zen/folders/ZenFolders.mjs'),
             ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
             ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
             ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),
@@ -98,7 +106,9 @@ def verify(app, root):
             ('modules/zen/share/share.schema.json', 'src/zen/share/share.schema.json'),
         ]:
             require(read(bundled) == (root / source).read_bytes(), f'Stale browser integration: {bundled}')
-        for bundled, expected_bytes in expected_native_assets(root).items():
+        for bundled, expected_bytes in native_assets.items():
+            if bundled.startswith('moz-src/'):
+                continue
             require(read(bundled) == expected_bytes, f'Stale native UI patch: {bundled}')
         require(b'gZenTerminalTabs.populateUnifiedContainerMenu(event)' in read('chrome/browser/content/browser/browser.xhtml'), 'Missing native terminal menu')
         return {'terminal_assets': count, 'engine': expected, 'layout': 'real GRE and browser omnijar resources'}

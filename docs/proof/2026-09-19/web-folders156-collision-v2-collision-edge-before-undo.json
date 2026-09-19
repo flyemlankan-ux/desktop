@@ -1,0 +1,120 @@
+{
+  "root": "1789825216477-98",
+  "lastGroup": "1789825216477-98",
+  "groups": [
+    {
+      "pinned": true,
+      "essential": null,
+      "splitView": false,
+      "id": "1789825216477-98",
+      "name": "collision-original",
+      "color": "zen-workspace-color",
+      "collapsed": false,
+      "saveOnWindowClose": true,
+      "closedAt": 1789825216621,
+      "sourceWindowId": "window0",
+      "tabs": [
+        {
+          "state": {
+            "entries": [
+              {
+                "url": "data:text/html,<title>Edge proof</title>",
+                "title": "Edge proof",
+                "cacheKey": 0,
+                "ID": 16,
+                "docshellUUID": "{407e5fb0-c60b-4dd4-b0dc-42d0fbbbb7bc}",
+                "resultPrincipalURI": null,
+                "principalToInherit_base64": "{\"0\":{\"0\":\"moz-nullprincipal:{1d8d2cf5-3322-4a0e-baa7-d3aaa0d430e6}\"}}",
+                "hasUserInteraction": false,
+                "triggeringPrincipal_base64": "{\"3\":{}}",
+                "docIdentifier": 17,
+                "transient": false,
+                "navigationKey": "{7e1d2754-9511-4d92-b100-7057f17c82b6}",
+                "navigationId": "{20ec0f6e-abeb-4bc0-82be-53120311ac8c}"
+              }
+            ],
+            "lastAccessed": 1789825216471,
+            "pinned": true,
+            "hidden": false,
+            "groupId": "1789825216477-98",
+            "zenWorkspace": "{dbaae675-e346-4eb1-8e14-9d3737e1ebba}",
+            "zenSyncId": "1789825216479-9fb6e27e-c585-452b-8b3b-fcc0180d759f",
+            "zenEssential": false,
+            "zenDefaultUserContextId": "true",
+            "zenPinnedIcon": null,
+            "zenIsEmpty": false,
+            "zenStaticLabel": null,
+            "zenHasStaticIcon": false,
+            "zenGlanceId": null,
+            "zenIsGlance": false,
+            "_zenPinnedInitialState": {
+              "entry": {
+                "url": null,
+                "title": null
+              },
+              "image": null
+            },
+            "_zenIsActiveTab": true,
+            "zenLiveFolderItemId": null,
+            "searchMode": null,
+            "userContextId": 0,
+            "attributes": {},
+            "extData": {
+              "syntheticWebFolderProof": "collision-original"
+            },
+            "index": 1,
+            "requestedIndex": 0,
+            "image": null
+          },
+          "title": "Edge proof",
+          "image": null,
+          "pos": 4,
+          "closedAt": 1789825216621,
+          "closedInGroup": null,
+          "closedInTabGroupId": "1789825216477-98",
+          "sourceWindowId": "window0",
+          "closedId": 2
+        }
+      ],
+      "splitViews": [],
+      "zenFolderState": {
+        "version": 1,
+        "rootId": "1789825216477-98",
+        "folders": [
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789825216477-98",
+            "name": "collision-original",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": null,
+            "prevSiblingInfo": {
+              "type": "start",
+              "id": null
+            },
+            "emptyTabIds": [
+              "1789825216479-cc3d9805-6b9a-4bb1-9e98-5feaa967141d"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{dbaae675-e346-4eb1-8e14-9d3737e1ebba}"
+          }
+        ],
+        "groups": [
+          {
+            "id": "1789825216477-98",
+            "name": "collision-original",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          }
+        ],
+        "emptyOnly": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/mozilla-firefox/firefox",
+  "tag": "FIREFOX_156_0_RELEASE",
+  "files": [
+    {
+      "path": "browser/components/sessionstore/SessionStore.sys.mjs",
+      "git_blob_sha": "52fc803050cd257d6de52b1e4a92f3211cbaba88",
+      "sha256": "42f5a8fe97747ce327cc1b1cac625ebea934391012b5efbb3157f803fb91708e"
+    },
+    {
+      "path": "browser/components/tabbrowser/Tabbrowser.sys.mjs",
+      "git_blob_sha": "f68e37926001384d0c8e80a3c163dc89e9c4ee5c",
+      "sha256": "699c34eb6d307862202175196bfcc3a6b33995b3a4f23b038939460df318d934"
+    }
+  ]
+}

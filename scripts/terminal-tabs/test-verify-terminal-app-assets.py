@@ -40,6 +40,8 @@ class VerificationTests(unittest.TestCase):
             module_path.parent.mkdir(parents=True, exist_ok=True)
             module_path.write_bytes((ROOT / 'src/zen/share' / name).read_bytes())
         entries['zen-components/ZenPinnedTabManager.mjs'] = (ROOT / 'src/zen/tabs/ZenPinnedTabManager.mjs').read_bytes()
+        for name in ('ZenFolder.mjs', 'ZenFolders.mjs'):
+            entries['zen-components/' + name] = (ROOT / 'src/zen/folders' / name).read_bytes()
         entries['browser.xhtml'] = b'gZenTerminalTabs.populateUnifiedContainerMenu(event)'
         for name, data in entries.items():
             path = self.browser / 'chrome/browser/content/browser' / name
@@ -47,6 +49,8 @@ class VerificationTests(unittest.TestCase):
             path.write_bytes(data)
 
         for bundled, data in module.expected_native_assets(ROOT).items():
+            if bundled.startswith('moz-src/'):
+                continue
             target = self.browser / bundled
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
@@ -56,6 +60,9 @@ class VerificationTests(unittest.TestCase):
         with zipfile.ZipFile(self.browser.parent / 'omni.ja', 'w') as archive:
             archive.writestr('chrome.manifest', 'synthetic')
             archive.writestr('modules/AppConstants.sys.mjs', 'synthetic')
+            for bundled, data in module.expected_native_assets(ROOT).items():
+                if bundled.startswith('moz-src/'):
+                    archive.writestr(bundled, data)
         with zipfile.ZipFile(self.browser / 'omni.ja', 'w') as archive:
             for directory in ('chrome', 'modules'):
                 for path in (self.browser / directory).rglob('*'):
@@ -84,6 +91,21 @@ class VerificationTests(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, 'Stale browser integration'):
                     module.verify(self.app, ROOT)
                 target.write_bytes((ROOT / source).read_bytes())
+
+    def test_stale_engine_restore_and_tab_management_rejected(self):
+        for entry in ('moz-src/browser/components/sessionstore/SessionStore.sys.mjs',
+                      'moz-src/browser/components/tabbrowser/Tabbrowser.sys.mjs'):
+            with self.subTest(entry=entry):
+                self.pack()
+                path = self.browser.parent / 'omni.ja'
+                with zipfile.ZipFile(path) as archive:
+                    entries = {n: archive.read(n) for n in archive.namelist()}
+                entries[entry] = b'stale engine module'
+                with zipfile.ZipFile(path, 'w') as archive:
+                    for name, data in entries.items():
+                        archive.writestr(name, data)
+                with self.assertRaisesRegex(AssertionError, 'Stale native engine patch'):
+                    module.verify(self.app, ROOT)
 
     def test_stale_native_settings_rejected(self):
         (self.browser / 'chrome/browser/content/browser/usercontext/ContainerEditor.mjs').write_text('old editor')

@@ -172,14 +172,31 @@ export class nsZenFolder extends MozTabbrowserTabGroup {
   }
 
   async delete() {
-    for (const tab of this.allItemsRecursive) {
-      if (tab.hasAttribute("zen-empty-tab")) {
-        // Manually remove the empty tabs as removeTabs() inside removeTabGroup
-        // does ignore them.
-        gBrowser.removeTab(tab);
+    // Keep the subtree description before placeholder removal can discard
+    // empty descendants. SessionStore consumes it during group close.
+    this._zenClosedFolderState = gZenFolders.captureClosedFolderState(this);
+    try {
+      const placeholders = this.allItemsRecursive.filter(tab => tab.hasAttribute("zen-empty-tab"));
+      if (this._zenClosedFolderState.emptyOnly) {
+        // Keep an empty root connected until its native close request bubbles
+        // to SessionStore. removeTabs intentionally skips inert placeholders.
+        await gBrowser.removeTabGroup(this, { isUserTriggered: true });
+        for (const tab of placeholders) {
+          gBrowser.removeTab(tab, { skipSessionStore: true });
+        }
+        return;
       }
+      for (const tab of this.allItemsRecursive) {
+        if (tab.hasAttribute("zen-empty-tab")) {
+          // Manually remove the empty tabs as removeTabs() inside removeTabGroup
+          // does ignore them.
+          gBrowser.removeTab(tab);
+        }
+      }
+      await gBrowser.removeTabGroup(this, { isUserTriggered: true });
+    } finally {
+      delete this._zenClosedFolderState;
     }
-    await gBrowser.removeTabGroup(this, { isUserTriggered: true });
   }
 
   get allItemsRecursive() {

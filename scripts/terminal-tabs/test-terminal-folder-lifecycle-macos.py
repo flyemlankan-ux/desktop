@@ -127,7 +127,23 @@ try:
  assert js('return folderRestoredFirst.group?.isZenFolder && folderRestoredSecond.group?.isZenFolder && folderRestoredSecond.group.group===folderRestoredFirst.group;'),'Native Undo lost the nested Zen folder structure'
  record('Actual Cmd+Shift+T Undo restores nested organization but never silently restarts either closed terminal')
  js('gBrowser.selectedTab=folderRestoredFirst;')
- button=js('return folderRestoredFirst.linkedBrowser.contentDocument.getElementById("zen-terminal-reconnect");');button.click()
+ # Each top-level terminal has a separate WebDriver content handle.
+ target_url=js('return folderRestoredFirst.linkedBrowser.currentURI.spec;')
+ chrome_handle=m.current_chrome_window_handle
+ try:
+  m.set_context('content')
+  matched=False
+  for handle in m.window_handles:
+   m.switch_to_window(handle)
+   if m.execute_script('return document.documentURI;')==target_url:
+    matched=True;break
+  assert matched,'Restored terminal content handle not found'
+  button=m.find_element('id','zen-terminal-reconnect')
+  assert button.is_displayed() and button.is_enabled()
+  button.click()
+ finally:
+  m.set_context('chrome');m.switch_to_window(chrome_handle)
+
  wait(lambda:js('return folderRestoredFirst.linkedBrowser.contentDocument.getElementById("zen-terminal-surface").hasAttribute("terminal-ready");'),'explicit restart ready')
  restarted=js('return folderRestoredFirst.getAttribute("zen-terminal-session-id");');test_sessions.append(restarted)
  wait(lambda:runs()==4 and exists(restarted),'one explicitly requested new job')

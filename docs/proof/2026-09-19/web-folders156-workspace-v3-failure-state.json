@@ -1,0 +1,215 @@
+{
+  "activeWorkspace": "{27944d71-d3f1-43cf-b6aa-e7aff899e369}",
+  "lastGroup": "1789825481775-10",
+  "groups": [
+    {
+      "pinned": true,
+      "essential": null,
+      "splitView": false,
+      "id": "1789825481770-65",
+      "name": "Web-only parent",
+      "color": "zen-workspace-color",
+      "collapsed": false,
+      "saveOnWindowClose": true,
+      "closedAt": 1789825481891,
+      "sourceWindowId": "window0",
+      "tabs": [
+        {
+          "state": {
+            "entries": [
+              {
+                "url": "data:text/html,<title>Web parent proof</title>",
+                "title": "Web parent proof",
+                "cacheKey": 0,
+                "ID": 13,
+                "docshellUUID": "{ff6048ae-1244-4d88-b106-3cc84c39137d}",
+                "resultPrincipalURI": null,
+                "principalToInherit_base64": "{\"0\":{\"0\":\"moz-nullprincipal:{2f4d0ec4-546c-4b74-bdd0-b835fb9d9483}\"}}",
+                "hasUserInteraction": false,
+                "triggeringPrincipal_base64": "{\"3\":{}}",
+                "docIdentifier": 14,
+                "transient": false,
+                "navigationKey": "{d76725f0-21c2-46e4-9b77-5d1e3055d6a0}",
+                "navigationId": "{d712102b-5511-4e27-9bff-b7bedc4f96a3}"
+              }
+            ],
+            "lastAccessed": 1789825481702,
+            "pinned": true,
+            "hidden": false,
+            "groupId": "1789825481770-65",
+            "zenWorkspace": "{27944d71-d3f1-43cf-b6aa-e7aff899e369}",
+            "zenSyncId": "1789825481777-e40ffa04-5d2a-40b3-979f-5dbd0688a492",
+            "zenEssential": false,
+            "zenDefaultUserContextId": "true",
+            "zenPinnedIcon": null,
+            "zenIsEmpty": false,
+            "zenStaticLabel": null,
+            "zenHasStaticIcon": false,
+            "zenGlanceId": null,
+            "zenIsGlance": false,
+            "_zenPinnedInitialState": {
+              "entry": {
+                "url": null,
+                "title": null
+              },
+              "image": null
+            },
+            "_zenIsActiveTab": true,
+            "zenLiveFolderItemId": null,
+            "searchMode": null,
+            "userContextId": 0,
+            "attributes": {},
+            "extData": {
+              "syntheticWebFolderProof": "parent"
+            },
+            "index": 1,
+            "requestedIndex": 0,
+            "image": null
+          },
+          "title": "Web parent proof",
+          "image": null,
+          "pos": 1,
+          "closedAt": 1789825481891,
+          "closedInGroup": null,
+          "closedInTabGroupId": "1789825481770-65",
+          "sourceWindowId": "window0",
+          "closedId": 0,
+          "_originalStateIndex": 0,
+          "_originalGroupStateIndex": 0
+        },
+        {
+          "state": {
+            "entries": [
+              {
+                "url": "data:text/html,<title>Web child proof</title>",
+                "title": "Web child proof",
+                "cacheKey": 0,
+                "ID": 14,
+                "docshellUUID": "{50a404c4-a0b2-43f3-be5a-05072b7df357}",
+                "resultPrincipalURI": null,
+                "principalToInherit_base64": "{\"0\":{\"0\":\"moz-nullprincipal:{5597a6a3-5e5e-4384-ae2f-5b4293b49828}\"}}",
+                "hasUserInteraction": false,
+                "triggeringPrincipal_base64": "{\"3\":{}}",
+                "docIdentifier": 15,
+                "transient": false,
+                "navigationKey": "{e2388a8a-5235-48c5-8180-6e096b576ec1}",
+                "navigationId": "{84cc4021-3cca-4c3b-bf81-da02a3f8ddf6}"
+              }
+            ],
+            "lastAccessed": 1789825481732,
+            "pinned": true,
+            "hidden": false,
+            "groupId": "1789825481775-10",
+            "zenWorkspace": "{27944d71-d3f1-43cf-b6aa-e7aff899e369}",
+            "zenSyncId": "1789825481777-d45e2a66-0b68-472c-aba3-173df0c81b26",
+            "zenEssential": false,
+            "zenDefaultUserContextId": "true",
+            "zenPinnedIcon": null,
+            "zenIsEmpty": false,
+            "zenStaticLabel": null,
+            "zenHasStaticIcon": false,
+            "zenGlanceId": null,
+            "zenIsGlance": false,
+            "_zenPinnedInitialState": {
+              "entry": {
+                "url": null,
+                "title": null
+              },
+              "image": null
+            },
+            "_zenIsActiveTab": true,
+            "zenLiveFolderItemId": null,
+            "searchMode": null,
+            "userContextId": 0,
+            "attributes": {},
+            "extData": {
+              "syntheticWebFolderProof": "child"
+            },
+            "image": null,
+            "index": 1,
+            "requestedIndex": 0
+          },
+          "title": "Web child proof",
+          "image": null,
+          "pos": 0,
+          "closedAt": 1789825481891,
+          "closedInGroup": null,
+          "closedInTabGroupId": "1789825481775-10",
+          "sourceWindowId": "window0",
+          "closedId": 1,
+          "_originalStateIndex": 1,
+          "_originalGroupStateIndex": 0
+        }
+      ],
+      "splitViews": [],
+      "zenFolderState": {
+        "version": 1,
+        "rootId": "1789825481770-65",
+        "folders": [
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789825481770-65",
+            "name": "Web-only parent",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": null,
+            "prevSiblingInfo": {
+              "type": "start",
+              "id": null
+            },
+            "emptyTabIds": [
+              "1789825481778-db75e6cb-d7a3-4779-b193-3dfa95692733"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{27944d71-d3f1-43cf-b6aa-e7aff899e369}"
+          },
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789825481775-10",
+            "name": "Web-only child",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": "1789825481770-65",
+            "prevSiblingInfo": {
+              "type": "tab",
+              "id": "1789825481778-db75e6cb-d7a3-4779-b193-3dfa95692733"
+            },
+            "emptyTabIds": [
+              "1789825481778-5e0499d0-227a-480e-adc3-4f438c80468d"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{27944d71-d3f1-43cf-b6aa-e7aff899e369}"
+          }
+        ],
+        "groups": [
+          {
+            "id": "1789825481770-65",
+            "name": "Web-only parent",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          },
+          {
+            "id": "1789825481775-10",
+            "name": "Web-only child",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          }
+        ],
+        "emptyOnly": false
+      }
+    }
+  ],
+  "folders": []
+}

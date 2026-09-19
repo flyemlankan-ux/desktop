@@ -1,0 +1,94 @@
+{
+  "lastGroup": null,
+  "folders": [
+    {
+      "id": "1789824911531-66",
+      "label": "Renamed project",
+      "parent": null
+    },
+    {
+      "id": "1789824911538-31",
+      "label": "Nested project",
+      "parent": "1789824911531-66"
+    }
+  ],
+  "groups": [
+    {
+      "id": "1789824911531-66",
+      "tag": "zen-folder",
+      "isZenFolder": true,
+      "parent": null
+    },
+    {
+      "id": "1789824911538-31",
+      "tag": "zen-folder",
+      "isZenFolder": true,
+      "parent": "1789824911531-66"
+    }
+  ],
+  "tabs": [
+    {
+      "id": "1789824911553-e0c0e168-c8db-4639-9741-c01b985bd4cf",
+      "group": "1789824911531-66",
+      "session": null,
+      "pending": false,
+      "uri": "about:blank",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789824911557-df4f7450-3e84-4207-942b-280ecf848d68",
+      "group": "1789824911538-31",
+      "session": null,
+      "pending": true,
+      "uri": "about:blank",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789824911541-6b2a2e61-af21-45d3-bac0-0ee0700754fa",
+      "group": "1789824911538-31",
+      "session": null,
+      "pending": true,
+      "uri": "data:text/html,<title>Nested web</title>",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789824911383-fc9eb765-7a00-4a12-afdc-3d9f148b8d5c",
+      "group": "1789824911538-31",
+      "session": "687d4cf5-5eec-42e6-872e-30e674d0abae",
+      "pending": false,
+      "uri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=687d4cf5-5eec-42e6-872e-30e674d0abae&name=Folder+lifecycle+proof&userContextId=7&started=1",
+      "status": "previous terminal ended \u00b7 starting again runs your setup as a new job",
+      "ownership": "{\"id\":\"687d4cf5-5eec-42e6-872e-30e674d0abae\",\"userContextId\":\"7\"}"
+    },
+    {
+      "id": "1789824911540-479326f4-30d3-4c02-8fc5-e0c28998dfe6",
+      "group": "1789824911531-66",
+      "session": null,
+      "pending": true,
+      "uri": "data:text/html,<title>Parent web</title>",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789824911238-cab66cea-d213-459a-9de1-c9dab8c34940",
+      "group": "1789824911531-66",
+      "session": "460434a2-eb8a-438a-a8e9-76213d9322fe",
+      "pending": false,
+      "uri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=460434a2-eb8a-438a-a8e9-76213d9322fe&name=Folder+lifecycle+proof&userContextId=7&started=1",
+      "status": "previous terminal ended \u00b7 starting again runs your setup as a new job",
+      "ownership": "{\"id\":\"460434a2-eb8a-438a-a8e9-76213d9322fe\",\"userContextId\":\"7\"}"
+    },
+    {
+      "id": "1789824909785-513143bc-6d94-4a56-8310-208ef9d9efe6",
+      "group": null,
+      "session": null,
+      "pending": false,
+      "uri": "about:blank",
+      "status": null,
+      "ownership": ""
+    }
+  ]
+}

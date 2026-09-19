@@ -1,0 +1,143 @@
+{
+  "activeWorkspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}",
+  "lastGroup": null,
+  "groups": [],
+  "folders": [
+    {
+      "id": "zen-restored-{c6739c82-2167-46ad-93e2-13d23d5dc388}",
+      "name": "collision-original",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080664-8db82904-2698-4040-9592-3e9e92b613f9",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080663-468e9e1e-ce88-48c1-b1ff-4b4099022864",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080450-8",
+      "name": "ordered-first",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080452-6c982e8e-a6c1-4227-8658-e76be7c697a4",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080451-5d80a5c2-81ba-448e-8fd9-8faa2a8afa96",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080572-72",
+      "name": "Surviving neighbor",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080573-05f28c6d-f87b-4141-aac7-f6a24a8d73c4",
+          "empty": true,
+          "workspace": null
+        }
+      ]
+    },
+    {
+      "id": "1789827080322-67",
+      "name": "Empty parent",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080326-3798ecb1-3322-427e-9272-6c05035057ee",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080326-dff2c221-377a-4e5a-9682-f50bc885b88f",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080324-4",
+      "name": "Empty child",
+      "parent": "1789827080322-67",
+      "tabs": [
+        {
+          "id": "1789827080326-dff2c221-377a-4e5a-9682-f50bc885b88f",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080114-43",
+      "name": "Web-only parent",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080120-a97976be-14ba-44e5-adc0-d258e1c7620c",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080119-394a4e33-2ab0-4d4d-9986-2e4137fe07c1",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080120-4b30db8a-a765-4fc2-b4ab-a3868c83339e",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080119-94446b2f-4c94-4bd3-9812-71456f4485eb",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080117-32",
+      "name": "Web-only child",
+      "parent": "1789827080114-43",
+      "tabs": [
+        {
+          "id": "1789827080120-4b30db8a-a765-4fc2-b4ab-a3868c83339e",
+          "empty": true,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        },
+        {
+          "id": "1789827080119-94446b2f-4c94-4bd3-9812-71456f4485eb",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    },
+    {
+      "id": "1789827080661-23",
+      "name": "Must stay unchanged",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789827080862-ca505c67-166d-4086-8aa6-9ffd14b028d2",
+          "empty": true,
+          "workspace": null
+        },
+        {
+          "id": "1789827080861-e2f6c70c-f8f1-4ece-afc1-95a0e93c39df",
+          "empty": false,
+          "workspace": "{c9f5c6db-3b1b-4695-9bfa-449507e032ef}"
+        }
+      ]
+    }
+  ]
+}

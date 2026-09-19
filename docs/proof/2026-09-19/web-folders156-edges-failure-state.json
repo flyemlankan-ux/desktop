@@ -1,0 +1,51 @@
+{
+  "activeWorkspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}",
+  "lastGroup": null,
+  "groups": [],
+  "folders": [
+    {
+      "id": "1789824974106-48",
+      "name": "Web-only parent",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789824974124-87d6d0d9-15e8-44ff-a233-34e7c946e0ba",
+          "empty": true,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        },
+        {
+          "id": "1789824974124-56db4096-afb4-4bc3-a8bd-48ef23a1e7dd",
+          "empty": true,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        },
+        {
+          "id": "1789824974124-78a885ad-a6fa-4ab5-be9d-06fd3896f1a4",
+          "empty": false,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        },
+        {
+          "id": "1789824974122-732e415b-4305-4cfa-b3ac-c77d26b412a1",
+          "empty": false,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        }
+      ]
+    },
+    {
+      "id": "1789824974114-100",
+      "name": "Web-only child",
+      "parent": "1789824974106-48",
+      "tabs": [
+        {
+          "id": "1789824974124-56db4096-afb4-4bc3-a8bd-48ef23a1e7dd",
+          "empty": true,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        },
+        {
+          "id": "1789824974124-78a885ad-a6fa-4ab5-be9d-06fd3896f1a4",
+          "empty": false,
+          "workspace": "{d9a3a252-5bd7-4cd1-8123-218b1cf15abc}"
+        }
+      ]
+    }
+  ]
+}

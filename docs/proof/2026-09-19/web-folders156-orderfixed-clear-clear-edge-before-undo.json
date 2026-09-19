@@ -1,0 +1,59 @@
+{
+  "root": "1789827090134-99",
+  "lastGroup": "1789827090134-99",
+  "groups": [
+    {
+      "pinned": true,
+      "essential": null,
+      "splitView": false,
+      "id": "1789827090134-99",
+      "name": "Empty clear-history",
+      "color": "zen-workspace-color",
+      "collapsed": false,
+      "saveOnWindowClose": true,
+      "closedAt": 1789827090251,
+      "sourceWindowId": "window0",
+      "tabs": [],
+      "splitViews": [],
+      "zenFolderState": {
+        "version": 1,
+        "rootId": "1789827090134-99",
+        "folders": [
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789827090134-99",
+            "name": "Empty clear-history",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": null,
+            "prevSiblingInfo": {
+              "type": "start",
+              "id": null
+            },
+            "emptyTabIds": [
+              "1789827090136-9d6da6eb-95fb-4031-a392-a0205413e498"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{fad2827b-79df-45b6-963b-4438c8810625}"
+          }
+        ],
+        "groups": [
+          {
+            "id": "1789827090134-99",
+            "name": "Empty clear-history",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          }
+        ],
+        "emptyOnly": true
+      },
+      "zenEmptyClosedId": 2
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "parentGroup": "1789825109439-74",
+  "parentIsZenFolder": true,
+  "childGroup": "1789825109443-3",
+  "childIsZenFolder": true,
+  "nested": true,
+  "groups": [
+    {
+      "id": "1789825109439-74",
+      "tag": "zen-folder",
+      "isZenFolder": true,
+      "parent": null
+    },
+    {
+      "id": "1789825109443-3",
+      "tag": "zen-folder",
+      "isZenFolder": true,
+      "parent": "1789825109439-74"
+    }
+  ]
+}

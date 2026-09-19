@@ -1,0 +1,21 @@
+{
+  "lastGroup": "1789825216157-29",
+  "groups": [
+    {
+      "id": "1789825216157-29",
+      "name": "Web-only parent",
+      "tabs": [
+        {
+          "groupId": "1789825216162-41",
+          "pinned": true,
+          "marker": "child"
+        },
+        {
+          "groupId": "1789825216157-29",
+          "pinned": true,
+          "marker": "parent"
+        }
+      ]
+    }
+  ]
+}

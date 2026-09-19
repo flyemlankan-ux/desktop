@@ -1,0 +1,51 @@
+{
+  "activeWorkspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}",
+  "lastGroup": null,
+  "groups": [],
+  "folders": [
+    {
+      "id": "1789825219142-16",
+      "name": "Web-only parent",
+      "parent": null,
+      "tabs": [
+        {
+          "id": "1789825219149-0dd666c2-4d51-4f0d-b8a1-7420fbade95c",
+          "empty": true,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        },
+        {
+          "id": "1789825219149-c2692ea6-8cdf-48da-9cb7-756a32be5910",
+          "empty": true,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        },
+        {
+          "id": "1789825219149-aa98f544-6851-4278-baac-d5c9f9303d3c",
+          "empty": false,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        },
+        {
+          "id": "1789825219148-eeb91d29-2025-4de8-8c9f-67e49453591c",
+          "empty": false,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        }
+      ]
+    },
+    {
+      "id": "1789825219147-99",
+      "name": "Web-only child",
+      "parent": "1789825219142-16",
+      "tabs": [
+        {
+          "id": "1789825219149-c2692ea6-8cdf-48da-9cb7-756a32be5910",
+          "empty": true,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        },
+        {
+          "id": "1789825219149-aa98f544-6851-4278-baac-d5c9f9303d3c",
+          "empty": false,
+          "workspace": "{ca1c7cf1-7522-4c75-a89c-55af212f4857}"
+        }
+      ]
+    }
+  ]
+}

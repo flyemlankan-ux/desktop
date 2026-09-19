@@ -645,11 +645,13 @@ index f68e37926001384d0c8e80a3c163dc89e9c4ee5c..350cebd50aa6ee58fbbbb53d0f5334aa
  
      this.documentGlobal.TabBarVisibility.update();
    }
-@@ -6025,6 +6221,7 @@ export class Tabbrowser {
+@@ -6025,6 +6221,9 @@ export class Tabbrowser {
        metricsContext,
      } = {}
    ) {
 +    tabs = tabs.filter(tab => !tab.hasAttribute("zen-empty-tab"));
++    // Removing no real tabs must not erase the previous Undo transaction.
++    if (!tabs.length) return;
      // When 'closeWindowWithLastTab' pref is enabled, closing all tabs
      // can be considered equivalent to closing the window.
      if (

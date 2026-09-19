@@ -4,6 +4,9 @@ This exercises a pinned current Mac engine, NOT a fresh source build.
 Never edits /Applications, the original browser, or a real user profile.
 """
 import argparse
+import importlib.util
+import sys
+sys.dont_write_bytecode = True
 import io
 import struct
 from pathlib import Path
@@ -93,6 +96,8 @@ for name in ['ZenPreloadedScripts.js', 'zen-sets.js']:
 for bundled, relative in [
     (prefix + 'ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
     (prefix + 'zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+    (prefix + 'zen-components/ZenFolder.mjs', 'src/zen/folders/ZenFolder.mjs'),
+    (prefix + 'zen-components/ZenFolders.mjs', 'src/zen/folders/ZenFolders.mjs'),
     ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
     ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
     ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),
@@ -136,6 +141,30 @@ entries[pref_name] = pref_source.encode()
 archive = app / 'Contents/Resources/browser/omni.ja'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as output:
     for name, data in entries.items():
+        output.writestr(name, data)
+# Session restoration and tab management live in the engine archive. Prove the
+# upstream patch produces the official bytes before applying our complete patch.
+spec = importlib.util.spec_from_file_location('terminal_assets', root / 'scripts/terminal-tabs/verify-terminal-app-assets.py')
+assets = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(assets)
+with assets.open_omni(source / 'Contents/Resources/omni.ja') as original:
+    gre_entries = {name: original.read(name) for name in original.namelist()}
+native_assets = assets.expected_native_assets(root)
+for filename in ('browser/components/sessionstore/SessionStore.sys.mjs',
+                 'browser/components/tabbrowser/Tabbrowser.sys.mjs'):
+    relative = Path(filename)
+    bundled = 'moz-src/' + filename
+    fixture = root / 'scripts/terminal-tabs/fixtures/firefox156-sessionstore' / relative
+    dest = engine / relative
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(fixture.read_bytes())
+    patch_path = root / 'src' / relative.parent / (relative.name.replace('.', '-') + '.patch')
+    baseline_patch = subprocess.check_output(['git', 'show', '1.22.2b:' + str(patch_path.relative_to(root))], cwd=root)
+    subprocess.run(['patch', '--batch', '--fuzz=0', '-p1'], input=baseline_patch, cwd=engine, check=True)
+    assert dest.read_bytes() == gre_entries[bundled], f'Official {relative.name} differs from pinned upstream patch; no guessed replacement'
+    gre_entries[bundled] = native_assets[bundled]
+with zipfile.ZipFile(app / 'Contents/Resources/omni.ja', 'w', zipfile.ZIP_DEFLATED) as output:
+    for name, data in gre_entries.items():
         output.writestr(name, data)
 subprocess.run([str(root / 'scripts/terminal-tabs/build-terminal-pty.sh'), str(app / 'Contents/MacOS/zen-terminal-pty')], check=True)
 original_executable = info['CFBundleExecutable']

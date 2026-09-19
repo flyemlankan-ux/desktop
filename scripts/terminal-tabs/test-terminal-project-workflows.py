@@ -105,9 +105,30 @@ def gecko_native_drag(source,target):
  module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
  ax=module.OwnedAppDialogs(process.pid)
  try:
-  ax.activate();ax.raise_window()
-  assert ax.attr(ax.root,'AXFrontmost') is True, 'Owned app is not frontmost'
+  class Pair(C.Structure):_fields_=[('a',C.c_double),('b',C.c_double)]
+  decode=ax.ax.AXValueGetValue;decode.argtypes=[C.c_void_p,C.c_int,C.c_void_p];decode.restype=C.c_bool
+  def verified_front_window():
+   if ax.attr(ax.root,'AXFrontmost') is not True:return False
+   focused=ax.attr(ax.root,'AXFocusedWindow')
+   if not focused:return False
+   ax.owner(focused)
+   position=Pair();size=Pair()
+   if not decode(ax.attr(focused,'AXPosition'),1,C.byref(position)) or not decode(ax.attr(focused,'AXSize'),2,C.byref(size)):return False
+   actual=js('return [Services.appinfo.processID,screenX,screenY,outerWidth,outerHeight];')
+   return actual[0]==process.pid and all(abs(a-b)<=2 for a,b in zip([position.a,position.b,size.a,size.b],actual[1:]))
+  if not verified_front_window():
+   try:ax.activate();ax.raise_window()
+   except module.AccessibilityError as error:
+    if "-25206" not in str(error):raise
+    # Unsupported Raise is acceptable ONLY if the exact desired state already
+    # holds. Never infer permission success or activate another application.
+    if not verified_front_window():raise
+  assert verified_front_window(),'Owned app is not frontmost with the exact focused window'
  finally:ax.close()
+ # Activation can change compact-sidebar geometry. Recompute after it, not
+ # from the stale pre-activation rectangles supplied by the caller.
+ source,target=js('return [projectTerms[1],projectWeb].map(t=>{const r=t.getBoundingClientRect();const x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,width:r.width,height:r.height,hit:document.elementFromPoint(x,y)?.closest("tab")===t};});')
+ assert all(r['width']>0 and r['height']>16 and r['hit'] for r in [source,target]),[source,target]
  result=async_js("""
  const pid=arguments[0],source=arguments[1],target=arguments[2];
  if(Services.appinfo.processID!==pid)throw new Error('Wrong owned browser process');
@@ -131,19 +152,34 @@ def gecko_native_drag(source,target):
    sent.push({message,x:point.x,y:point.y});
  }
  window.focus();
- await send(u.NATIVE_MOUSE_MESSAGE_MOVE,start);
+ let acceptedOver=null;
+ const onOver=event=>{
+   const tab=event.target.closest?.('tab');
+   const types=event.dataTransfer?[...event.dataTransfer.types]:[];
+   // Capture survives native propagation stops; inspect acceptance after the
+   // production target handlers, without altering the event or its data.
+   queueMicrotask(()=>{
+     if(event.isTrusted && tab===projectWeb && types.includes('application/x-moz-tabbrowser-tab') && event.dataTransfer.dropEffect==='move' && Math.abs(event.screenX-end.x)<=2 && Math.abs(event.screenY-end.y)<=2){
+       acceptedOver={trusted:true,target:tab.id,types,dropEffect:event.dataTransfer.dropEffect,screenX:event.screenX,screenY:event.screenY};
+     }
+   });
+ };
+ window.addEventListener('dragover',onOver,true);
  try{
+   await send(u.NATIVE_MOUSE_MESSAGE_MOVE,start);
    await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_DOWN,start);
-   for(let step=1;step<=3;step++){
-     const p=end;
-     // Move directly to the destination, then allow native drag tracking to settle.
-     // API has MOVE only, not a DRAG constant. Completion must be observed,
-     // never fabricated using a DOM drop or a tab reorder method.
-     await send(u.NATIVE_MOUSE_MESSAGE_MOVE,p);
+   const deadline=performance.now()+3000;
+   while(!acceptedOver && performance.now()<deadline){
+     await send(u.NATIVE_MOUSE_MESSAGE_MOVE,end);
      await new Promise(resolve=>window.setTimeout(resolve,50));
    }
- }finally{await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_UP,end);}
- return {start:[start.x,start.y],end:[end.x,end.y],outer,ratio,sent,scope:'own NSApp NSEvent down/move/up; shared cursor moved'};
+   // Actual drag readiness, not a fixed number of moves or an assumed delay.
+   if(!acceptedOver)throw new Error('No trusted accepted tab dragover at destination before bounded release');
+ }finally{
+   try{await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_UP,end);}
+   finally{window.removeEventListener('dragover',onOver,true);}
+ }
+ return {start:[start.x,start.y],end:[end.x,end.y],outer,ratio,sent,acceptedOver,scope:'own NSApp NSEvent down/move/up; shared cursor moved'};
  """,[process.pid,source,target])
  assert 'error' not in result,result
  return result['value']

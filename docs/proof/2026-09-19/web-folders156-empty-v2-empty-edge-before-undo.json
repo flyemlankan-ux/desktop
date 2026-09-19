@@ -1,0 +1,88 @@
+{
+  "root": "1789825478994-64",
+  "lastGroup": "1789825478994-64",
+  "groups": [
+    {
+      "pinned": true,
+      "essential": null,
+      "splitView": false,
+      "id": "1789825478994-64",
+      "name": "Empty parent",
+      "color": "zen-workspace-color",
+      "collapsed": false,
+      "saveOnWindowClose": true,
+      "closedAt": 1789825479103,
+      "sourceWindowId": "window0",
+      "tabs": [],
+      "splitViews": [],
+      "zenFolderState": {
+        "version": 1,
+        "rootId": "1789825478994-64",
+        "folders": [
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789825478994-64",
+            "name": "Empty parent",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": null,
+            "prevSiblingInfo": {
+              "type": "start",
+              "id": null
+            },
+            "emptyTabIds": [
+              "1789825478999-f6ac939e-f2a6-4e6f-854b-f8c161a76fb8"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{8d872e3d-2e2d-48d3-82c8-30a2e53aa1ad}"
+          },
+          {
+            "pinned": true,
+            "essential": null,
+            "splitViewGroup": false,
+            "id": "1789825478998-66",
+            "name": "Empty child",
+            "collapsed": false,
+            "saveOnWindowClose": true,
+            "parentId": "1789825478994-64",
+            "prevSiblingInfo": {
+              "type": "tab",
+              "id": "1789825478999-f6ac939e-f2a6-4e6f-854b-f8c161a76fb8"
+            },
+            "emptyTabIds": [
+              "1789825478999-01ab52f4-21d1-4d44-94d4-44a3f68b86ec"
+            ],
+            "userIcon": "",
+            "isLiveFolder": null,
+            "workspaceId": "{8d872e3d-2e2d-48d3-82c8-30a2e53aa1ad}"
+          }
+        ],
+        "groups": [
+          {
+            "id": "1789825478994-64",
+            "name": "Empty parent",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          },
+          {
+            "id": "1789825478998-66",
+            "name": "Empty child",
+            "color": "zen-workspace-color",
+            "collapsed": false,
+            "pinned": true,
+            "essential": null,
+            "splitView": false
+          }
+        ],
+        "emptyOnly": true
+      },
+      "zenEmptyClosedId": 2
+    }
+  ]
+}

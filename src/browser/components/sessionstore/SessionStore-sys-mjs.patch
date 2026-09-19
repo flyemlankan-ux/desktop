@@ -1,8 +1,7 @@
 diff --git a/browser/components/sessionstore/SessionStore.sys.mjs b/browser/components/sessionstore/SessionStore.sys.mjs
-index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eadac7510935 100644
 --- a/browser/components/sessionstore/SessionStore.sys.mjs
 +++ b/browser/components/sessionstore/SessionStore.sys.mjs
-@@ -111,6 +111,11 @@ const TAB_EVENTS = [
+@@ -111,6 +111,11 @@
    "TabSplitViewActivate",
    "SplitViewRemoved",
    "SplitViewCreated",
@@ -14,7 +13,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  ];
  
  const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-@@ -185,6 +190,8 @@ const lazy = XPCOMUtils.declareLazy({
+@@ -185,6 +190,8 @@
    TabStateFlusher:
      "moz-src:///browser/components/sessionstore/TabStateFlusher.sys.mjs",
    setTimeout: "resource://gre/modules/Timer.sys.mjs",
@@ -23,7 +22,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
    blankURI: () => Services.io.newURI("about:blank"),
    gRestoreWindowsToVirtualDesktop: {
      pref: "browser.sessionstore.restore_windows_to_virtual_desktop",
-@@ -348,6 +355,22 @@ class _SessionStore {
+@@ -348,6 +355,22 @@
      return this.#shouldRestoreLastSession;
    }
  
@@ -46,7 +45,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
    // whether we will potentially be restoring the session
    // more than once without Firefox restarting in between
    #restoreWithoutRestart = false;
-@@ -515,10 +538,7 @@ class _SessionStore {
+@@ -515,10 +538,7 @@
     */
    get willAutoRestore() {
      return (
@@ -58,7 +57,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      );
    }
  
-@@ -1215,6 +1235,11 @@ class _SessionStore {
+@@ -1215,6 +1235,11 @@
        case "TabPinned":
        case "TabUnpinned":
        case "SwapDocShells":
@@ -70,7 +69,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
          this.#saveStateDelayed(win);
          break;
        case "TabGroupCreate":
-@@ -1341,6 +1366,10 @@ class _SessionStore {
+@@ -1341,6 +1366,10 @@
        this.#windows[aWindow.__SSi].isTaskbarTab = true;
      }
  
@@ -81,7 +80,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      if (lazy.AIWindow.isAIWindowActiveAndEnabled(aWindow)) {
        this.#windows[aWindow.__SSi].isAIWindow = true;
      }
-@@ -1377,7 +1406,7 @@ class _SessionStore {
+@@ -1377,7 +1406,7 @@
      let isTaskbarTab = this.#windows[aWindow.__SSi].isTaskbarTab;
      // A regular window is not a private window, taskbar tab window, or popup window
      let isRegularWindow =
@@ -90,7 +89,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
      // perform additional initialization when the first window is loading
      if (lazy.RunState.isStopped) {
-@@ -1389,7 +1418,7 @@ class _SessionStore {
+@@ -1389,7 +1418,7 @@
          // to disk to NOW() to enforce a full interval before the next write.
          lazy.SessionSaver.updateLastSaveTime();
  
@@ -99,7 +98,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            this.#log.debug(
              "initializeWindow, the window is private or a web app. Saving SessionStartup.state for possibly restoring later"
            );
-@@ -1433,6 +1462,7 @@ class _SessionStore {
+@@ -1433,6 +1462,7 @@
            null,
            "sessionstore-one-or-no-tab-restored"
          );
@@ -107,7 +106,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
          this.#deferredAllWindowsRestored.resolve();
        }
        // this window was opened by #openWindowWithState
-@@ -1482,7 +1512,6 @@ class _SessionStore {
+@@ -1482,7 +1512,6 @@
        if (closedWindowState) {
          let newWindowState;
          if (
@@ -115,7 +114,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            !lazy.SessionStartup.willRestore()
          ) {
            // We want to split the window up into pinned tabs and unpinned tabs.
-@@ -1518,6 +1547,7 @@ class _SessionStore {
+@@ -1518,6 +1547,7 @@
          }
  
          if (newWindowState) {
@@ -123,7 +122,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            // Ensure that the window state isn't hidden
            this.#restoreCount = 1;
            let state = { windows: [newWindowState] };
-@@ -1554,6 +1584,9 @@ class _SessionStore {
+@@ -1554,6 +1584,9 @@
        });
        this.#shouldRestoreLastSession = false;
      }
@@ -133,7 +132,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
      if (this.#restoreLastWindow && aWindow.toolbar.visible) {
        // always reset (if not a popup window)
-@@ -1704,7 +1737,7 @@ class _SessionStore {
+@@ -1704,7 +1737,7 @@
  
      var tabbrowser = aWindow.gBrowser;
  
@@ -142,7 +141,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
      TAB_EVENTS.forEach(function (aEvent) {
        tabbrowser.tabContainer.removeEventListener(aEvent, this, true);
-@@ -1755,7 +1788,7 @@ class _SessionStore {
+@@ -1755,7 +1788,7 @@
  
        let isLastRegularWindow =
          Object.values(this.#windows).filter(
@@ -151,7 +150,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
          ).length == 1;
        this.#log.debug(
          `onClose, closing window isLastRegularWindow? ${isLastRegularWindow}`
-@@ -1812,8 +1845,8 @@ class _SessionStore {
+@@ -1812,8 +1845,8 @@
        // 2) Flush the window.
        // 3) When the flush is complete, revisit our decision to store the window
        //    in #closedWindows, and add/remove as necessary.
@@ -162,7 +161,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        }
  
        completionPromise = lazy.TabStateFlusher.flushWindow(aWindow).then(() => {
-@@ -1833,8 +1866,9 @@ class _SessionStore {
+@@ -1833,8 +1866,9 @@
  
          // Save non-private windows if they have at
          // least one saveable tab or are the last window.
@@ -174,7 +173,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
            if (!isLastWindow && winData.closedId > -1) {
              this.#addClosedAction(
-@@ -1910,7 +1944,7 @@ class _SessionStore {
+@@ -1910,7 +1944,7 @@
     *        to call this method again asynchronously (for example, after
     *        a window flush).
     */
@@ -183,7 +182,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      // Make sure SessionStore is still running, and make sure that we
      // haven't chosen to forget this window.
      if (
-@@ -1927,6 +1961,7 @@ class _SessionStore {
+@@ -1927,6 +1961,7 @@
        // #closedWindows from a previous call to this function.
        let winIndex = this.#closedWindows.indexOf(winData);
        let alreadyStored = winIndex != -1;
@@ -191,7 +190,103 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        // If sidebar command is truthy, i.e. sidebar is open, store sidebar settings
        let shouldStore = hasSaveableTabs || isLastWindow;
  
-@@ -2744,7 +2779,7 @@ class _SessionStore {
+@@ -2339,11 +2374,16 @@
+     // Clear closed tab groups
+     if (windowData.closedGroups.length) {
+       for (let closedGroup of windowData.closedGroups) {
++        if (closedGroup.zenEmptyClosedId !== undefined) {
++          this.#removeClosedAction(this.LAST_ACTION_CLOSED_TAB, closedGroup.zenEmptyClosedId);
++        }
+         while (closedGroup.tabs.length) {
+           this.#removeClosedTabData(windowData, closedGroup.tabs, 0);
+         }
+       }
+       windowData.closedGroups = [];
++      windowData._lastClosedTabGroupCount = -1;
++      windowData.lastClosedTabGroupId = null;
+       this.#closedObjectsChanged = true;
+     }
+   }
+@@ -2497,6 +2537,17 @@
+           "sessionstore.max_tabs_undo"
+         );
+         for (let ix in this.#windows) {
++          const winData = this.#windows[ix];
++          const emptyGroups = (winData.closedGroups || []).filter(group => group.zenEmptyClosedId !== undefined);
++          for (const group of emptyGroups.slice(Math.max(0, this.#max_tabs_undo))) {
++            this.#removeClosedAction(this.LAST_ACTION_CLOSED_TAB, group.zenEmptyClosedId);
++            winData.closedGroups.splice(winData.closedGroups.indexOf(group), 1);
++            if (winData.lastClosedTabGroupId === group.id) {
++              winData.lastClosedTabGroupId = null;
++              winData._lastClosedTabGroupCount = -1;
++            }
++            this.#closedObjectsChanged = true;
++          }
+           if (this.#windows[ix]._closedTabs.length > this.#max_tabs_undo) {
+             this.#windows[ix]._closedTabs.splice(
+               this.#max_tabs_undo,
+@@ -2630,7 +2681,15 @@
+ 
+     let closedGroups = this.#windows[win.__SSi].closedGroups;
+     let tabGroupState = lazy.TabGroupState.closed(tabGroup, win.__SSi);
+-    tabGroupState.tabs = this.#collectClosedTabsForTabGroup(tabGroup.tabs, win);
++    if (tabGroup.isZenFolder) {
++      tabGroupState.zenFolderState = tabGroup._zenClosedFolderState ||
++        win.gZenFolders.captureClosedFolderState(tabGroup);
++    }
++    tabGroupState.tabs = this.#collectClosedTabsForTabGroup(tabGroup.tabs, win, {
++      // The close transaction belongs to the root; each tab's saved groupId
++      // still names its own child folder for reconstruction.
++      closedInTabGroupId: tabGroup.isZenFolder ? tabGroup.id : undefined,
++    });
+     tabGroupState.splitViews = this.#collectSplitViewDataForTabGroup(
+       tabGroup.tabs
+     );
+@@ -2642,6 +2701,18 @@
+     this.#windows[win.__SSi]._lastClosedTabGroupCount =
+       tabGroupState.tabs.length;
+     closedGroups.unshift(tabGroupState);
++    if (tabGroupState.zenFolderState?.emptyOnly) {
++      // An empty folder has no closed tab to register the normal Undo action.
++      // Give its existing closed-group record an action ID, never a fake tab.
++      tabGroupState.zenEmptyClosedId = this.#nextClosedId++;
++      this.#windows[win.__SSi].lastClosedTabGroupId = tabGroupState.id;
++      this.#addClosedAction(this.LAST_ACTION_CLOSED_TAB, tabGroupState.zenEmptyClosedId);
++      const emptyGroups = closedGroups.filter(group => group.zenEmptyClosedId !== undefined);
++      for (const oldGroup of emptyGroups.slice(this.#max_tabs_undo)) {
++        this.#removeClosedAction(this.LAST_ACTION_CLOSED_TAB, oldGroup.zenEmptyClosedId);
++        closedGroups.splice(closedGroups.indexOf(oldGroup), 1);
++      }
++    }
+     this.#closedObjectsChanged = true;
+   }
+ 
+@@ -2665,7 +2736,7 @@
+    *         saved groups.
+    * @returns {ClosedTabStateData[]}
+    */
+-  #collectClosedTabsForTabGroup(tabs, win, { updateTabGroupId } = {}) {
++  #collectClosedTabsForTabGroup(tabs, win, { updateTabGroupId, closedInTabGroupId } = {}) {
+     let closedTabs = [];
+     tabs.forEach(tab => {
+       let tabState = lazy.TabState.collect(tab, TAB_CUSTOM_VALUES.get(tab));
+@@ -2675,6 +2746,7 @@
+       this.#maybeSaveClosedTab(win, tab, tabState, {
+         closedTabsArray: closedTabs,
+         closedInTabGroup: true,
++        closedInTabGroupId,
+       });
+     });
+     return closedTabs;
+@@ -2737,14 +2809,14 @@
+     aWindow,
+     aTab,
+     tabState,
+-    { closedTabsArray, closedInTabGroup = false } = {}
++    { closedTabsArray, closedInTabGroup = false, closedInTabGroupId } = {}
+   ) {
+     // Don't save private tabs
+     let isPrivateWindow = PrivateBrowsingUtils.isWindowPrivate(aWindow);
      if (!isPrivateWindow && tabState.isPrivate) {
        return;
      }
@@ -200,7 +295,16 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        return;
      }
  
-@@ -3511,7 +3546,15 @@ class _SessionStore {
+@@ -2758,7 +2830,7 @@
+       pos: aTab.index,
+       closedAt: Date.now(),
+       closedInGroup: aTab._closedInMultiselection,
+-      closedInTabGroupId: closedInTabGroup ? tabState.groupId : null,
++      closedInTabGroupId: closedInTabGroup ? (closedInTabGroupId ?? tabState.groupId) : null,
+       sourceWindowId: aWindow.__SSi,
+     };
+ 
+@@ -3511,7 +3583,15 @@
          1,
          Math.min(tabState.index, tabState.entries.length)
        );
@@ -217,7 +321,32 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
        if (inBackground === false) {
          aWindow.gBrowser.selectedTab = newTab;
-@@ -4036,6 +4079,8 @@ class _SessionStore {
+@@ -3562,6 +3642,13 @@
+     for (let privateness of privateValues) {
+       for (let window of this.getWindows({ private: privateness })) {
+         const windowState = this.#windows[window.__SSi];
++        const emptyGroup = windowState.closedGroups?.find(group =>
++          group.zenEmptyClosedId === aClosedId
++        );
++        if (emptyGroup) {
++          windowState.lastClosedTabGroupId = emptyGroup.id;
++          return window;
++        }
+         const closedTabs =
+           this.#getStateForClosedTabsAndClosedGroupTabs(windowState);
+         if (!closedTabs.length) {
+@@ -3584,6 +3671,10 @@
+    */
+   getLastClosedTabCount(aWindow) {
+     if ("__SSi" in aWindow) {
++      const winData = this.#windows[aWindow.__SSi];
++      if (winData.closedGroups?.some(group =>
++        group.id === winData.lastClosedTabGroupId && group.zenFolderState?.emptyOnly
++      )) return 1;
+       return Math.min(
+         Math.max(this.#windows[aWindow.__SSi]._lastClosedTabGroupCount, 1),
+         this.getClosedTabCountForWindow(aWindow)
+@@ -4036,6 +4127,8 @@
        // Append the tab if we're opening into a different window,
        tabIndex: aSource == aTargetWindow ? pos : Infinity,
        pinned: state.pinned,
@@ -226,7 +355,17 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        userContextId: state.userContextId,
        skipLoad: true,
        preferredRemoteType,
-@@ -4608,9 +4653,10 @@ class _SessionStore {
+@@ -4184,6 +4277,9 @@
+     }
+ 
+     let closedGroup = winData.closedGroups[closedGroupIndex];
++    if (closedGroup.zenEmptyClosedId !== undefined) {
++      this.#removeClosedAction(this.LAST_ACTION_CLOSED_TAB, closedGroup.zenEmptyClosedId);
++    }
+     while (closedGroup.tabs.length) {
+       this.#removeClosedTabData(winData, closedGroup.tabs, 0);
+     }
+@@ -4608,9 +4704,10 @@
        if (activePageData.title && activePageData.title != activePageData.url) {
          win.gBrowser.setInitialTabTitle(tab, activePageData.title, {
            isContentTitle: true,
@@ -238,7 +377,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        }
      }
  
-@@ -4982,7 +5028,7 @@ class _SessionStore {
+@@ -4982,7 +5079,7 @@
  
      for (let i = tabbrowser.pinnedTabCount; i < tabbrowser.tabs.length; i++) {
        let tab = tabbrowser.tabs[i];
@@ -247,7 +386,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
          removableTabs.push(tab);
        }
      }
-@@ -5095,7 +5141,7 @@ class _SessionStore {
+@@ -5095,7 +5192,7 @@
  
      // collect the data for all windows
      for (ix in this.#windows) {
@@ -256,7 +395,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
          // window data is still in #statesToRestore
          continue;
        }
-@@ -5239,11 +5285,12 @@ class _SessionStore {
+@@ -5239,11 +5336,12 @@
      }
  
      let tabbrowser = aWindow.gBrowser;
@@ -270,7 +409,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      // update the internal state data for this window
      for (let tab of tabs) {
        if (tab == aWindow.FirefoxViewHandler.tab) {
-@@ -5254,6 +5301,9 @@ class _SessionStore {
+@@ -5254,6 +5352,9 @@
        tabsData.push(tabData);
      }
  
@@ -280,7 +419,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      // update tab group state for this window
      winData.groups = [];
      for (let tabGroup of aWindow.gBrowser.tabGroups) {
-@@ -5270,7 +5320,7 @@ class _SessionStore {
+@@ -5270,7 +5371,7 @@
      // a window is closed, point to the first item in the tab strip instead (it will never be the Firefox View tab,
      // since it's only inserted into the tab strip after it's selected).
      if (aWindow.FirefoxViewHandler.tab?.selected) {
@@ -289,7 +428,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        winData.title = tabbrowser.tabs[0].label;
      }
      winData.selected = selectedIndex;
-@@ -5472,8 +5522,8 @@ class _SessionStore {
+@@ -5472,8 +5573,8 @@
      // selectTab represents.
      let selectTab = 0;
      if (overwriteTabs) {
@@ -300,7 +439,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        selectTab = Math.min(selectTab, winData.tabs.length);
      }
  
-@@ -5495,6 +5545,7 @@ class _SessionStore {
+@@ -5495,6 +5596,7 @@
      if (overwriteTabs) {
        for (let i = tabbrowser.browsers.length - 1; i >= 0; i--) {
          if (!tabbrowser.tabs[i].selected) {
@@ -308,7 +447,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            tabbrowser.removeTab(tabbrowser.tabs[i]);
          }
        }
-@@ -5529,6 +5580,12 @@ class _SessionStore {
+@@ -5529,6 +5631,12 @@
          savedTabGroup => !openTabGroupIdsInWindow.has(savedTabGroup.id)
        );
      }
@@ -321,7 +460,15 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
      // Move the originally open tabs to the end.
      if (initialTabs) {
-@@ -6098,6 +6155,25 @@ class _SessionStore {
+@@ -5609,6 +5717,7 @@
+     // and reset closed tab ids for tabs within each group.
+     let newClosedTabGroupsData = winData.closedGroups || [];
+     newClosedTabGroupsData.forEach(group => {
++      if (group.zenEmptyClosedId !== undefined) group.zenEmptyClosedId = this.#nextClosedId++;
+       this.#resetClosedTabIds(group.tabs, aWindow.__SSi);
+     });
+     this.#windows[aWindow.__SSi].closedGroups = newClosedTabGroupsData;
+@@ -6098,6 +6207,25 @@
  
      // Most of tabData has been restored, now continue with restoring
      // attributes that may trigger external events.
@@ -347,17 +494,29 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
  
      if (tabData.pinned) {
        tabbrowser.pinTab(tab);
-@@ -6272,6 +6348,9 @@ class _SessionStore {
+@@ -6271,6 +6399,9 @@
+       if (aWindow.gURLBar && !isTaskbarTab) {
          aWindow.gURLBar.readOnly = false;
        }
-     }
++    }
 +    if (aWinData.isZenUnsynced) {
 +      this.#windows[aWindow.__SSi].isZenUnsynced = true;
-+    }
+     }
  
      let promiseParts = Promise.withResolvers();
-     const wasMinimized = aWindow.windowState == aWindow.STATE_MINIMIZED;
-@@ -6774,6 +6853,7 @@ class _SessionStore {
+@@ -6516,6 +6647,11 @@
+    * @returns Array of closed windows.
+    */
+   #removeClosedWindow(index) {
++    for (const group of this.#closedWindows[index].closedGroups || []) {
++      if (group.zenEmptyClosedId !== undefined) {
++        this.#removeClosedAction(this.LAST_ACTION_CLOSED_TAB, group.zenEmptyClosedId);
++      }
++    }
+     // remove all of the closed tabs from the #lastClosedActions list
+     // before removing the window from it
+     for (let closedTab of this.#closedWindows[index]._closedTabs) {
+@@ -6774,6 +6910,7 @@
     */
    #isCmdLineEmpty(aWindow, aState) {
      var pinnedOnly =
@@ -365,7 +524,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
        aState.windows &&
        aState.windows.every(win => win.tabs.every(tab => tab.pinned));
  
-@@ -7116,7 +7196,7 @@ class _SessionStore {
+@@ -7116,7 +7253,7 @@
  
        let groupsToSave = new Map();
        for (let tIndex = 0; tIndex < window.tabs.length; ) {
@@ -374,7 +533,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            // Adjust window.selected
            if (tIndex + 1 < window.selected) {
              window.selected -= 1;
-@@ -7131,7 +7211,7 @@ class _SessionStore {
+@@ -7131,7 +7268,7 @@
            );
            // We don't want to increment tIndex here.
            continue;
@@ -383,7 +542,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            // Convert any open groups into saved groups.
            let groupStateToSave = window.groups.find(
              groupState => groupState.id == window.tabs[tIndex].groupId
-@@ -7691,7 +7771,6 @@ class _SessionStore {
+@@ -7691,7 +7828,6 @@
      timer.initWithCallback(
        () => {
          if (beats <= 0) {
@@ -391,7 +550,7 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
            Glean.sessionRestore.shutdownFlushAllOutcomes.timed_out.add(1);
            deferred.resolve();
          }
-@@ -8174,6 +8253,7 @@ class _SessionStore {
+@@ -8174,6 +8310,7 @@
      if (
        !savedTabGroupState.tabs.length ||
        this.getSavedTabGroup(savedTabGroupState.id)
@@ -399,3 +558,42 @@ index 52fc803050cd257d6de52b1e4a92f3211cbaba88..a9841832ddce540dc0f9b14c29e5eada
      ) {
        return;
      }
+@@ -8375,16 +8512,26 @@
+    * @returns {MozTabbrowserTabGroup}
+    */
+   #createTabsForSavedOrClosedTabGroup(tabGroupData, targetWindow) {
+-    let tabDataList = tabGroupData.tabs.map(tab => tab.state);
++    let tabDataList = tabGroupData.tabs.map(tab => structuredClone(tab.state));
++    const folderState = tabGroupData.zenFolderState?.version === 1
++      ? targetWindow.gZenFolders.prepareClosedFolderState(
++          tabGroupData.zenFolderState, tabDataList
++        ) : null;
++    if (folderState && !tabDataList.length) {
++      return targetWindow.gZenFolders.restoreClosedFolderState(folderState);
++    }
+     let tabs = targetWindow.gBrowser.createTabsForSessionRestore(
+       true,
+       0, // TODO Bug 1933113 - Save tab group position and selected tab with saved tab group data
+       tabDataList,
+-      [tabGroupData],
++      folderState?.groups || [tabGroupData],
+       tabGroupData.splitViews
+     );
+ 
+     this.#restoreTabs(targetWindow, tabs, tabDataList, 0);
++    if (folderState) {
++      return targetWindow.gZenFolders.restoreClosedFolderState(folderState);
++    }
+     return tabs[0].group;
+   }
+ 
+@@ -8408,7 +8555,8 @@
+       return;
+     }
+     for (let index = winData.closedGroups.length - 1; index >= 0; index--) {
+-      if (winData.closedGroups[index].tabs.length === 0) {
++      if (winData.closedGroups[index].tabs.length === 0 &&
++          winData.closedGroups[index].zenFolderState?.emptyOnly !== true) {
+         winData.closedGroups.splice(index, 1);
+         this.#closedObjectsChanged = true;
+       }

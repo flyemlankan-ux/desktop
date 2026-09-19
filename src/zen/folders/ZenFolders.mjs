@@ -1198,6 +1198,117 @@ class nsZenFolders extends nsZenDOMOperatedFeature {
     });
   }
 
+  captureClosedFolderState(root) {
+    if (!root?.isZenFolder) return null;
+    const folders = this.storeDataForSessionStore().filter(data => {
+      const node = document.getElementById(data.id);
+      return node === root || root.contains(node);
+    }).map(data => ({
+      ...data,
+      emptyTabIds: (document.getElementById(data.id).allItems || [])
+        .filter(tab => tab.hasAttribute("zen-empty-tab"))
+        .map(tab => tab.id),
+    }));
+    const groups = folders.map(data => ({
+      id: data.id, name: data.name, color: "zen-workspace-color",
+      collapsed: data.collapsed, pinned: data.pinned,
+      essential: data.essential, splitView: data.splitViewGroup,
+    }));
+    return { version: 1, rootId: root.id, folders, groups,
+      emptyOnly: root.tabs.every(tab => tab.hasAttribute("zen-empty-tab")) };
+  }
+
+  prepareClosedFolderState(savedState, tabStates) {
+    const state = structuredClone(savedState);
+    const workspaceFallback = gZenWorkspaces.activeWorkspace;
+    const missingWorkspaces = new Set();
+    for (const data of state.folders) {
+      if (!gZenWorkspaces.workspaceElement(data.workspaceId)) {
+        missingWorkspaces.add(data.workspaceId);
+        data.workspaceId = workspaceFallback;
+      }
+    }
+    for (const tab of tabStates) {
+      if (missingWorkspaces.has(tab.zenWorkspace)) tab.zenWorkspace = workspaceFallback;
+    }
+    const replacements = new Map();
+    const ids = state.folders.flatMap(data => [data.id, ...(data.emptyTabIds || [])]);
+    for (const id of ids) {
+      if (document.getElementById(id)) {
+        replacements.set(id, `zen-restored-${Services.uuid.generateUUID()}`);
+      }
+    }
+    const remap = id => replacements.get(id) || id;
+    state.rootId = remap(state.rootId);
+    for (const data of state.folders) {
+      data.id = remap(data.id);
+      data.parentId = remap(data.parentId);
+      data.emptyTabIds = (data.emptyTabIds || []).map(remap);
+      if (data.prevSiblingInfo) data.prevSiblingInfo.id = remap(data.prevSiblingInfo.id);
+    }
+    for (const group of state.groups) group.id = remap(group.id);
+    // Only cloned restore records are changed, never closed history or existing tabs.
+    for (const tab of tabStates) tab.groupId = remap(tab.groupId);
+    return state;
+  }
+
+  restoreClosedFolderState(state) {
+    if (state?.version !== 1 || !Array.isArray(state.folders)) return null;
+    // Closed groups with no ordinary tabs still need a node: their old empty
+    // placeholders were deliberately excluded from closed-tab history.
+    for (const data of state.folders) {
+      let group = document.getElementById(data.id);
+      if (!group) {
+        group = document.createXULElement("tab-group");
+        group.id = data.id;
+        gBrowser.tabContainer.appendChild(group);
+      }
+      if (!data.splitViewGroup) {
+        // Recreate the old inert anchor before nesting, so saved sibling order
+        // also works when the child originally followed an empty placeholder.
+        const empty = gBrowser.addTab("about:blank", {
+          skipAnimation: true, pinned: true, createLazyBrowser: true,
+          triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+          _forZenEmptyTab: true,
+        });
+        const savedId = data.emptyTabIds?.[0];
+        if (savedId && !document.getElementById(savedId)) empty.id = savedId;
+        const first = group.tabs[0];
+        if (first) first.before(empty);
+        else group.appendChild(empty);
+      }
+    }
+    this.restoreDataFromSessionStore(state.folders);
+    const ids = new Set(state.folders.map(data => data.id));
+    for (const data of state.folders) {
+      const folder = document.getElementById(data.id);
+      if (!folder?.isZenFolder) continue;
+      if (!ids.has(data.parentId)) {
+        const parent = document.getElementById(data.parentId);
+        const container = parent?.isZenFolder ? parent.groupContainer :
+          gZenWorkspaces.workspaceElement(data.workspaceId)?.pinnedTabsContainer ||
+          gZenWorkspaces.pinnedTabsContainer;
+        if (container) {
+          const previous = document.getElementById(data.prevSiblingInfo?.id);
+          if (previous?.parentElement === container) previous.after(folder);
+          else if (!data.prevSiblingInfo || data.prevSiblingInfo.type === "start") {
+            const first = parent?.isZenFolder ?
+              parent.groupStartElement.nextElementSibling : container.firstElementChild;
+            if (parent?.isZenFolder && first) first.after(folder);
+            else if (first) first.before(folder);
+            else container.appendChild(folder);
+          } else {
+            const separator = container.querySelector(".pinned-tabs-container-separator");
+            if (separator) separator.before(folder);
+            else container.appendChild(folder);
+          }
+        }
+      }
+    }
+    gBrowser.tabContainer._invalidateCachedTabs();
+    return document.getElementById(state.rootId);
+  }
+
   storeDataForSessionStore() {
     const folders = Array.from(
       gBrowser.tabContainer.querySelectorAll("zen-folder")

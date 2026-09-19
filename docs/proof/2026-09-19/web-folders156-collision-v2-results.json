@@ -1,0 +1,33 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Web-only nested folder setup uses native method fixture; zero terminal jobs created",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual parent-folder Delete closes nested ordinary web tabs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual Cmd+Shift+T restores both ordinary web tab receipts",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Web-only user Undo restores actual nested Zen folder structure",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Synthetic same-ID stress fixture: actual Undo remaps restored root and leaves preexisting folder/tab/label/parent unchanged",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-edf4b063",
+  "scope": "ordinary web tabs only, actual folder Delete and Cmd+Shift+T; no terminal jobs"
+}
