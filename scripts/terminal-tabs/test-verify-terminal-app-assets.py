@@ -40,6 +40,7 @@ class VerificationTests(unittest.TestCase):
             module_path.parent.mkdir(parents=True, exist_ok=True)
             module_path.write_bytes((ROOT / 'src/zen/share' / name).read_bytes())
         entries['zen-components/ZenPinnedTabManager.mjs'] = (ROOT / 'src/zen/tabs/ZenPinnedTabManager.mjs').read_bytes()
+        entries['zen-components/ZenViewSplitter.mjs'] = (ROOT / 'src/zen/split-view/ZenViewSplitter.mjs').read_bytes()
         for name in ('ZenFolder.mjs', 'ZenFolders.mjs'):
             entries['zen-components/' + name] = (ROOT / 'src/zen/folders' / name).read_bytes()
         entries['browser.xhtml'] = b'gZenTerminalTabs.populateUnifiedContainerMenu(event)'
@@ -80,6 +81,7 @@ class VerificationTests(unittest.TestCase):
     def test_unused_copy_does_not_hide_stale_registered_module(self):
         for entry, source in [
             ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenViewSplitter.mjs', 'src/zen/split-view/ZenViewSplitter.mjs'),
             ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
         ]:
             with self.subTest(entry=entry):

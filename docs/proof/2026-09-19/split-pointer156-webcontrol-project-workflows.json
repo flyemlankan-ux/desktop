@@ -1,0 +1,307 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual pointer drag reordered terminal before web inside folder",
+      "result": "pass",
+      "detail": {
+        "mechanism": "Gecko own NSApp NSEvent",
+        "events": [
+          {
+            "type": "mousedown",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": null,
+            "cancelled": null,
+            "types": []
+          },
+          {
+            "type": "dragstart",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": null,
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "none",
+            "cancelled": false,
+            "types": []
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094377-b562be11-e559-4ccb-ae52-304d90bd9a07",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "drop",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094377-b562be11-e559-4ccb-ae52-304d90bd9a07",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragend",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828094207-64301816-7abf-4e03-8af3-14ff7d29a3c0",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          }
+        ],
+        "geometry": {
+          "start": [
+            129,
+            292
+          ],
+          "end": [
+            129,
+            204
+          ],
+          "outer": {
+            "x": 4,
+            "y": 25,
+            "width": 1280,
+            "height": 713
+          },
+          "ratio": 2,
+          "sent": [
+            {
+              "message": 3,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 1,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 2,
+              "x": 129,
+              "y": 204
+            }
+          ],
+          "acceptedOver": {
+            "trusted": true,
+            "target": "1789828094377-b562be11-e559-4ccb-ae52-304d90bd9a07",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ],
+            "dropEffect": "move",
+            "screenX": 129,
+            "screenY": 204
+          },
+          "observedOvers": [],
+          "tabboxHits": 0,
+          "webControl": true,
+          "scope": "own NSApp NSEvent down/move/up; shared cursor moved"
+        }
+      }
+    },
+    {
+      "test": "native tab reorder retains folder and live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "whole mixed folder moves to new workspace without restarting jobs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError({'error': 'Error: No trusted accepted tab dragover at destination before bounded release [{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828094377-b562be11-e559-4ccb-ae52-304d90bd9a07\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828094377-b562be11-e559-4ccb-ae52-304d90bd9a07\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\",\"div\",\"1789828094363-59\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{2cbfc4a4-0b96-4fd0-8db7-f7400a8f9e57}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"x\":129,\"y\":292,\"canDrop\":false,\"last\":\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\"},{\"target\":\"browser\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"browser\",\"stack\",\"box\",\"panel-17-5\",\"tabbrowser-tabpanels\",\"tabbrowser-tabbox\",\"zen-tabbox-wrapper\",\"zen-appcontent-wrapper\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":true,\"effect\":\"move\",\"x\":1236,\"y\":381,\"canDrop\":false,\"last\":\"1789828093823-4e6ab46d-6652-4f23-95d7-73e6653678e9\"}]'})",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-54888de1"
+}

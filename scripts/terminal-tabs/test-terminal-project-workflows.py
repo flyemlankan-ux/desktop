@@ -11,11 +11,18 @@ from marionette_driver.keys import Keys
 parser=argparse.ArgumentParser()
 parser.add_argument('--app', required=True, type=Path)
 parser.add_argument('--label', default='packaged')
+parser.add_argument('--split-web-source-control', action='store_true', help='Diagnostic only: drag the ordinary web tab toward the previous terminal view')
+parser.add_argument('--split-web-target-control', action='store_true', help='Diagnostic only: select web after native dragstart to compare content event paths')
+parser.add_argument('--gecko-native-drag-to-split', action='store_true', help='Also prove actual tab-to-content-edge native split; requires Gecko pointer reorder mode')
 parser.add_argument('--gecko-native-pointer-drag', action='store_true', help='Experimental process-local Gecko native down/move/up; moves system cursor but never posts global input')
 parser.add_argument('--annotate-native-window', action='store_true', help='Opt-in CG window annotations; requires --native-pointer-drag')
 parser.add_argument('--native-pointer-drag', action='store_true', help='Actual owned-PID macOS CGEvent drag; no W3C fallback')
 parser.add_argument('--pointer-drag', action='store_true', help='Attempt real pointer reorder; failure is NOT replaced by a native-method pass')
 args=parser.parse_args()
+if args.split_web_source_control and not args.gecko_native_drag_to_split:parser.error('--split-web-source-control requires --gecko-native-drag-to-split')
+if args.split_web_source_control and args.split_web_target_control:parser.error('Choose one split control')
+if args.split_web_target_control and not args.gecko_native_drag_to_split:parser.error('--split-web-target-control requires --gecko-native-drag-to-split')
+if args.gecko_native_drag_to_split and not args.gecko_native_pointer_drag:parser.error('--gecko-native-drag-to-split requires --gecko-native-pointer-drag')
 if args.annotate_native_window and not args.native_pointer_drag:parser.error('--annotate-native-window requires --native-pointer-drag')
 if sum([args.pointer_drag,args.native_pointer_drag,args.gecko_native_pointer_drag])>1:parser.error('Choose one pointer mechanism explicitly')
 if not args.label.replace('-', '').replace('_', '').isalnum():parser.error('label must contain letters, digits, hyphens or underscores')
@@ -98,7 +105,7 @@ def native_drag(source, target):
   return {'start':start,'end':end,'bounds':bounds,'DOM':geometry}
  finally:ax.close()
 
-def gecko_native_drag(source,target):
+def gecko_native_drag(source,target,split=False):
  # Native AppKit drag tracking requires an active owned application, not just
  # DOM window.focus(). Never activate or send input to any other process.
  spec=importlib.util.spec_from_file_location('owned_dialogs',Path(__file__).with_name('macos-test-dialogs.py'))
@@ -127,40 +134,64 @@ def gecko_native_drag(source,target):
  finally:ax.close()
  # Activation can change compact-sidebar geometry. Recompute after it, not
  # from the stale pre-activation rectangles supplied by the caller.
- source,target=js('return [projectTerms[1],projectWeb].map(t=>{const r=t.getBoundingClientRect();const x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,width:r.width,height:r.height,hit:document.elementFromPoint(x,y)?.closest("tab")===t};});')
+ if split:
+  source,target=js('const t=arguments[0]?projectWeb:projectTerms[0];t.scrollIntoView({block:"nearest"});const r=t.getBoundingClientRect(),box=gBrowser.tabbox.getBoundingClientRect();const a={x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height};a.hit=document.elementFromPoint(a.x,a.y)?.closest("tab")===t;const b={x:box.right-Math.min(40,box.width/8),y:box.y+box.height/2,width:box.width,height:box.height};b.hit=gBrowser.tabbox.contains(document.elementFromPoint(b.x,b.y));return [a,b];',[args.split_web_source_control])
+ else:
+  source,target=js('return [projectTerms[1],projectWeb].map(t=>{const r=t.getBoundingClientRect();const x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,width:r.width,height:r.height,hit:document.elementFromPoint(x,y)?.closest("tab")===t};});')
  assert all(r['width']>0 and r['height']>16 and r['hit'] for r in [source,target]),[source,target]
  result=async_js("""
- const pid=arguments[0],source=arguments[1],target=arguments[2];
+ const pid=arguments[0],source=arguments[1],target=arguments[2],split=arguments[3],webControl=arguments[4];
  if(Services.appinfo.processID!==pid)throw new Error('Wrong owned browser process');
- const ownedDocument=window.document,element=projectTerms[1];
+ const ownedDocument=window.document,element=split?gBrowser.tabContainer:projectTerms[1];
  if(element.ownerDocument!==ownedDocument || !element.isConnected)throw new Error('Not an owned chrome tab');
  const u=window.windowUtils,ratio=window.devicePixelRatio;
  if(!Number.isFinite(ratio)||ratio<=0)throw new Error('Invalid device-pixel scale');
  const origin={x:window.mozInnerScreenX,y:window.mozInnerScreenY};
  const outer={x:window.screenX,y:window.screenY,width:window.outerWidth,height:window.outerHeight};
- const start={x:origin.x+source.x,y:origin.y+source.y},end={x:origin.x+target.x,y:origin.y+target.y-8};
+ const start={x:origin.x+source.x,y:origin.y+source.y},end={x:origin.x+target.x,y:origin.y+target.y-(split?0:8)};
  for(const p of [start,end])if(p.x<outer.x||p.y<outer.y||p.x>outer.x+outer.width||p.y>outer.y+outer.height)throw new Error('Point outside owned window');
- const sent=[];
+ const sent=[];window.projectNativeDispatch=sent;
  async function send(message,point){
    if(Services.appinfo.processID!==pid || element.ownerDocument!==ownedDocument || !element.isConnected)throw new Error('Owned widget changed');
    if(message!==u.NATIVE_MOUSE_MESSAGE_BUTTON_UP && (window.screenX!==outer.x || window.screenY!==outer.y || window.outerWidth!==outer.width || window.outerHeight!==outer.height || window.devicePixelRatio!==ratio))throw new Error('Owned geometry changed');
+   const dispatch={message,x:point.x,y:point.y,requestedAt:performance.now()};sent.push(dispatch);
    await new Promise((resolve,reject)=>{
      const timeout=window.setTimeout(()=>reject(new Error('Native mouse dispatch callback timed out')),3000);
      try{u.sendNativeMouseEvent(Math.round(point.x*ratio),Math.round(point.y*ratio),message,0,0,element,{onCompleteDispatch(){window.clearTimeout(timeout);resolve();}});}
      catch(error){window.clearTimeout(timeout);reject(error);}
    });
-   sent.push({message,x:point.x,y:point.y});
+   dispatch.completedAt=performance.now();
  }
  window.focus();
- let acceptedOver=null;
+ const lifecycle=[];
+ const splitState=()=>{
+   const splitter=gZenViewSplitter,fake=splitter.fakeBrowser;
+   const rect=fake?.getBoundingClientRect();
+   return {canDrop:!!splitter._canDrop,hasAnimated:!!splitter._hasAnimated,selected:gBrowser.selectedTab?.id,last:splitter._lastOpenedTab?.id,dragging:splitter._draggingTab?.id,fake:fake?.id,side:fake?.getAttribute('side'),fakeConnected:fake?.isConnected,fakeRect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null};
+ };
+ const lifecycleTypes=['dragenter','dragleave','dragover','drop','dragend','TabSelect'];
+ const traceLifecycle=event=>{
+   if(!split||lifecycle.length>=128)return;
+   const entry={type:event.type,time:performance.now(),trusted:event.isTrusted,previousTab:event.detail?.previousTab?.id,target:event.target.id||event.target.localName,document:event.target.ownerDocument?.documentURI,related:event.relatedTarget?.id||event.relatedTarget?.localName,path:event.composedPath().map(n=>n.id||n.localName||n.constructor.name),client:{x:event.clientX,y:event.clientY},screen:{x:event.screenX,y:event.screenY},chrome:{x:event.screenX-window.mozInnerScreenX,y:event.screenY-window.mozInnerScreenY},effect:event.dataTransfer?.dropEffect,cancelled:event.dataTransfer?.mozUserCancelled,before:splitState()};
+   lifecycle.push(entry);
+   // Observe the real production listeners; never call or replace them.
+   setTimeout(()=>{entry.after=splitState();entry.afterTime=performance.now();entry.afterEffect=event.dataTransfer?.dropEffect;},0);
+ };
+ if(split)for(const type of lifecycleTypes)window.addEventListener(type,traceLifecycle,true);
+ const traceMilestone=name=>{if(split&&lifecycle.length<128)lifecycle.push({milestone:name,time:performance.now(),state:splitState()});};
+ let acceptedOver=null;const observedOvers=[];let tabboxHits=0;const atTabbox=()=>tabboxHits++;gBrowser.tabbox.addEventListener("dragover",atTabbox,true);
  const onOver=event=>{
-   const tab=event.target.closest?.('tab');
+   const tab=event.target.closest?.('tab');const nativePath=event.composedPath();const crossedTabbox=nativePath.includes(gBrowser.tabbox);const eventPath=nativePath.map(n=>n.id||n.localName||n.constructor.name);
    const types=event.dataTransfer?[...event.dataTransfer.types]:[];
    // Capture survives native propagation stops; inspect acceptance after the
    // production target handlers, without altering the event or its data.
-   queueMicrotask(()=>{
-     if(event.isTrusted && tab===projectWeb && types.includes('application/x-moz-tabbrowser-tab') && event.dataTransfer.dropEffect==='move' && Math.abs(event.screenX-end.x)<=2 && Math.abs(event.screenY-end.y)<=2){
-       acceptedOver={trusted:true,target:tab.id,types,dropEffect:event.dataTransfer.dropEffect,screenX:event.screenX,screenY:event.screenY};
+   (split?callback=>setTimeout(callback,0):queueMicrotask)(()=>{
+     const fake=document.getElementById('zen-split-view-fake-browser');
+     if(split&&observedOvers.length<64)observedOvers.push({fake:fake?.id,side:fake?.getAttribute('side'),target:event.target.localName,document:event.target.ownerDocument?.documentURI,path:eventPath,embedder:event.target.ownerGlobal?.browsingContext?.embedderElement?.id,tabboxHits,inside:gBrowser.tabbox.contains(event.target),effect:event.dataTransfer?.dropEffect,clientX:event.clientX,clientY:event.clientY,chromeOrigin:{x:mozInnerScreenX,y:mozInnerScreenY},x:event.screenX,y:event.screenY,canDrop:gZenViewSplitter._canDrop,last:gZenViewSplitter._lastOpenedTab?.id});
+     const correctTarget=split ? !!fake&&fake.getAttribute('side')==='right'&&crossedTabbox&&tabboxHits>0 : tab===projectWeb;
+     const correctEffect=split ? event.dataTransfer.dropEffect==='none' : event.dataTransfer.dropEffect==='move';
+     if(event.isTrusted && correctTarget && types.includes('application/x-moz-tabbrowser-tab') && correctEffect && Math.abs(event.screenX-end.x)<=2 && Math.abs(event.screenY-end.y)<=2){
+       acceptedOver={trusted:true,target:split?fake.id:tab.id,types,dropEffect:event.dataTransfer.dropEffect,screenX:event.screenX,screenY:event.screenY};
      }
    });
  };
@@ -168,19 +199,43 @@ def gecko_native_drag(source,target):
  try{
    await send(u.NATIVE_MOUSE_MESSAGE_MOVE,start);
    await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_DOWN,start);
+   if(split){
+     // Start the drag inside the original chrome tab before crossing into its
+     // content browser widget. A single leap can miss tab drag initiation.
+     const threshold={x:start.x+Math.min(20,source.width/4),y:start.y};
+     const started=performance.now()+3000;
+     while(!projectDragEvents.some(event=>event.type==='dragstart'&&event.trusted) && performance.now()<started){
+       await send(u.NATIVE_MOUSE_MESSAGE_MOVE,threshold);
+       await new Promise(resolve=>setTimeout(resolve,50));
+     }
+     if(!projectDragEvents.some(event=>event.type==='dragstart'&&event.trusted))throw new Error('No trusted tab dragstart before entering content');
+     const trackingDeadline=performance.now()+3000;
+     while(!projectDragEvents.some(event=>event.type==='dragover'&&event.trusted)&&performance.now()<trackingDeadline)await new Promise(resolve=>setTimeout(resolve,25));
+     if(!projectDragEvents.some(event=>event.type==='dragover'&&event.trusted))throw new Error('Native AppKit drag tracking did not start');
+     if(webControl)gBrowser.selectedTab=projectWeb;
+     await send(u.NATIVE_MOUSE_MESSAGE_MOVE,end);
+   }
    const deadline=performance.now()+3000;
    while(!acceptedOver && performance.now()<deadline){
-     await send(u.NATIVE_MOUSE_MESSAGE_MOVE,end);
-     await new Promise(resolve=>window.setTimeout(resolve,50));
+     if(split&&projectDragEvents.some(event=>event.type==='dragend'))throw new Error('Native drag ended before explicit mouse release');
+     if(!split)await send(u.NATIVE_MOUSE_MESSAGE_MOVE,end);
+     await new Promise(resolve=>window.setTimeout(resolve,split?25:50));
    }
    // Actual drag readiness, not a fixed number of moves or an assumed delay.
-   if(!acceptedOver)throw new Error('No trusted accepted tab dragover at destination before bounded release');
+   if(!acceptedOver)throw new Error('No trusted accepted tab dragover at destination before bounded release '+JSON.stringify(observedOvers));
+   traceMilestone("before-preview-animation-wait");
+   if(split)await new Promise((resolve,reject)=>{
+     const timeout=setTimeout(()=>reject(new Error('Native split preview animation timed out')),3000);
+     Promise.resolve(gZenViewSplitter._finishAllAnimatingPromise).then(()=>{clearTimeout(timeout);resolve();},error=>{clearTimeout(timeout);reject(error);});
+   });
+   traceMilestone("after-preview-animation-wait");
+   if(split&&projectDragEvents.some(event=>event.type==='dragend'))throw new Error('Native drag ended before explicit mouse release after preview');
  }finally{
-   try{await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_UP,end);}
-   finally{window.removeEventListener('dragover',onOver,true);}
+   try{traceMilestone("before-button-up");await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_UP,end);await new Promise(resolve=>setTimeout(resolve,0));traceMilestone("after-button-up");}
+   finally{window.removeEventListener('dragover',onOver,true);gBrowser.tabbox.removeEventListener('dragover',atTabbox,true);if(split)for(const type of lifecycleTypes)window.removeEventListener(type,traceLifecycle,true);window.projectSplitDiagnostic={observedOvers,tabboxHits,webControl,lifecycle};}
  }
- return {start:[start.x,start.y],end:[end.x,end.y],outer,ratio,sent,acceptedOver,scope:'own NSApp NSEvent down/move/up; shared cursor moved'};
- """,[process.pid,source,target])
+ return {start:[start.x,start.y],end:[end.x,end.y],outer,ratio,sent,acceptedOver,observedOvers,tabboxHits,webControl,lifecycle,scope:'own NSApp NSEvent down/move/up; shared cursor moved'};
+ """,[process.pid,source,target,split,args.split_web_target_control])
  assert 'error' not in result,result
  return result['value']
 
@@ -211,7 +266,7 @@ try:
  assert js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder);')
  same_jobs();record('native collapse/expand retains members and jobs')
  if args.pointer_drag or args.native_pointer_drag or args.gecko_native_pointer_drag:
-  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(e.type!=="dragover" || projectDragEvents.filter(x=>x.type==="dragover").length<10)projectDragEvents.push({type:e.type,trusted:e.isTrusted,button:e.button,buttons:e.buttons,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY,screenX:e.screenX,screenY:e.screenY,dropEffect:e.dataTransfer?.dropEffect,types:e.dataTransfer?[...e.dataTransfer.types]:[]});},true);}window.focus();')
+  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(e.type!=="dragover" || projectDragEvents.filter(x=>x.type==="dragover").length<10)projectDragEvents.push({type:e.type,trusted:e.isTrusted,button:e.button,buttons:e.buttons,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY,screenX:e.screenX,screenY:e.screenY,dropEffect:e.dataTransfer?.dropEffect,cancelled:e.dataTransfer?.mozUserCancelled,types:e.dataTransfer?[...e.dataTransfer.types]:[]});},true);}window.focus();')
   time.sleep(.6)
   # Both pointer mechanisms hit actual browser chrome. Never inject drag events or
   # silently substitute DOM moves when real pointer dragging fails.
@@ -251,7 +306,19 @@ try:
  wait(lambda:js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder && t.getAttribute("zen-workspace-id")===projectSpace.uuid);'),'whole mixed folder moves to workspace')
  js('gBrowser.selectedTab=projectTerms[0];')
  same_jobs();record('whole mixed folder moves to new workspace without restarting jobs')
- js('gZenViewSplitter.splitTabs([projectWeb,projectTerms[0]],"grid",1);')
+ if args.gecko_native_drag_to_split:
+  js('if(!Services.prefs.getBoolPref("zen.splitView.enable-tab-drop"))throw new Error("Native tab drop split preference disabled");projectFolder.collapsed=false;gBrowser.selectedTab=projectWeb;window.projectDragEvents=[];',[ ])
+  if args.split_web_source_control:js('gBrowser.selectedTab=projectTerms[0];')
+  split_geometry=gecko_native_drag(None,None,split=True)
+  wait(lambda:js('return projectWeb.splitView && projectTerms[0].splitView && projectWeb.group===projectTerms[0].group;'),'actual native edge drag creates mixed split')
+  wait(lambda:js('return projectDragEvents.some(e=>e.type==="dragend"&&e.trusted);'),'native split drag ends')
+  split_events=js('return projectDragEvents;')
+  assert all(any(e['type']==kind and e['trusted'] for e in split_events) for kind in ['dragstart','dragover','dragend']),split_events
+  assert any(e['type']=='dragover' and e['trusted'] and 'application/x-moz-tabbrowser-tab' in e['types'] for e in split_events),split_events
+  assert any(e['type']=='dragend' and e['trusted'] and e['dropEffect']=='none' and not e.get('cancelled') for e in split_events),split_events
+  same_jobs();record('controlled web-target native edge drag creates mixed split' if args.split_web_target_control else 'actual native content-edge drag creates mixed web/terminal split',{'events':split_events,'geometry':split_geometry,'scope':'Zen native uncancelled dragend commit, not a DOM drop handler'})
+ else:
+  js('gZenViewSplitter.splitTabs([projectWeb,projectTerms[0]],"grid",1);')
  wait(lambda:js('return projectWeb.splitView && projectTerms[0].splitView && projectWeb.group===projectTerms[0].group;'),'mixed split view')
  old_size=pane(test_sessions[0],'#{pane_width}x#{pane_height}')
  m.set_window_rect(width=1100,height=700)
@@ -280,7 +347,9 @@ try:
 except Exception as error:
  failure=repr(error)
  try:
-  print('NATIVE FAILURE STATE',js('return {terms:projectTerms?.map(t=>({id:t.id,index:t.index,oldIndex:t._tPos,group:t.group?.id,pending:t.hasAttribute("pending")})),web:projectWeb?.id,order:projectFolder?.tabs?.map(t=>t.id),drag:window.projectDragEvents||[]};'),flush=True)
+  print('NATIVE FAILURE STATE',js('return {terms:projectTerms?.map(t=>({id:t.id,index:t.index,oldIndex:t._tPos,group:t.group?.id,pending:t.hasAttribute("pending")})),web:projectWeb?.id,order:projectFolder?.tabs?.map(t=>t.id),nativeDispatch:window.projectNativeDispatch,splitDiagnostic:window.projectSplitDiagnostic,drag:window.projectDragEvents||[]};'),flush=True)
+  if args.gecko_native_drag_to_split:
+   (proof/(args.label+'-split-lifecycle.json')).write_text(json.dumps(js('return window.projectSplitDiagnostic||null;'),indent=2)+'\n')
   screen('project-workflows-failure')
  except Exception:pass
  raise

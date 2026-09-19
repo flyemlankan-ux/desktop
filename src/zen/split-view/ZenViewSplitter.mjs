@@ -373,27 +373,47 @@ class nsZenViewSplitter extends nsZenDOMOperatedFeature {
     if (currentView?.tabs.length >= this.MAX_TABS) {
       return;
     }
+    // In-process terminal events bubble through the browser, but clientX/Y
+    // remain relative to the terminal document, not the chrome tabbox.
+    let dragPoint = event;
+    const sourceDocument = event.target?.ownerDocument;
+    const selectedBrowser = gBrowser.selectedBrowser;
+    const terminalPage = "chrome://browser/content/zen-terminal/terminal.xhtml";
+    if (
+      event.isTrusted &&
+      sourceDocument?.nodePrincipal?.isSystemPrincipal &&
+      sourceDocument === selectedBrowser?.contentDocument &&
+      sourceDocument.documentURI?.split(/[?#]/, 1)[0] === terminalPage &&
+      selectedBrowser.currentURI?.spec?.split(/[?#]/, 1)[0] === terminalPage &&
+      [event.screenX, event.screenY, window.mozInnerScreenX, window.mozInnerScreenY]
+        .every(Number.isFinite)
+    ) {
+      dragPoint = {
+        clientX: event.screenX - window.mozInnerScreenX,
+        clientY: event.screenY - window.mozInnerScreenY,
+      };
+    }
     const panelsRect = gBrowser.tabbox.getBoundingClientRect();
     const panelsWidth = panelsRect.width;
     const panelsHeight = panelsRect.height;
     if (
-      event.clientX > panelsRect.left + panelsWidth - 10 ||
-      event.clientX < panelsRect.left + 10 ||
-      event.clientY < panelsRect.top + 10 ||
-      event.clientY > panelsRect.bottom - 10
+      dragPoint.clientX > panelsRect.left + panelsWidth - 10 ||
+      dragPoint.clientX < panelsRect.left + 10 ||
+      dragPoint.clientY < panelsRect.top + 10 ||
+      dragPoint.clientY > panelsRect.bottom - 10
     ) {
       return;
     }
-    const dropSide = this._calculateDropSide(event, panelsRect);
+    const dropSide = this._calculateDropSide(dragPoint, panelsRect);
     if (!dropSide) {
       return;
     }
     // first quarter or last quarter of the screen, but not the middle
     if (!(
-      event.clientX < panelsRect.left + panelsWidth / 4 ||
-      event.clientX > panelsRect.left + (panelsWidth / 4) * 3 ||
-      event.clientY < panelsRect.top + panelsHeight / 4 ||
-      event.clientY > panelsRect.top + (panelsHeight / 4) * 3
+      dragPoint.clientX < panelsRect.left + panelsWidth / 4 ||
+      dragPoint.clientX > panelsRect.left + (panelsWidth / 4) * 3 ||
+      dragPoint.clientY < panelsRect.top + panelsHeight / 4 ||
+      dragPoint.clientY > panelsRect.top + (panelsHeight / 4) * 3
     )) {
       return;
     }

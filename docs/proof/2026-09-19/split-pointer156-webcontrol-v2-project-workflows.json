@@ -1,0 +1,307 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual pointer drag reordered terminal before web inside folder",
+      "result": "pass",
+      "detail": {
+        "mechanism": "Gecko own NSApp NSEvent",
+        "events": [
+          {
+            "type": "mousedown",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": null,
+            "cancelled": null,
+            "types": []
+          },
+          {
+            "type": "dragstart",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": null,
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "none",
+            "cancelled": false,
+            "types": []
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122546-bfab70fd-ebef-4e02-94b3-11269c93b83a",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "drop",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122546-bfab70fd-ebef-4e02-94b3-11269c93b83a",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragend",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828122396-08feceda-2d35-414e-a25e-47126d4809c3",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          }
+        ],
+        "geometry": {
+          "start": [
+            129,
+            292
+          ],
+          "end": [
+            129,
+            204
+          ],
+          "outer": {
+            "x": 4,
+            "y": 25,
+            "width": 1280,
+            "height": 713
+          },
+          "ratio": 2,
+          "sent": [
+            {
+              "message": 3,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 1,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 2,
+              "x": 129,
+              "y": 204
+            }
+          ],
+          "acceptedOver": {
+            "trusted": true,
+            "target": "1789828122546-bfab70fd-ebef-4e02-94b3-11269c93b83a",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ],
+            "dropEffect": "move",
+            "screenX": 129,
+            "screenY": 204
+          },
+          "observedOvers": [],
+          "tabboxHits": 0,
+          "webControl": true,
+          "scope": "own NSApp NSEvent down/move/up; shared cursor moved"
+        }
+      }
+    },
+    {
+      "test": "native tab reorder retains folder and live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "whole mixed folder moves to new workspace without restarting jobs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError('Timed out: actual native edge drag creates mixed split; None')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-30e7f0e5"
+}

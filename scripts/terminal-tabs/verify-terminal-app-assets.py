@@ -99,6 +99,7 @@ def verify(app, root):
             ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
             ('chrome/browser/content/browser/zen-components/ZenFolder.mjs', 'src/zen/folders/ZenFolder.mjs'),
             ('chrome/browser/content/browser/zen-components/ZenFolders.mjs', 'src/zen/folders/ZenFolders.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenViewSplitter.mjs', 'src/zen/split-view/ZenViewSplitter.mjs'),
             ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
             ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
             ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),

@@ -1,0 +1,307 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual pointer drag reordered terminal before web inside folder",
+      "result": "pass",
+      "detail": {
+        "mechanism": "Gecko own NSApp NSEvent",
+        "events": [
+          {
+            "type": "mousedown",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": null,
+            "cancelled": null,
+            "types": []
+          },
+          {
+            "type": "dragstart",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": null,
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "none",
+            "cancelled": false,
+            "types": []
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 267,
+            "screenX": 129,
+            "screenY": 292,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragover",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "drop",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          },
+          {
+            "type": "dragend",
+            "trusted": true,
+            "button": 0,
+            "buttons": 0,
+            "target": "1789828430664-b2f20ac4-0f50-4c02-97b1-7b031e03a9f7",
+            "x": 125,
+            "y": 179,
+            "screenX": 129,
+            "screenY": 204,
+            "dropEffect": "move",
+            "cancelled": false,
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ]
+          }
+        ],
+        "geometry": {
+          "start": [
+            129,
+            292
+          ],
+          "end": [
+            129,
+            204
+          ],
+          "outer": {
+            "x": 4,
+            "y": 25,
+            "width": 1280,
+            "height": 713
+          },
+          "ratio": 2,
+          "sent": [
+            {
+              "message": 3,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 1,
+              "x": 129,
+              "y": 292
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 3,
+              "x": 129,
+              "y": 204
+            },
+            {
+              "message": 2,
+              "x": 129,
+              "y": 204
+            }
+          ],
+          "acceptedOver": {
+            "trusted": true,
+            "target": "1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577",
+            "types": [
+              "application/x-moz-tabbrowser-tab",
+              "text/x-moz-text-internal"
+            ],
+            "dropEffect": "move",
+            "screenX": 129,
+            "screenY": 204
+          },
+          "observedOvers": [],
+          "tabboxHits": 0,
+          "webControl": false,
+          "scope": "own NSApp NSEvent down/move/up; shared cursor moved"
+        }
+      }
+    },
+    {
+      "test": "native tab reorder retains folder and live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "whole mixed folder moves to new workspace without restarting jobs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError({'error': 'Error: No trusted accepted tab dragover at destination before bounded release [{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"target\":\"label\",\"document\":\"chrome://browser/content/browser.xhtml\",\"path\":[\"label\",\"vbox\",\"hbox\",\"stack\",\"1789828430376-5c071d00-76be-4e53-a48f-143dc20195e8\",\"div\",\"1789828430822-86\",\"vbox\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"arrowscrollbox\",\"{74695904-9906-4196-9e5b-01c70850737a}\",\"slot\",\"scrollbox\",\"ShadowRoot\",\"tabbrowser-arrowscrollbox\",\"zen-tabs-wrapper\",\"tabbrowser-tabs\",\"TabsToolbar-customization-target\",\"hbox\",\"TabsToolbar\",\"titlebar\",\"navigator-toolbox\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":0,\"inside\":false,\"effect\":\"move\",\"clientX\":125,\"clientY\":329,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":129,\"y\":354,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"},{\"fake\":\"zen-split-view-fake-browser\",\"side\":\"right\",\"target\":\"div\",\"document\":\"chrome://browser/content/zen-terminal/terminal.xhtml?session=43d49333-a43a-41bf-8b9b-31d221baafbc&name=Mixed+project+proof&userContextId=7&started=1\",\"path\":[\"ContentFrameMessageManager\",\"browser\",\"stack\",\"box\",\"panel-17-3\",\"tabbrowser-tabpanels\",\"tabbrowser-tabbox\",\"zen-tabbox-wrapper\",\"zen-appcontent-wrapper\",\"browser\",\"zen-main-app-wrapper\",\"body\",\"main-window\",\"HTMLDocument\",\"Window\"],\"tabboxHits\":1,\"inside\":false,\"effect\":\"none\",\"clientX\":996,\"clientY\":348,\"chromeOrigin\":{\"x\":4,\"y\":25},\"x\":1236,\"y\":381,\"canDrop\":false,\"last\":\"1789828430834-5c725a33-bf79-48e0-9bdf-fd1c772d4577\"}]'})",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-f8312302"
+}
