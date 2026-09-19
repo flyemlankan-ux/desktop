@@ -41,6 +41,7 @@ class VerificationTests(unittest.TestCase):
             module_path.write_bytes((ROOT / 'src/zen/share' / name).read_bytes())
         entries['zen-components/ZenPinnedTabManager.mjs'] = (ROOT / 'src/zen/tabs/ZenPinnedTabManager.mjs').read_bytes()
         entries['zen-components/ZenViewSplitter.mjs'] = (ROOT / 'src/zen/split-view/ZenViewSplitter.mjs').read_bytes()
+        entries['zen-components/ZenDragAndDrop.js'] = (ROOT / 'src/zen/drag-and-drop/ZenDragAndDrop.js').read_bytes()
         for name in ('ZenFolder.mjs', 'ZenFolders.mjs'):
             entries['zen-components/' + name] = (ROOT / 'src/zen/folders' / name).read_bytes()
         entries['browser.xhtml'] = b'gZenTerminalTabs.populateUnifiedContainerMenu(event)'
@@ -82,6 +83,7 @@ class VerificationTests(unittest.TestCase):
         for entry, source in [
             ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
             ('chrome/browser/content/browser/zen-components/ZenViewSplitter.mjs', 'src/zen/split-view/ZenViewSplitter.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenDragAndDrop.js', 'src/zen/drag-and-drop/ZenDragAndDrop.js'),
             ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
         ]:
             with self.subTest(entry=entry):

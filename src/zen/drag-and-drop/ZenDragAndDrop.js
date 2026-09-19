@@ -996,6 +996,34 @@
       if (!isTab(draggedTab)) {
         return;
       }
+      // Selecting the preview's other tab hides the in-process terminal.
+      // Gecko then emits a terminal dragleave with no relatedTarget even
+      // though the trusted pointer is still inside this window's tabbox.
+      const sourceDocument = event.target?.ownerDocument;
+      const sourceBrowser = draggedTab.linkedBrowser;
+      const terminalPage = "chrome://browser/content/zen-terminal/terminal.xhtml";
+      if (
+        event.isTrusted &&
+        event.dataTransfer.mozTypesAt(0)[0] === TAB_DROP_TYPE &&
+        draggedTab.documentGlobal === window &&
+        gZenViewSplitter._canDrop &&
+        gZenViewSplitter._draggingTab === draggedTab &&
+        gZenViewSplitter.fakeBrowser?.isConnected &&
+        gBrowser.selectedBrowser !== sourceBrowser &&
+        sourceDocument?.nodePrincipal?.isSystemPrincipal &&
+        sourceDocument === sourceBrowser?.contentDocument &&
+        sourceDocument.documentURI?.split(/[?#]/, 1)[0] === terminalPage &&
+        sourceBrowser.currentURI?.spec?.split(/[?#]/, 1)[0] === terminalPage &&
+        [event.screenX, event.screenY, window.mozInnerScreenX, window.mozInnerScreenY]
+          .every(Number.isFinite)
+      ) {
+        const x = event.screenX - window.mozInnerScreenX;
+        const y = event.screenY - window.mozInnerScreenY;
+        const rect = gBrowser.tabbox.getBoundingClientRect();
+        if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) {
+          return;
+        }
+      }
       if (this.#isOutOfWindow) {
         return;
       }

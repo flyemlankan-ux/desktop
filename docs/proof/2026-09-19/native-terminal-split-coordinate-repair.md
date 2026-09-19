@@ -35,3 +35,13 @@ The parent rebuilt the coordinate repair. Actual terminal-edge dragging now crea
 Do not claim split acceptance from the preview. No second production change has been made. The test now records bounded before/after lifecycle snapshots for dragenter/leave/over/drop/end and TabSelect, with native document/path, both coordinate spaces, preview bounds, selected/previous/dragged tabs and splitter state. It also records animation-wait and button-release milestones. Listeners only observe; they do not replace production handlers or dispatch fake events. Failure saves a separate `-split-lifecycle.json` receipt. Syntax passes; parent owns the next actual UI run.
 
 The diagnostic must distinguish dragleave cancellation, selection/location cleanup and normal final commit consumption before choosing any further repair.
+
+## Grounded false window-leave candidate
+
+The later sequence receipt reaches the real preview. At 6627.96ms it records a terminal-document `dragleave` with `relatedTarget=null`, while the pointer is still inside the chrome tabbox. The production window-capture listener was registered earlier than the diagnostic listener. Consequently, the diagnostic's “before” snapshot already follows that production listener; the delayed TabSelect “after” snapshot also runs after this leave and cannot assign the cleanup to TabSelect itself.
+
+Source inspection identifies the matching path: `ZenDragAndDrop.handle_windowDragLeave` interprets null relatedTarget as leaving the window, sets its out-of-window flag and calls `onBrowserDragEndToSplit(event, true)`. That cancellation clears the dragged tab and accepting state while leaving the preview temporarily present for its closing animation, matching the receipt. `disableTabRearrangeView` does not itself call `onBrowserDragEnd` in the inspected commit.
+
+The candidate changes only that window-leave handler. It ignores this internal transition only when all of the following hold: trusted native tab payload; same-window source tab; active matching split preview; connected preview node; selection has moved away from the source browser; exact source document identity; system principal; canonical terminal document and browser URLs; finite coordinates; and pointer strictly inside the chrome tabbox. Genuine outside/boundary leaves and ordinary web behavior retain the original cancellation path.
+
+The new actual-method source test passes the observed transition, 18 identity/source/geometry negative cases and both pre-existing relatedTarget/preview-target exceptions. Syntax and the earlier coordinate tests pass. Independent security review requested. No native acceptance claim yet, and no browser UI was launched by this source task.

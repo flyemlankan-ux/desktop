@@ -99,6 +99,7 @@ for bundled, relative in [
     (prefix + 'zen-components/ZenFolder.mjs', 'src/zen/folders/ZenFolder.mjs'),
     (prefix + 'zen-components/ZenFolders.mjs', 'src/zen/folders/ZenFolders.mjs'),
     (prefix + 'zen-components/ZenViewSplitter.mjs', 'src/zen/split-view/ZenViewSplitter.mjs'),
+    (prefix + 'zen-components/ZenDragAndDrop.js', 'src/zen/drag-and-drop/ZenDragAndDrop.js'),
     ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
     ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
     ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),

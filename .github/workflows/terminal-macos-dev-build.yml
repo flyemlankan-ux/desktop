@@ -111,6 +111,7 @@ jobs:
           node scripts/terminal-tabs/test-folder-undo-subtree.mjs
           node scripts/terminal-tabs/test-terminal-empty-close-history.mjs
           node scripts/terminal-tabs/test-terminal-split-drag-coordinates.mjs
+          node scripts/terminal-tabs/test-terminal-split-window-leave.mjs
           node scripts/terminal-tabs/test-terminal-navigation-return.mjs
           node scripts/terminal-tabs/test-terminal-native-polish.mjs
           node scripts/terminal-tabs/test-terminal-organization.mjs
