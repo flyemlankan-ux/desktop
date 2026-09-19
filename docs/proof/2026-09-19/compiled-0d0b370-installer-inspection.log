@@ -1,0 +1,14 @@
+Verifying DMG structure...
+hdiutil: verify: checksum of "../zen-terminal-aarch64.dmg" is VALID
+Package privacy check passed: no recognized profile artifacts in image or resource archives.
+{
+  "terminal_assets": 14,
+  "engine": "156.0",
+  "layout": "real GRE and browser omnijar resources"
+}
+DMG inspection passed:
+- app: Zen Terminal.app
+- bundle id: app.zen-browser.zen-terminal
+- executable: zen-terminal
+- updater: absent
+- stock Zen update address: absent

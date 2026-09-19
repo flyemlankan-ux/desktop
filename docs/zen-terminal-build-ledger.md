@@ -468,3 +468,8 @@ final current-source delivery without a subsequent build/package step.
 - Next handoff: high reasoning for lifecycle/security, focused source regression plus fresh compiled-package/native proof. Scope remains genuine Zen with integrated terminals; no personal migration or notarized distribution claim. Original Zen699 and all personal profiles remain untouched.
 
 - Frozen-source precommit audit:35/35 exact workflow commands succeed, including browser-test setup, native helper build, strict pinned156 engine patches, folder12groups, no-op close, verifier11, motion18 and searchlayout13 (negative control included). Complete per-command output/timing in final-folder-source-regression.{json,log}. This audit did not launch native GUI or replace compiled-package acceptance.
+
+
+### Compiled development installer inspection — 2026-09-19
+
+Run 35444319973 (source 0d0b370) completed successfully. Downloaded its DMG and matched SHA-256 `1415eba0b672ac1868038ac3312f71598f6f8bd21384b85bf84f223d174c2a46`. Read-only local inspection against scripts/resources archived from that exact source passed: image checksum, deep strict development signature, separate identity/profile root, absent stock updater, helper signature, whole-image recognized-profile-data scan, exact shipped assets and engine156. Receipts: `docs/proof/2026-09-19/compiled-0d0b370-installer-inspection.{json,log}`. No launch, installation or personal migration performed. This older artifact excludes subsequent fixes and is not release acceptance. Initial local archive/path setup mistakes were corrected before the successful inspection; they were not installer failures. Latest0c source build remains separate.

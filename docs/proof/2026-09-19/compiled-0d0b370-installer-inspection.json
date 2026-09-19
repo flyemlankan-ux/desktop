@@ -1,0 +1,26 @@
+{
+  "source_commit": "0d0b3706e03d0fc41fc792ca9159d1b0bd3e05ef",
+  "workflow_run": "35444319973",
+  "dmg_sha256": "1415eba0b672ac1868038ac3312f71598f6f8bd21384b85bf84f223d174c2a46",
+  "download_hash_matches": true,
+  "inspection_exit_code": 0,
+  "inspection_source": "exact git archive of artifact commit, not current working tree",
+  "checks": [
+    "DMG checksum",
+    "deep strict development code signature",
+    "separate app identity and profile root",
+    "no stock updater",
+    "native helper signature",
+    "whole-image recognized-profile-artifact scan",
+    "14 exact terminal assets and matching native resources for this source",
+    "Firefox engine 156.0"
+  ],
+  "not_proven": [
+    "latest folder/search/split fixes (artifact predates them)",
+    "app launch or everyday workflows in compiled app",
+    "Apple notarization",
+    "installation/update/rollback with actual package",
+    "personal migration"
+  ],
+  "original_app_or_profiles_modified": false
+}
