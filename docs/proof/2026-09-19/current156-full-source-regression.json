@@ -1,0 +1,152 @@
+[
+  {
+    "command": "node scripts/terminal-tabs/check-terminal-tabs.mjs",
+    "exit_code": 0,
+    "seconds": 0.28
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-settings156.mjs",
+    "exit_code": 0,
+    "seconds": 0.08
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-recipes.mjs",
+    "exit_code": 0,
+    "seconds": 0.8
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-session-persistence.mjs",
+    "exit_code": 0,
+    "seconds": 2.19
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-output-pipeline.mjs",
+    "exit_code": 0,
+    "seconds": 0.05
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-polish.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-accessibility-lifecycle.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-search.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-navigation-return.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-native-polish.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-organization.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-entrypoints.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-alltabs.mjs",
+    "exit_code": 0,
+    "seconds": 0.04
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-associations156.mjs",
+    "exit_code": 0,
+    "seconds": 0.05
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-container-deletion.mjs",
+    "exit_code": 0,
+    "seconds": 0.21
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-concurrent-cleanup.mjs",
+    "exit_code": 0,
+    "seconds": 0.76
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-close-ownership.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-share-safety.mjs",
+    "exit_code": 0,
+    "seconds": 0.03
+  },
+  {
+    "command": "node scripts/terminal-tabs/test-terminal-session-ownership.mjs",
+    "exit_code": 0,
+    "seconds": 0.02
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-clipboard-proof-transaction.py",
+    "exit_code": 0,
+    "seconds": 0.07
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-copy-zen-profiles.py",
+    "exit_code": 0,
+    "seconds": 0.33
+  },
+  {
+    "command": "scripts/terminal-tabs/build-terminal-pty.sh",
+    "exit_code": 0,
+    "seconds": 0.44
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-terminal-pty.py",
+    "exit_code": 0,
+    "seconds": 1.88
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py",
+    "exit_code": 0,
+    "seconds": 12.31
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-terminal-build-declarations.py",
+    "exit_code": 0,
+    "seconds": 0.08
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-terminal-build-packaging.py",
+    "exit_code": 0,
+    "seconds": 0.81
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-manage-terminal-app.py",
+    "exit_code": 0,
+    "seconds": 0.29
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-terminal-package-privacy.py",
+    "exit_code": 0,
+    "seconds": 0.12
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-package-terminal-macos.py",
+    "exit_code": 0,
+    "seconds": 0.06
+  },
+  {
+    "command": "python3 scripts/terminal-tabs/test-verify-terminal-app-assets.py",
+    "exit_code": 0,
+    "seconds": 0.56
+  }
+]

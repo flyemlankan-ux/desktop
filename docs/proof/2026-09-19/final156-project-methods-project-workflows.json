@@ -1,0 +1,68 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual pointer drag/drop",
+      "result": "not_run",
+      "detail": "Use --pointer-drag, --native-pointer-drag or --gecko-native-pointer-drag; native methods do not establish pointer acceptance"
+    },
+    {
+      "test": "native tab reorder retains folder and live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "whole mixed folder moves to new workspace without restarting jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed split and window resize retain shell and resize terminal",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "unsplit retains live jobs and recipe counts",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "second native window mirrors both terminal tabs without rerunning recipes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing one mirrored window preserves original live jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "closing last view destroys only its matching shell",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-9ed03213"
+}

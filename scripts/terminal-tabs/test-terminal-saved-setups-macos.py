@@ -107,7 +107,10 @@ def settings():
     wait(lambda: js('return document.readyState === "complete" && Boolean(window.gSubDialog);'), 'Settings initialization')
     # Native Settings controls render asynchronously. Their presence precedes
     # completed custom-element updates and event wiring on a fresh profile.
-    m.execute_async_script('const done=arguments[arguments.length-1];(async()=>{const all=[];const visit=root=>{for(const el of root.querySelectorAll("*")){if(el.updateComplete)all.push(el.updateComplete);if(el.shadowRoot)visit(el.shadowRoot);}};visit(document);await Promise.all(all);requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));})();')
+    control = deep('[data-l10n-id="containers-add-button2"]')
+    update = m.execute_async_script('const done=arguments[arguments.length-1];Promise.resolve(arguments[0].updateComplete).then(()=>done({ready:true}),error=>done({error:String(error)}));', script_args=[control])
+    assert update.get('ready'), update
+    wait(lambda: js('const e=arguments[0].shadowRoot?.querySelector("button")||arguments[0];const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&!e.disabled;', [control]), 'Visible enabled Settings Add button')
     time.sleep(.5)  # Same native first-paint/event-settling allowance as main Mac proof.
 
 def dialog(edit=False):
@@ -118,7 +121,7 @@ def dialog(edit=False):
     frame = wait(lambda: js('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/containers.xhtml");'), 'setup dialog')
     m.execute_async_script('const done=arguments[arguments.length-1];arguments[0]._dialogReady.then(()=>done(true));', script_args=[frame])
     m.switch_to_frame(frame)
-    m.execute_async_script('const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));')
+    wait(lambda: js('return document.readyState==="complete" && !!document.querySelector("dialog")?.getButton("accept");'), 'Dialog document and native accept control')
     wait(lambda: m.find_element('id', 'zen-terminal-starting-directory'), 'Starting folder field')
     return frame
 

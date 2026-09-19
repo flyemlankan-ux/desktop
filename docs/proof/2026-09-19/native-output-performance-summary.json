@@ -1,0 +1,78 @@
+[
+  {
+    "stage": "before",
+    "run": 1,
+    "source": "performance156-detailed-1-results.json",
+    "startup_seconds": 2.8642250000000002,
+    "six_tabs_seconds": 1.132527291999999,
+    "burst_seconds": 9.357434082999998,
+    "max_heartbeat_ms": 70.25062500000058,
+    "idle_cpu_one_core_percent": 1.7110805811368344,
+    "cleanup_seconds": 0.2039659999999941,
+    "failed_checks": []
+  },
+  {
+    "stage": "before",
+    "run": 2,
+    "source": "performance156-detailed-2-results.json",
+    "startup_seconds": 2.29898475,
+    "six_tabs_seconds": 0.9678974579999995,
+    "burst_seconds": 11.302346334,
+    "max_heartbeat_ms": 64.63124999999854,
+    "idle_cpu_one_core_percent": 6.9923063504639416,
+    "cleanup_seconds": 0.1681469999999976,
+    "failed_checks": [
+      "All six output bursts reach actual xterm buffers"
+    ]
+  },
+  {
+    "stage": "before",
+    "run": 3,
+    "source": "performance156-detailed-3-results.json",
+    "startup_seconds": 2.0516127500000003,
+    "six_tabs_seconds": 0.9736648339999991,
+    "burst_seconds": 12.358058707999998,
+    "max_heartbeat_ms": 70.74554166666348,
+    "idle_cpu_one_core_percent": 6.601097734529724,
+    "cleanup_seconds": 0.17440466600000093,
+    "failed_checks": [
+      "All six output bursts reach actual xterm buffers"
+    ]
+  },
+  {
+    "stage": "after",
+    "run": 1,
+    "source": "performance156-pipeline-1-results.json",
+    "startup_seconds": 5.866329875,
+    "six_tabs_seconds": 0.9834837090000015,
+    "burst_seconds": 4.147196125000001,
+    "max_heartbeat_ms": 87.70341666666354,
+    "idle_cpu_one_core_percent": 6.0930866125674195,
+    "cleanup_seconds": 0.1800449579999963,
+    "failed_checks": []
+  },
+  {
+    "stage": "after",
+    "run": 2,
+    "source": "performance156-pipeline-2-results.json",
+    "startup_seconds": 2.10919075,
+    "six_tabs_seconds": 1.0017955,
+    "burst_seconds": 3.2136911660000003,
+    "max_heartbeat_ms": 93.23549999999886,
+    "idle_cpu_one_core_percent": 6.927064682211683,
+    "cleanup_seconds": 0.1692432499999974,
+    "failed_checks": []
+  },
+  {
+    "stage": "after",
+    "run": 3,
+    "source": "performance156-pipeline-3-results.json",
+    "startup_seconds": 1.669183667,
+    "six_tabs_seconds": 0.9787192079999993,
+    "burst_seconds": 4.219301541,
+    "max_heartbeat_ms": 79.6200416666652,
+    "idle_cpu_one_core_percent": 6.351220703605479,
+    "cleanup_seconds": 0.1837449580000019,
+    "failed_checks": []
+  }
+]

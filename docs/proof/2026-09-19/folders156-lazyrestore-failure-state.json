@@ -1,0 +1,59 @@
+{
+  "lastGroup": null,
+  "folders": [],
+  "groups": [
+    {
+      "id": "1789823982382-36",
+      "tag": "tab-group",
+      "isZenFolder": false,
+      "parent": null
+    }
+  ],
+  "tabs": [
+    {
+      "id": "1789823980739-84b4a1ac-e4f8-4d5f-a887-72f70c53a5e0",
+      "group": null,
+      "session": null,
+      "pending": false,
+      "uri": "about:blank",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823982389-ece399c8-3de0-415b-8a6b-837340f9276f",
+      "group": null,
+      "session": null,
+      "pending": true,
+      "uri": "data:text/html,<title>Nested web</title>",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823982235-0c455eaa-4642-4886-8af1-b4266abd2b6e",
+      "group": null,
+      "session": "2dd75d2b-0e3b-4900-91e5-5c9898fa8155",
+      "pending": false,
+      "uri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=2dd75d2b-0e3b-4900-91e5-5c9898fa8155&name=Folder+lifecycle+proof&userContextId=7&started=1",
+      "status": "previous terminal ended \u00b7 starting again runs your setup as a new job",
+      "ownership": "{\"id\":\"2dd75d2b-0e3b-4900-91e5-5c9898fa8155\",\"userContextId\":\"7\"}"
+    },
+    {
+      "id": "1789823982388-1ae582cd-8fcf-46a0-ac50-45f9da066249",
+      "group": "1789823982382-36",
+      "session": null,
+      "pending": true,
+      "uri": "data:text/html,<title>Parent web</title>",
+      "status": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823982102-0e3ca20c-d2cb-4c20-84d2-e5f9bd7a6b0c",
+      "group": "1789823982382-36",
+      "session": "488861e2-2eff-4477-8587-1fe4007f44b9",
+      "pending": false,
+      "uri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=488861e2-2eff-4477-8587-1fe4007f44b9&name=Folder+lifecycle+proof&userContextId=7&started=1",
+      "status": "previous terminal ended \u00b7 starting again runs your setup as a new job",
+      "ownership": "{\"id\":\"488861e2-2eff-4477-8587-1fe4007f44b9\",\"userContextId\":\"7\"}"
+    }
+  ]
+}

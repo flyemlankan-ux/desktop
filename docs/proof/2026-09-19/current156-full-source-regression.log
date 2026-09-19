@@ -1,0 +1,289 @@
+$ node scripts/terminal-tabs/check-terminal-tabs.mjs
+Terminal wiring and syntax checks passed (not a real-app acceptance test).
+
+$ node scripts/terminal-tabs/test-terminal-settings156.mjs
+✓ five production patches apply to hash-verified pristine Firefox 156.0 sources
+✓ compact setup help preserves every warning and accessible folder description
+✓ native creation requires kind and name and saves one terminal identity
+✓ add/edit/reorder/remove keeps commands and saves a validated SSH recipe
+✓ invalid SSH recipe cannot create or update an identity
+✓ legacy one-command recipe opens unchanged
+✓ Terminal to Web cancellation preserves running work and its recipe
+✓ deletion warns even with no visible tabs and preserves cancelled work
+✓ native open-tab cancellation happens before any session teardown
+✓ dialog accept is cancelled when shared editor validation fails
+✓ native creation panel remains open on invalid recipes
+✓ folder picker save and reopen preserves literal path; cancel does not save
+✓ missing or relative folder cannot create an identity or modify saved setup
+✓ picker failure leaves editable input and never saves
+
+13 Firefox 156 Settings behavior tests passed; source receipt and five patches verified.
+
+$ node scripts/terminal-tabs/test-terminal-recipes.mjs
+✓ recipe data version is 4
+✓ legacy string becomes one ordered step
+✓ legacy v2 command becomes one ordered step
+✓ a normalised legacy container reports the current v4 shape
+✓ saving writes v4 while keeping one-command backwards compatibility
+✓ stored ordered steps win over the legacy command
+✓ blank and malformed recipes become a plain shell
+✓ duplicate step ids are repaired without changing order
+✓ ordinary local steps run in order and stop on failure
+✓ SSH options and destination are parsed without a remote command
+✓ SSH plus Claude is compiled as one remote SSH command
+✓ forced tty is inserted before SSH options and the -- marker
+✓ a connection step that already has a remote command is rejected
+✓ SSH shell operators and substitutions are rejected
+✓ conflicting SSH modes are rejected before later steps
+✓ SSH config that conflicts with a remote recipe is rejected
+✓ remote command text cannot escape and execute on the local machine
+✓ an SSH connection failure cannot run the following step locally
+✓ a final SSH step remains an ordinary interactive connection
+✓ empty rows are ignored and multi-line rows are rejected
+✓ each row keeps semicolons, OR operators and comments inside its boundary
+✓ rows preserve working directory, exports, quotes and shell variables
+✓ safe combined SSH flags and attached values are preserved
+✓ fake SSH executes following rows only in the remote shell, including nested connections
+✓ starting folders preserve literal spaces, Unicode and shell characters
+✓ invalid explicit starting folders fail rather than become home
+✓ filesystem validation rejects missing, non-folder and inaccessible paths
+
+27 terminal recipe tests passed.
+
+$ node scripts/terminal-tabs/test-terminal-session-persistence.mjs
+✓ process sockets are stable per physical profile and distinct from copied profiles
+✓ validates identifiers and repairs stored target names
+✓ lost work requires explicit restart and never validates or reruns steps silently
+✓ Undo Close URL marker requires consent even after session record deletion
+✓ restart consent cannot override unknown inventory
+✓ final server exit is rechecked without treating unknown as absence
+✓ repeated unknown cleanup stays bounded and preserves deletion intent
+✓ failed tool probes remain unknown and keep deletion pending
+✓ failed deletion preserves its retry request; confirmed absence clears it
+✓ only explicit missing-server errors mean absence
+✓ two simultaneous prepares create and launch the recipe once
+✓ existing sessions never read edited settings; new sessions validate before launch
+✓ literal folder guard prevents path injection and fails before startup commands
+✓ deletion waits for in-flight creation and prevents later recreation
+✓ unknown inventory never creates a replacement
+✓ container cleanup kills only matching records
+✓ startup retry processes saved deletion requests only
+✓ both output pipes are drained concurrently
+✓ hung tools time out as unknown and retain pending cleanup
+✓ truncated inventory is unknown and cannot discard cleanup records
+✓ real module creates once, retains and resizes its process; copied profiles cannot attach or delete across profiles
+
+21 terminal persistence tests passed (including isolated real tmux).
+
+$ node scripts/terminal-tabs/test-terminal-output-pipeline.mjs
+PASS bounded output pipeline: payload/count ceilings, order, Unicode/ANSI, EOF drain, sync callbacks, callback+throw, read failure, unload and blocked-read cancellation. Native throughput not inferred.
+
+$ node scripts/terminal-tabs/test-terminal-polish.mjs
+Terminal polish tests passed: vendor integrity, native helper launch, resize, Unicode input, repeated keys, whole-paste warning recovery, queued-warning races and reduced-motion lifecycle.
+
+$ node scripts/terminal-tabs/test-terminal-accessibility-lifecycle.mjs
+PASS accessibility lifecycle: initially on/off, late full activation, shutdown, PDF/unknown ignored, duplicate subscription, stopping guard and idempotent teardown
+
+$ node scripts/terminal-tabs/test-terminal-search.mjs
+Terminal search focused tests passed: exact vendor bytes, literal incremental search, previous/next, shortcut interception, IME Enter, close focus, blank/no-match and bounded scrollback. Native key dispatch is a separate acceptance test.
+
+$ node scripts/terminal-tabs/test-terminal-navigation-return.mjs
+PASS 22 terminal navigation-return cases; production class, no UI
+
+$ node scripts/terminal-tabs/test-terminal-native-polish.mjs
+Native polish checks pass: ordinary icon slot, custom icon preserved, no overlay suppression, packaged icon, honest update default, compact accessible status.
+
+$ node scripts/terminal-tabs/test-terminal-organization.mjs
+PASS 14 native organization logic cases (synthetic browser; real classes)
+
+$ node scripts/terminal-tabs/test-terminal-entrypoints.mjs
+PASS 21 terminal entry-point and page-context cases (synthetic browser; production methods)
+PASS 4 stale workspace-default cases (production method)
+
+$ node scripts/terminal-tabs/test-terminal-alltabs.mjs
+PASS Firefox155 exact patch; mixed, web-only, all-terminal native-list cases
+PASS Firefox156 exact patch; mixed, web-only, all-terminal native-list cases
+PASS 6 All Tabs menu cases; 2 pinned upstream patch applications; no UI launched
+
+$ node scripts/terminal-tabs/test-terminal-associations156.mjs
+PASS 21 Firefox156 website-association cases; 3 strict pinned-source patch applications. No native UI proof.
+
+$ node scripts/terminal-tabs/test-terminal-container-deletion.mjs
+PASS One shared observer across repeat/window startup and session registration
+PASS Service deletion synchronously marks visible/background only, keeps neighbor, duplicate safe
+PASS Unavailable tmux keeps durable deletion intent and next-launch retry completes
+PASS Owner deleted during settings lookup cannot create any new process
+PASS Final service and saved-setup lookup refuses stale owner without relying on observer
+PASS Deletion while tmux creation is in flight wins and leaves neighbor running
+PASS Page deletion observer stops its attached helper only and hides reconnect
+PASS Real isolated tmux: service deletion kills exact jobs, retains neighbor
+8 container deletion checks passed, including real isolated tmux.
+
+$ node scripts/terminal-tabs/test-terminal-concurrent-cleanup.mjs
+PASS 10 rounds of six actual tmux jobs: all final-close records removed; unique synthetic profile
+Nonzero tool result counts: {"no server running on <isolated socket>":120,"server exited unexpectedly":1}
+
+$ node scripts/terminal-tabs/test-terminal-close-ownership.mjs
+PASS 19 close-ownership cases (actual production class; no UI)
+
+$ node scripts/terminal-tabs/test-terminal-share-safety.mjs
+PASS 63 share-safety cases; actual production helpers/client/manager methods; no UI or network
+
+$ node scripts/terminal-tabs/test-terminal-session-ownership.mjs
+✓ same setup may register another view without changing creation time
+✓ different setup is refused before any preference write
+✓ omitted owner preserves existing owner rather than clearing it
+✓ legacy container owner cannot be reassigned
+✓ an existing ownerless record cannot be silently claimed by another setup
+✓ pending deletion cannot be cancelled by same-owner registration
+6 terminal ownership tests passed; no subprocesses or browser profiles used.
+
+$ python3 scripts/terminal-tabs/test-clipboard-proof-transaction.py
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.000s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-copy-zen-profiles.py
+test_absolute_inside_root_profiles_become_equivalent_relative_paths (__main__.CopyTests.test_absolute_inside_root_profiles_become_equivalent_relative_paths) ... ok
+test_active_posix_lock_is_refused_but_stale_file_is_allowed (__main__.CopyTests.test_active_posix_lock_is_refused_but_stale_file_is_allowed) ... ok
+test_ambiguous_default_requires_explicit_choice (__main__.CopyTests.test_ambiguous_default_requires_explicit_choice) ... ok
+test_atomic_publish_cannot_overwrite_racing_destination (__main__.CopyTests.test_atomic_publish_cannot_overwrite_racing_destination) ... ok
+test_cli_requires_explicit_copy_and_both_engine_versions (__main__.CopyTests.test_cli_requires_explicit_copy_and_both_engine_versions) ... ok
+test_copy_all_profiles_exact_private_and_source_unchanged (__main__.CopyTests.test_copy_all_profiles_exact_private_and_source_unchanged) ... ok
+test_corrupt_copy_is_not_published (__main__.CopyTests.test_corrupt_copy_is_not_published) ... ok
+test_default_is_dry_run_and_changes_nothing (__main__.CopyTests.test_default_is_dry_run_and_changes_nothing) ... ok
+test_downgrade_and_invalid_engine_versions_are_rejected (__main__.CopyTests.test_downgrade_and_invalid_engine_versions_are_rejected) ... ok
+test_existing_destination_is_never_changed (__main__.CopyTests.test_existing_destination_is_never_changed) ... ok
+test_external_or_escaping_profile_is_not_skipped (__main__.CopyTests.test_external_or_escaping_profile_is_not_skipped) ... ok
+test_generated_ini_bytes_use_firefox_exact_key_value_syntax (__main__.CopyTests.test_generated_ini_bytes_use_firefox_exact_key_value_syntax) ... ok
+test_invalid_target_install_hash_is_rejected_without_copying (__main__.CopyTests.test_invalid_target_install_hash_is_rejected_without_copying) ... ok
+test_missing_compatibility_metadata_is_rejected (__main__.CopyTests.test_missing_compatibility_metadata_is_rejected) ... ok
+test_missing_compatibility_with_even_an_empty_subdirectory_is_rejected (__main__.CopyTests.test_missing_compatibility_with_even_an_empty_subdirectory_is_rejected) ... ok
+test_never_used_registered_profiles_are_preserved_without_compatibility (__main__.CopyTests.test_never_used_registered_profiles_are_preserved_without_compatibility) ... ok
+test_no_hash_explicitly_warns_about_manual_profile_selection (__main__.CopyTests.test_no_hash_explicitly_warns_about_manual_profile_selection) ... ok
+test_open_file_guard_and_running_zen_guard_fail_closed (__main__.CopyTests.test_open_file_guard_and_running_zen_guard_fail_closed) ... ok
+test_overlapping_roots_are_rejected (__main__.CopyTests.test_overlapping_roots_are_rejected) ... ok
+test_publish_error_cleans_own_staging_only (__main__.CopyTests.test_publish_error_cleans_own_staging_only) ... ok
+test_repository_destination_is_rejected (__main__.CopyTests.test_repository_destination_is_rejected) ... ok
+test_source_mutation_during_copy_discards_staging (__main__.CopyTests.test_source_mutation_during_copy_discards_staging) ... ok
+test_source_open_rejects_late_parent_symlink (__main__.CopyTests.test_source_open_rejects_late_parent_symlink) ... ok
+test_symlinks_in_data_or_cache_or_destination_ancestors_are_rejected (__main__.CopyTests.test_symlinks_in_data_or_cache_or_destination_ancestors_are_rejected) ... ok
+test_target_install_hash_maps_only_final_app_to_selected_profile (__main__.CopyTests.test_target_install_hash_maps_only_final_app_to_selected_profile) ... ok
+test_zen_compressed_sessions_and_all_session_backups_have_private_hashes (__main__.CopyTests.test_zen_compressed_sessions_and_all_session_backups_have_private_hashes) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.212s
+
+OK
+
+$ scripts/terminal-tabs/build-terminal-pty.sh
+
+$ python3 scripts/terminal-tabs/test-terminal-pty.py
+test_child_exit_code_and_trailing_output (__main__.Tests.test_child_exit_code_and_trailing_output) ... ok
+test_ctrl_c (__main__.Tests.test_ctrl_c) ... ok
+test_eof_and_signal_cleanup (__main__.Tests.test_eof_and_signal_cleanup) ... ok
+test_exec_failure_and_cli_validation (__main__.Tests.test_exec_failure_and_cli_validation) ... ok
+test_large_bidirectional_stream (__main__.Tests.test_large_bidirectional_stream) ... ok
+test_malformed_and_truncated_frames (__main__.Tests.test_malformed_and_truncated_frames) ... ok
+test_real_shell_stty_resize (__main__.Tests.test_real_shell_stty_resize) ... ok
+test_repeated_unicode_and_split_frames (__main__.Tests.test_repeated_unicode_and_split_frames) ... ok
+test_resize_without_tmux (__main__.Tests.test_resize_without_tmux) ... ok
+test_slow_output_consumer (__main__.Tests.test_slow_output_consumer) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.833s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py
+Created a fully sealed development DMG (not notarized).
+PASS development DMG signing, complete seal, Applications shortcut, no overwrite and missing-input refusal
+/var/folders/cj/1dgxxg4x231glgr63kcssvcm0000gn/T//zen-terminal-sign.fIDFUl/image/Zen Terminal.app: replacing existing signature
+
+$ python3 scripts/terminal-tabs/test-terminal-build-declarations.py
+test_case_insensitive_order_and_meaningful_directory_order (__main__.BuildDeclarations.test_case_insensitive_order_and_meaningful_directory_order) ... ok
+test_cloud_failure_order_is_rejected (__main__.BuildDeclarations.test_cloud_failure_order_is_rejected) ... ok
+test_current_zen_literal_module_and_source_lists_are_sorted (__main__.BuildDeclarations.test_current_zen_literal_module_and_source_lists_are_sorted) ... ok
+test_safety_module_is_still_registered_once (__main__.BuildDeclarations.test_safety_module_is_still_registered_once) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.011s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-terminal-build-packaging.py
+test_native_build_declaration_uses_standalone_program (__main__.PackagingTests.test_native_build_declaration_uses_standalone_program) ... ok
+test_pristine_program_output_is_the_staging_input (__main__.PackagingTests.test_pristine_program_output_is_the_staging_input) ... ok
+test_pristine_source_receipts (__main__.PackagingTests.test_pristine_source_receipts) ... ok
+test_real_helper_survives_pristine_assembly_and_repack (__main__.PackagingTests.test_real_helper_survives_pristine_assembly_and_repack) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.745s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-manage-terminal-app.py
+test_build_id_swap_after_initial_verification_is_refused (__main__.Tests.test_build_id_swap_after_initial_verification_is_refused) ... ok
+test_concurrent_process_lock_refuses_change (__main__.Tests.test_concurrent_process_lock_refuses_change) ... ok
+test_dry_run_has_no_filesystem_changes (__main__.Tests.test_dry_run_has_no_filesystem_changes) ... ok
+test_install_verifies_source_and_stage_then_publishes (__main__.Tests.test_install_verifies_source_and_stage_then_publishes) ... ok
+test_large_file_snapshot_does_not_use_read_bytes (__main__.Tests.test_large_file_snapshot_does_not_use_read_bytes) ... ok
+test_links_existing_backup_and_overlap_refused (__main__.Tests.test_links_existing_backup_and_overlap_refused) ... ok
+test_live_app_refusal_makes_no_changes (__main__.Tests.test_live_app_refusal_makes_no_changes) ... ok
+test_missing_malformed_and_impossible_build_ids_refused (__main__.Tests.test_missing_malformed_and_impossible_build_ids_refused) ... ok
+test_original_zen_and_other_destination_names_refused (__main__.Tests.test_original_zen_and_other_destination_names_refused) ... ok
+test_production_verifier_requires_signature_and_exact_assets (__main__.Tests.test_production_verifier_requires_signature_and_exact_assets) ... ok
+test_publish_failure_restores_old_app (__main__.Tests.test_publish_failure_restores_old_app) ... ok
+test_racing_backup_is_never_overwritten (__main__.Tests.test_racing_backup_is_never_overwritten) ... ok
+test_racing_foreign_destination_never_overwritten_during_recovery (__main__.Tests.test_racing_foreign_destination_never_overwritten_during_recovery) ... ok
+test_racing_install_destination_is_not_moved_into_backup (__main__.Tests.test_racing_install_destination_is_not_moved_into_backup) ... ok
+test_remove_retains_app_and_never_touches_profile (__main__.Tests.test_remove_retains_app_and_never_touches_profile) ... ok
+test_rollback_requires_ack_and_matching_old_verification (__main__.Tests.test_rollback_requires_ack_and_matching_old_verification) ... ok
+test_same_engine_equal_and_newer_build_upgrade_allowed (__main__.Tests.test_same_engine_equal_and_newer_build_upgrade_allowed) ... ok
+test_same_engine_older_build_requires_explicit_rollback (__main__.Tests.test_same_engine_older_build_requires_explicit_rollback) ... ok
+test_source_mutation_during_copy_never_replaces_destination (__main__.Tests.test_source_mutation_during_copy_never_replaces_destination) ... ok
+test_stage_verification_failure_preserves_installed_app (__main__.Tests.test_stage_verification_failure_preserves_installed_app) ... ok
+test_upgrade_refuses_engine_downgrade (__main__.Tests.test_upgrade_refuses_engine_downgrade) ... ok
+test_upgrade_retains_previous_app_byte_for_byte (__main__.Tests.test_upgrade_retains_previous_app_byte_for_byte) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.184s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-terminal-package-privacy.py
+test_applications_link_is_not_followed (__main__.Tests.test_applications_link_is_not_followed) ... ok
+test_archive_names_checked_without_reading_member_contents (__main__.Tests.test_archive_names_checked_without_reading_member_contents) ... ok
+test_cli_never_prints_private_names_or_contents (__main__.Tests.test_cli_never_prints_private_names_or_contents) ... ok
+test_defaults_and_normal_resources_are_allowed (__main__.Tests.test_defaults_and_normal_resources_are_allowed) ... ok
+test_history_sessions_and_sqlite_sidecars (__main__.Tests.test_history_sessions_and_sqlite_sidecars) ... ok
+test_inspector_calls_scanner_on_whole_mount (__main__.Tests.test_inspector_calls_scanner_on_whole_mount) ... ok
+test_internal_framework_links_allowed_without_traversal (__main__.Tests.test_internal_framework_links_allowed_without_traversal) ... ok
+test_other_external_links_fail_before_target_is_read (__main__.Tests.test_other_external_links_fail_before_target_is_read) ... ok
+test_private_member_in_each_supported_resource_archive (__main__.Tests.test_private_member_in_each_supported_resource_archive) ... ok
+test_sibling_profile_not_only_app_is_rejected (__main__.Tests.test_sibling_profile_not_only_app_is_rejected) ... ok
+test_special_files_and_bad_archives_fail_closed (__main__.Tests.test_special_files_and_bad_archives_fail_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.051s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-package-terminal-macos.py
+test_failure_stops_before_next_package (__main__.Tests.test_failure_stops_before_next_package) ... ok
+test_malformed_locale_is_rejected (__main__.Tests.test_malformed_locale_is_rejected) ... ok
+test_real_supported_locales_and_no_updater_commands (__main__.Tests.test_real_supported_locales_and_no_updater_commands) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+OK
+
+$ python3 scripts/terminal-tabs/test-verify-terminal-app-assets.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.509s
+
+OK

@@ -99,6 +99,15 @@ def native_drag(source, target):
  finally:ax.close()
 
 def gecko_native_drag(source,target):
+ # Native AppKit drag tracking requires an active owned application, not just
+ # DOM window.focus(). Never activate or send input to any other process.
+ spec=importlib.util.spec_from_file_location('owned_dialogs',Path(__file__).with_name('macos-test-dialogs.py'))
+ module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+ ax=module.OwnedAppDialogs(process.pid)
+ try:
+  ax.activate();ax.raise_window()
+  assert ax.attr(ax.root,'AXFrontmost') is True, 'Owned app is not frontmost'
+ finally:ax.close()
  result=async_js("""
  const pid=arguments[0],source=arguments[1],target=arguments[2];
  if(Services.appinfo.processID!==pid)throw new Error('Wrong owned browser process');

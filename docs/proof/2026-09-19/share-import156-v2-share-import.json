@@ -1,0 +1,82 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Unmodified production native share client/validation/UI/importer; only service transport replaced by loopback fixture; no uploads or account services",
+  "results": [
+    {
+      "test": "owned Firefox156 process/profile; loopback transport only; unmodified production share manager/client",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual preview is mutation-free; real confirm creates one folder with two pinned ordinary website tabs",
+      "result": "pass",
+      "detail": {
+        "id": "1789824411634-54",
+        "tabs": [
+          {
+            "id": "1789824411649-d14fd95f-7889-4b03-8bc6-469f45bf4101",
+            "pinned": true,
+            "terminal": false,
+            "container": 0
+          },
+          {
+            "id": "1789824411649-52c1af26-36ee-42e2-8f6e-ee0b421831e4",
+            "pinned": true,
+            "terminal": false,
+            "container": 0
+          }
+        ]
+      }
+    },
+    {
+      "test": "actual fetched nested chrome payload rejected before import mutation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual fetched nested javascript payload rejected before import mutation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual fetched nested file payload rejected before import mutation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual fetched nested data payload rejected before import mutation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual fetched web URL with terminal-session metadata rejected before mutation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "external sharing service/account authentication/upload",
+      "result": "not_run",
+      "detail": "Local loopback transport fixture only; real production parsing, validation, rendered confirmation and importer exercised unchanged."
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-bb56283d",
+  "requests": [
+    "/folder/SAFE-0000-0000-0001",
+    "/api/shares/SAFE-0000-0000-0001",
+    "/favicon.ico",
+    "/web/a",
+    "/web/b",
+    "/folder/BAD0-0000-0000-0001",
+    "/api/shares/BAD0-0000-0000-0001",
+    "/folder/BAD0-0000-0000-0002",
+    "/api/shares/BAD0-0000-0000-0002",
+    "/folder/BAD0-0000-0000-0003",
+    "/api/shares/BAD0-0000-0000-0003",
+    "/folder/BAD0-0000-0000-0004",
+    "/api/shares/BAD0-0000-0000-0004",
+    "/folder/META-0000-0000-0001",
+    "/api/shares/META-0000-0000-0001"
+  ],
+  "unexpected_requests": []
+}

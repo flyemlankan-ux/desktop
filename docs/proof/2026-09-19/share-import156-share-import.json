@@ -1,0 +1,19 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Unmodified production native share client/validation/UI/importer; only service transport replaced by loopback fixture; no uploads or account services",
+  "results": [
+    {
+      "test": "owned Firefox156 process/profile; loopback transport only; unmodified production share manager/client",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "ElementClickInterceptedException('Element <button class=\"zen-big-accent-button primary zen-share-overlay-add\"> is not clickable at point (753,495) because another element <div id=\"zen-update-animation-border\"> obscures it')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-95fdfad6",
+  "requests": [
+    "/folder/SAFE-0000-0000-0001",
+    "/api/shares/SAFE-0000-0000-0001",
+    "/favicon.ico"
+  ],
+  "unexpected_requests": []
+}

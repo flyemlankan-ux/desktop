@@ -1,5 +1,5 @@
 {
-  "app": ".terminal-test/Zen Terminal Test.app",
+  "app": ".terminal-test/Zen Terminal Test 156.app",
   "scope": "Native browser-method diagnostic on synthetic data, NOT drag-and-drop UI acceptance",
   "before": {
     "terminalPinned": true,

@@ -1,0 +1,36 @@
+{
+  "lastGroup": null,
+  "folders": [],
+  "tabs": [
+    {
+      "id": "1789823416699-ea87c272-9177-46fb-a828-615acea166c9",
+      "group": null,
+      "session": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823418259-22c753fa-816c-4fd9-b1b9-20bf836ff77e",
+      "group": null,
+      "session": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823418107-25271415-ec37-4d28-98d5-e01ae317d92e",
+      "group": null,
+      "session": null,
+      "ownership": "{\"id\":\"5cf89466-44ac-4db9-91ed-09c1c1953f70\",\"userContextId\":\"7\"}"
+    },
+    {
+      "id": "1789823418258-dea89335-fad0-490f-af8a-41b445b3592c",
+      "group": "1789823418251-28",
+      "session": null,
+      "ownership": ""
+    },
+    {
+      "id": "1789823417955-92459954-351c-4e3d-a0d2-aa3a5e655a6b",
+      "group": "1789823418251-28",
+      "session": null,
+      "ownership": "{\"id\":\"4725fe9e-714f-4b2e-8ff0-b87069fff33a\",\"userContextId\":\"7\"}"
+    }
+  ]
+}

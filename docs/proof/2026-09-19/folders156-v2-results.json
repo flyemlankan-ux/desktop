@@ -1,0 +1,30 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Native-method setup: two mixed folders nested using the same placement as upstream folder test; three jobs unchanged",
+      "result": "pass",
+      "detail": {
+        "pointer_drag_proved": false
+      }
+    },
+    {
+      "test": "Actual folder context-menu Rename and inline input preserve both nested jobs",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual workspace menu item and inline rename preserve jobs; popup opened by native method",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual parent-folder Delete closes nested web/terminal tabs and stops only their exact jobs; same-setup neighbor survives",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "TypeError: can't access property \"select\", group is undefined\nstacktrace:\n\tundoCloseTabGroup@moz-src:///browser/components/sessionstore/SessionStore.sys.mjs:8360:5\n\t@scripts/terminal-tabs/test-terminal-folder-lifecycle-macos.py:56:38\n\t@scripts/terminal-tabs/test-terminal-folder-lifecycle-macos.py:57:8\n\tevaluate.sandbox/promise<@chrome://remote/content/marionette/evaluate.sys.mjs:127:10\n\tevaluate.sandbox@chrome://remote/content/marionette/evaluate.sys.mjs:103:17\n\texecuteScript@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:353:26\n\treceiveMessage@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:209:31\n",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-b6957ecf",
+  "scope": "synthetic native menu cases and explicitly labelled native-method cases; no pointer drag or confirmation acceptance claim"
+}

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { createServer } from "node:http";
+import { StringDecoder } from "node:string_decoder";
 import { mkdtemp, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -74,6 +75,11 @@ const server = createServer(async (req, res) => {
         "chrome://browser/content/zen-styles/zen-terminal-page.css",
         "/zen-terminal-page.css",
       );
+    if (name === "ZenTerminalSessionManager.mjs") {
+      // The synchronous Gecko import sees these ACTUAL production functions.
+      // Do not replace the newly exercised cleanup observer with a stub.
+      source += "\nglobalThis.__testSessionModule = { getTerminalSessionCoordinator, ensureTerminalContainerCleanupObserver };\n";
+    }
     const type =
       name.endsWith(".mjs") || name.endsWith(".js")
         ? "text/javascript"
@@ -112,6 +118,7 @@ function mapArgs(args = []) {
 // (one <=64 KiB stream chunk may remain) and resume only when the browser reads.
 function boundedReader(stream) {
   const queue = [];
+  const decoder = new StringDecoder("utf8");
   let bytes = 0,
     ended = false,
     failure = null,
@@ -135,18 +142,24 @@ function boundedReader(stream) {
     end();
   });
   return async () => {
-    while (!queue.length && !ended)
-      await new Promise((resolve) => {
-        wake = resolve;
-      });
-    if (queue.length) {
-      const chunk = queue.shift();
-      bytes -= Buffer.byteLength(chunk);
-      if (bytes < 192 * 1024) stream.resume();
-      return chunk;
+    for (;;) {
+      while (!queue.length && !ended)
+        await new Promise(resolve => { wake = resolve; });
+      if (queue.length) {
+        const next = queue.shift();
+        // Match Firefox156's default 32768-byte subprocess read, including
+        // UTF-8 carry. Node pipe events are larger and are not Gecko reads.
+        const chunk = next.subarray(0, 32768);
+        if (next.length > chunk.length) queue.unshift(next.subarray(chunk.length));
+        bytes -= chunk.length;
+        if (bytes < 192 * 1024) stream.resume();
+        const text = decoder.write(chunk);
+        if (text) return text;
+        continue;
+      }
+      if (failure) throw failure;
+      return decoder.end();
     }
-    if (failure) throw failure;
-    return "";
   };
 }
 async function closeWithUnload(page) {
@@ -204,8 +217,6 @@ try {
         const id = nextId++;
         if (process.env.DEBUG_TERMINAL_PROOF)
           console.log("CALL", id, options.command, options.arguments);
-        child.stdout.setEncoding("utf8");
-        child.stderr.setEncoding("utf8");
         const result = new Promise((resolve, reject) => {
           child.once("error", reject);
           child.once("exit", (code, signal) =>
@@ -347,7 +358,7 @@ try {
       window.ChromeUtils = {
         importESModule: (name) =>
           name.endsWith("/ZenTerminalSessionManager.mjs")
-            ? { getTerminalSessionCoordinator: () => (window.__testSessionCoordinator ||= { operations: new Map(), containerCleanupObserver: null }) }
+            ? window.__testSessionModule
             : name.includes("ZenTerminalContainerStore")
             ? { getTerminalContainerRecipe: id => JSON.parse(Services.prefs.getStringPref("zen.terminal.containerRecipes", "{}"))[id] || null }
             : name.includes("ContextualIdentityService")
