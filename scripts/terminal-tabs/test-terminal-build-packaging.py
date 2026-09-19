@@ -17,6 +17,9 @@ import sys
 import tempfile
 import unittest
 
+# Pinned upstream fixtures must remain pristine after importing the assembler.
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).with_name('fixtures') / 'firefox156-packaging'
 ASSEMBLER = 'python/mozbuild/mozbuild/action/assemble_macos_bundle.py'
