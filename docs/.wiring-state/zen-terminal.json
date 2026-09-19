@@ -7,7 +7,7 @@
   "coverage_matrix_required": true,
   "existing_project_path": "/Users/ar/zen-terminal-research/desktop-stable",
   "created_at": "2026-09-07T21:32:14Z",
-  "updated_at": "2026-09-19T16:35:29.790620+00:00",
+  "updated_at": "2026-09-19T18:01:34.594191+00:00",
   "checkpoint_every": 10,
   "completed_pairs": 0,
   "last_checkpoint_at_pair": 0,
@@ -46,7 +46,7 @@
     "last_clarification_reason": "R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.",
     "artifact_refresh_completed_at": "2026-09-19T11:04:24Z",
     "updated_at": "2026-09-07T22:15:20Z",
-    "remaining_work": "Final compiled5d acceptance; native drag-to-split driver/gesture and OS picker; OS clipboard/input/accessibility; notarization; final matrix then safe personal profile copy. Original untouched."
+    "remaining_work": "Compiled5d installer/main27/project12 pass; strict drag release and nativepicker remain open, as do OS clipboard/IME/accessibility and full final matrix. Development distribution only; no Apple account. Personal copy remains unperformed pending acceptance."
   },
   "change_request": {
     "count": 2,
@@ -136,7 +136,7 @@
   "product_review_location": {
     "host": "chubs@100.92.30.93",
     "path": "/home/chubs/zen-terminal/docs/zen-terminal-product-review.md",
-    "sha256": "de4e423f93ba5cac7796600782380d5f831fb37fb52e009fad8bf53dc6f78a64",
+    "sha256": "a862e0fcd28dc75817c8218e9b3017377eb7f27f9fddddee41b7dbf7c4c7196a",
     "local_working_copy_removed": true,
     "scope": "Product review plan only; source project remains on Mac. Prior Git history not rewritten."
   }

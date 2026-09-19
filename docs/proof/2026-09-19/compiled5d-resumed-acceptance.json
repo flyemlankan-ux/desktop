@@ -1,0 +1,21 @@
+{
+  "build": {
+    "source_commit": "5d12ee683ce3516bc67c0977927f0525a8ed3c60",
+    "upstream_stable": "1.22.2b",
+    "upstream_commit": "04e7db5d3a84ec754c14d6fc6930fa3ccd00c836",
+    "rust_toolchain": "1.95.0",
+    "firefox_engine": "156.0",
+    "workflow_run": "35455394170",
+    "dmg_sha256": "3eeff91399c81e0cf76cfd6b7e0b3d8c41bb51053ca1cd2357438f99b6e92cfd",
+    "signing": "development build; not Apple-notarized",
+    "personal_data": "not included"
+  },
+  "completion_watch": "gh run watch --interval 60 --exit-status; returned 0, then download and tests resumed in same active session",
+  "installer_inspection": "pass, exact source archive5d12ee6",
+  "main_passes": 27,
+  "project_passes": 12,
+  "split_gesture": "FAIL premature native dragend before instructed release; actual mixed split and same2jobPIDs/startupcount2 observed in failure snapshot, not acceptance",
+  "personal_profiles_copied": false,
+  "system_security_changed": false,
+  "release_ready": false
+}

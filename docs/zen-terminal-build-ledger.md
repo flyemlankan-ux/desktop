@@ -491,3 +491,10 @@ Compiled0c followups: savedsetups9, extendednavigation12 (+2notrun), mixedfolder
 Founder confirmed narrow app-specific changes if required and backed-up profile COPY, not a move. This does not make failed acceptance checks pass. No system protections were disabled. Existing development app already launches. Read-only disk sizing shows original Zen root about1.27GiB with about5GiB free; recheck before backup/copy, and never copy live profiles.
 
 Additional compiled0c nativepicker control used normal macOS LaunchServices (`--launch-services`) rather than direct executable launch. Separate owned app/profile identity confirmed, but actual ownedCancel still undiscoverable: `compiled0c-native-dialogs-launchservices-results.json`. Thus direct launch alone does not explain the earlier picker failure. Original699 remains untouched; no personal copy or security-setting changes. New compiled5d build35455394170 remains in progress.
+
+
+## Completion-triggered resume — 2026-09-19
+
+Kept an active gh run watch on35455394170. It succeeded after1h23m27s; downloaded compiled5d12ee6 immediately afterward and verified DMG SHA256 3eeff91399c81e0cf76cfd6b7e0b3d8c41bb51053ca1cd2357438f99b6e92cfd. Exact-source installer inspection passes. Real compiled main27 and project12 pass (actual sidebar reorder; method-created split/mirror/resize/last-close labelled). Both reviewed split fixes are now genuinely compiled, not overlaid.
+
+Strict compiled5d-split gesture check still FAILS on premature native dragend. Failure snapshot proves real mixedsplit, same2shellPIDs and startupcount2. This distinguishes successful native commit from an invalid automated release sequence; not full gesture acceptance. Nativepicker/OS input/accessibility/clipboard and remaining complete-product checks stay open. No Apple signingidentity/account available; development build only. No security settings changed, original Zen untouched, no personalprofilecopy.
