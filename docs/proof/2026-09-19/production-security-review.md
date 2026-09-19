@@ -143,3 +143,20 @@ claim that terminal access is sandboxed: it intentionally runs as the local user
 Suggested proof bar: high reasoning for identity/import/deletion changes; focused
 module tests plus actual native/browser/extension negative tests. No broad unrelated
 Core tests. Product migration remains held while these end-to-end gaps are open.
+
+## Authorized follow-up implemented: All Tabs native list only
+
+Added `src/browser/components/tabbrowser/content/browser-allTabsMenu-js.patch`.
+It consults the existing terminal recipe store and omits terminal identities at
+this specific native website-container list. No second manager, command routing,
+terminal opener or tab lifecycle changes were added.
+
+Downloaded pristine Firefox155.0.1 and156.0 files from official Mozilla GitHub
+release tags into `scripts/terminal-tabs/fixtures/firefox-alltabs`, with source URLs,
+SHA256 and Git-blob hashes. `test-terminal-alltabs.mjs` verifies both receipts,
+applies the patch with zero fuzz, then executes the actual patched menu callback.
+Six cases passed across both versions: mixed identities retain only web rows,
+web-only rows stay unchanged, all-terminal lists are empty; native commands,
+labels and hide cleanup are preserved. No UI launched. Native entry-point
+acceptance and inclusion in the test overlay/final packaged asset checks are
+parent integration work, not claimed complete by this source test.

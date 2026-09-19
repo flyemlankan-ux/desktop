@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/mozilla-firefox/firefox",
+  "files": [
+    {
+      "version": "155",
+      "tag": "FIREFOX_155_0_1_RELEASE",
+      "url": "https://raw.githubusercontent.com/mozilla-firefox/firefox/FIREFOX_155_0_1_RELEASE/browser/components/tabbrowser/content/browser-allTabsMenu.js",
+      "path": "browser/components/tabbrowser/content/browser-allTabsMenu.js",
+      "sha256": "abd5d62544cb97166f4474a26690afc0f2c5f678e85a919ad2087ac152fa59f3",
+      "git_blob_sha": "4845d3c4dc0235e76f3b71852889f528ce0eeec1"
+    },
+    {
+      "version": "156",
+      "tag": "FIREFOX_156_0_RELEASE",
+      "url": "https://raw.githubusercontent.com/mozilla-firefox/firefox/FIREFOX_156_0_RELEASE/browser/components/tabbrowser/content/browser-allTabsMenu.js",
+      "path": "browser/components/tabbrowser/content/browser-allTabsMenu.js",
+      "sha256": "605601c6997a89ac60ac657253bc1a322ed6e0b8cd3e8045b4d2a3f6f739dbb6",
+      "git_blob_sha": "ffc6e5f3d584b5c76bb3f5ec4ecf62d0f4e13f75"
+    }
+  ]
+}
