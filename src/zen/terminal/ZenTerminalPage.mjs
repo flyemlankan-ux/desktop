@@ -12,6 +12,8 @@ import {
   getTerminalTmuxSessionName,
   normalizeTerminalSessionId,
   registerTerminalSession,
+  assertTerminalSessionCanStart,
+  ZEN_TERMINAL_SESSION_DELETE_TOPIC,
   getTerminalSessionRecord,
   markTerminalSessionStartupAttempt,
   terminalSessionEndedError,
@@ -104,7 +106,9 @@ function getStartupRecord() {
 }
 
 function getNewSessionSettings() {
+  validateTerminalPageContext();
   const record = getStartupRecord();
+  if (!record) throw new Error("This terminal setup was removed. Choose an existing setup from the new-tab menu.");
   const recipe = normalizeTerminalRecipe(record?.recipe);
   const home = validateTerminalStartingDirectory(
     recipe.startingDirectory || (recipe.startingDirectory === "" ? getHomeDirectory() : recipe.startingDirectory),
@@ -384,6 +388,7 @@ async function startShell({ allowRestart = false } = {}) {
     }
     // Mark live reconnects too, so an old restored tab gains the Undo Close guard.
     markTabStarted();
+    assertTerminalSessionCanStart(terminalSessionId);
     if (!tmuxCommand) markTerminalSessionStartupAttempt(terminalSessionId);
     const createdProcess = await Subprocess.call({
       ...MACOS_SUBPROCESS_OPTIONS,
@@ -542,6 +547,17 @@ function writeToShell(text) {
   return writeFrame(framed);
 }
 
+const sessionDeleteObserver = {
+  observe(_subject, topic, id) {
+    if (topic !== ZEN_TERMINAL_SESSION_DELETE_TOPIC || id !== activeTerminalSessionId) return;
+    void stopShell();
+    terminal?.writeln("\r\nThis terminal was closed. Cleanup of its running work was requested.");
+    setStatus("terminal closed · cleanup requested", false);
+    document.getElementById("zen-terminal-reconnect").hidden = true;
+  },
+};
+Services.obs?.addObserver?.(sessionDeleteObserver, ZEN_TERMINAL_SESSION_DELETE_TOPIC);
+
 surface.addEventListener("mousedown", (event) => {
   if (!event.target.closest("button")) terminal?.focus();
 });
@@ -556,6 +572,7 @@ window.addEventListener("pageshow", () => {
 });
 
 async function stopShell() {
+  try { Services.obs?.removeObserver?.(sessionDeleteObserver, ZEN_TERMINAL_SESSION_DELETE_TOPIC); } catch (_) {}
   stopping = true;
   shellReady = false;
   try {

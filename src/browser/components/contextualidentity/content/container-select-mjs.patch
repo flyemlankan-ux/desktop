@@ -1,0 +1,49 @@
+--- a/browser/components/contextualidentity/content/container-select.mjs
++++ b/browser/components/contextualidentity/content/container-select.mjs
+@@ -4,6 +4,7 @@
+
+ import { html } from "chrome://global/content/vendor/lit.all.mjs";
+ import MozSelect from "chrome://global/content/elements/moz-select.mjs";
++import { isTerminalContainerId } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
+
+ const lazy = {};
+
+@@ -18,8 +19,18 @@
+  *
+  * @returns {Array<Record<string, string>>}
+  */
++export function isWebContainerId(value) {
++  const text = String(value);
++  if (!/^[1-9][0-9]*$/.test(text)) return false;
++  const id = Number(text);
++  return Number.isSafeInteger(id) && !isTerminalContainerId(id) &&
++    lazy.ContextualIdentityService.getPublicIdentities().some(identity => identity.userContextId === id);
++}
++
+ export function containerOptions() {
+-  return lazy.ContextualIdentityService.getPublicIdentities().map(identity => ({
++  return lazy.ContextualIdentityService.getPublicIdentities()
++    .filter(identity => !isTerminalContainerId(identity.userContextId))
++    .map(identity => ({
+     value: String(identity.userContextId),
+     label: lazy.ContextualIdentityService.getUserContextLabel(
+       identity.userContextId
+@@ -130,7 +141,17 @@
+   }
+
+   #bindSite() {
+-    let userContextId = parseInt(this.value, 10);
++    if (!this.site) return;
++    // A setup can change kind or be deleted while this menu is open.
++    if (!isWebContainerId(this.value)) {
++      this.value = "";
++      this.setAttribute("aria-invalid", "true");
++      Services.prompt.alert(this.ownerGlobal, "Choose a web container",
++        "Terminal setups cannot be used for websites. Choose an existing web container.");
++      return;
++    }
++    this.removeAttribute("aria-invalid");
++    let userContextId = Number(this.value);
+     if (this.site && userContextId) {
+       lazy.ContextualIdentityService.setSiteAssociation(
+         this.site,

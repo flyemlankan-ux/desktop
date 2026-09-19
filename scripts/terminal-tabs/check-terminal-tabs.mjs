@@ -19,6 +19,13 @@ for (const file of readdirSync(dir).filter((name) => name.endsWith(".mjs"))) {
 for (const [path, text] of [
   ["src/zen/moz.build", '"terminal"'],
   [dir + "moz.build", 'Program("zen-terminal-pty")'],
+  [dir + "moz.build", 'DIST_SUBDIR = ""'],
+  ["src/browser/installer/package-manifest-in.patch", "@BINPATH@/zen-terminal-pty"],
+  ["src/zen/tabs/jar.inc.mn", "content/browser/zen-components/ZenPinnedTabManager.mjs"],
+  ["src/zen/common/ZenPreloadedScripts.js", "chrome://browser/content/zen-components/ZenPinnedTabManager.mjs"],
+  ["src/zen/common/ZenPreloadedScripts.js", "resource:///modules/zen/ZenSpaceManager.mjs"],
+  ["src/zen/spaces/moz.build", '"ZenSpaceManager.mjs"'],
+  [".github/workflows/terminal-macos-dev-build.yml", "test-terminal-settings156.mjs"],
   ["src/browser/app/macbuild/Contents/MacOS-files-in.patch", "/zen-terminal-pty"],
   [
     "src/browser/base/content/zen-assets.jar.inc.mn",
@@ -74,7 +81,7 @@ assert.equal(
 assert.equal(
   existsSync("src/browser/components/preferences/containers-js.patch"),
   false,
-  "Firefox 155 removed the old container settings file",
+  "Current Firefox uses the shared native container editor, not the removed legacy pane",
 );
 no(".github/workflows/terminal-macos-dev-build.yml", "export MOZ_APP_PROFILE=");
 no(dir + "ZenTerminalPage.mjs", "shouldDropDuplicateInput");

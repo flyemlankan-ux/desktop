@@ -31,3 +31,8 @@ diff --git a/browser/components/preferences/config/containers.mjs b/browser/comp
  }
  
  Preferences.addSetting(
+@@ -236,3 +247,3 @@
+     beforeRefresh() {
+-      this.containers = lazy.ContextualIdentityService.getPublicIdentities();
++      this.containers = containerOptions();
+     }

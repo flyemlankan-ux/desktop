@@ -160,3 +160,55 @@ web-only rows stay unchanged, all-terminal lists are empty; native commands,
 labels and hide cleanup are preserved. No UI launched. Native entry-point
 acceptance and inclusion in the test overlay/final packaged asset checks are
 parent integration work, not claimed complete by this source test.
+
+## Authorized follow-up implemented: incoming and outgoing share safety
+
+Added the packaged `ZenShareSafety.sys.mjs` helper under the existing
+`modules/zen/share` directory. Both the client validator and manager import path
+check the complete nested document for parsed absolute HTTP/HTTPS addresses before
+creating anything. The eager split-view import has the same whole-document check;
+the final single-tab trusted-open method also refuses non-web addresses. Raw
+control/space characters, backslashes, relative and protocol-relative addresses
+are rejected rather than normalized into something unexpectedly valid.
+
+Outgoing serialization excludes a tab carrying the terminal marker even when its
+current URL looks HTTP(S). Genuine web tabs remain. An export with zero web tabs,
+including a tree of empty folders after terminals were excluded, neither asks for
+upload confirmation nor sends a request. The client independently refuses empty
+uploads. Existing structure/schema validation, normal share UI, metadata and web
+behavior remain upstream-owned.
+
+`test-terminal-share-safety.mjs`: **63 passed**, executing the actual helper and
+production client/manager methods with synthetic services (test-only private
+method visibility changes). Tests include nested valid-then-invalid lists and
+eager split import with no partial creation; chrome/resource/file/data/javascript/
+about/FTP, malformed and ambiguous addresses; stale HTTP terminal marker; genuine
+web serialization; empty export; and a permissive schema mock that cannot bypass
+the new client check. No UI or network was used. Native156 import/export acceptance
+and exact final packaged module matching remain parent integration work.
+
+## Authorized follow-up implemented: close ownership
+
+`ZenTerminalTabs` now recognizes the exact parsed terminal-page address, not a
+string prefix. Destructive close handling requires an existing session record
+whose owner matches the browser's actual non-private container identity. A saved
+`zenTerminalOwnership` receipt carries the session ID and owner through ordinary
+navigation, lazy restoration and tab duplication. Legacy exact terminal pages can
+establish a receipt only when actual browser identity and existing record agree.
+URL text or an old session-ID attribute alone is not permission to kill a job.
+Rejected viewers also do not count as legitimate viewers keeping another job alive.
+
+The explicit opener registers the owner before creating a tab. This keeps early
+close protected even before the page's startup code runs. Failed fresh tab creation
+cleans its own registration; a failed duplicate creation never destroys an existing
+job. Window adoption, quitting, existing actual-final-TabClose semantics and native
+folders/pins remain unchanged. The Firefox156 RunState import is preserved.
+
+`test-terminal-close-ownership.mjs`: **16 passed** against the production class,
+covering malformed prefix, wrong/private identity, invalid ID, ordinary web tab
+without receipt, legitimate lazy/restored receipt, website navigation retaining
+ownership, duplicate last-close, invalid neighboring view, adopted/quit/windowclose,
+creation-before-page-start and failed addTab cleanup. Organization14, entrypoints21,
+workspace-default4 and native-polish logic also passed. No UI launched. Parent
+must rerun actual native last-close, duplication, lazy restore and Undo Close with
+the rebuilt receipt code before final acceptance.

@@ -32,7 +32,7 @@ permissions:
 jobs:
   build:
     name: Build terminal Zen for macOS (${{ inputs.arch }})
-    runs-on: macos-26
+    runs-on: ${{ inputs.arch == 'x86_64' && 'macos-15-intel' || 'macos-26' }}
     timeout-minutes: 720
     env:
       SURFER_COMPAT: ${{ inputs.arch }}
@@ -55,7 +55,9 @@ jobs:
         shell: bash
         run: |
           echo "id=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-          echo "version=155.0.1-terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+          engine="$(python3 -c 'import json; print(json.load(open("surfer.json"))["version"]["version"])')"
+          test "$engine" = "156.0"
+          echo "version=${engine}-terminal-dev-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -91,7 +93,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "$(cat .rust-toolchain)"
           source "$HOME/.cargo/env"
           rustup target add "${{ inputs.arch }}-apple-darwin"
-          echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix gnu-tar)/libexec/gnubin" >> "$GITHUB_PATH"
           echo "$(python3 -m site --user-base)/bin" >> "$GITHUB_PATH"
 
       - name: Install JavaScript dependencies
@@ -99,10 +101,19 @@ jobs:
 
       - name: Test terminal logic and native helper
         run: |
-          node scripts/terminal-tabs/test-terminal-settings155.mjs
+          node scripts/terminal-tabs/test-terminal-settings156.mjs
           node scripts/terminal-tabs/test-terminal-recipes.mjs
           node scripts/terminal-tabs/test-terminal-session-persistence.mjs
           node scripts/terminal-tabs/test-terminal-polish.mjs
+          node scripts/terminal-tabs/test-terminal-native-polish.mjs
+          node scripts/terminal-tabs/test-terminal-organization.mjs
+          node scripts/terminal-tabs/test-terminal-entrypoints.mjs
+          node scripts/terminal-tabs/test-terminal-alltabs.mjs
+          node scripts/terminal-tabs/test-terminal-associations156.mjs
+          node scripts/terminal-tabs/test-terminal-container-deletion.mjs
+          node scripts/terminal-tabs/test-terminal-close-ownership.mjs
+          node scripts/terminal-tabs/test-terminal-share-safety.mjs
+          node scripts/terminal-tabs/test-terminal-session-ownership.mjs
           python3 scripts/terminal-tabs/test-copy-zen-profiles.py
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
@@ -149,7 +160,7 @@ jobs:
         run: |
           cd engine
           export PATH="$(python3 -m site --user-base)/bin:$PATH"
-          ./mach --no-interactive bootstrap --application-choice browser --exclude macos-sdk || true
+          ./mach --no-interactive bootstrap --application-choice browser --exclude macos-sdk
 
       - name: Build language packs
         run: sh scripts/download-language-packs.sh
@@ -201,10 +212,12 @@ jobs:
       - name: Collect DMG
         shell: bash
         run: |
-          set -eux
+          set -euxo pipefail
           mkdir -p terminal-build-artifacts
-          dmg_path="$(find engine/obj-* -path '*/dist/*.dmg' -print -quit)"
-          test -n "$dmg_path"
+          shopt -s nullglob
+          dmgs=(engine/obj-${{ inputs.arch }}-apple-darwin/dist/*.dmg)
+          test "${#dmgs[@]}" -eq 1
+          dmg_path="${dmgs[0]}"
           scripts/terminal-tabs/sign-terminal-dev-dmg.sh "$dmg_path" "terminal-build-artifacts/zen-terminal-${{ inputs.arch }}.dmg"
           python3 - <<'PYINFO'
           import hashlib, json, os, subprocess
@@ -212,7 +225,9 @@ jobs:
           dmg = next(Path("terminal-build-artifacts").glob("*.dmg"))
           Path("terminal-build-artifacts/build-info.json").write_text(json.dumps({
               "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-              "upstream_stable": "1.22b",
+              "upstream_stable": "1.22.2b",
+              "upstream_commit": "04e7db5d3a84ec754c14d6fc6930fa3ccd00c836",
+              "rust_toolchain": Path(".rust-toolchain").read_text().strip(),
               "firefox_engine": json.loads(Path("surfer.json").read_text())["version"]["version"],
               "workflow_run": os.environ["GITHUB_RUN_ID"],
               "dmg_sha256": hashlib.file_digest(dmg.open("rb"), "sha256").hexdigest(),

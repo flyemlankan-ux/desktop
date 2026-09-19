@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import { assertSafeShareDocument } from "resource:///modules/zen/share/ZenShareSafety.sys.mjs";
+
 import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
@@ -88,6 +90,11 @@ class nsZenShareClient {
    * @returns {Promise<{valid: boolean, errors: object[]}>}
    */
   async validateDocument(doc) {
+    try {
+      assertSafeShareDocument(doc);
+    } catch (_) {
+      return { valid: false, errors: [{ message: "Shared tabs must use absolute HTTP or HTTPS addresses." }] };
+    }
     const validator = await this.#getValidator();
     return validator.validate(doc);
   }
@@ -159,6 +166,9 @@ class nsZenShareClient {
     const base = this.#baseUrl;
     const headers = this.#authHeaders();
     await this.#assertValidDocument(doc);
+    if (!assertSafeShareDocument(doc)) {
+      throw new ZenShareError("empty", "nothing to share");
+    }
     const body = JSON.stringify(doc);
     if (new TextEncoder().encode(body).length > MAX_SHARE_BYTES) {
       throw new ZenShareError("too-large", "share document is over 25 MiB");

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Overlay terminal changes onto a disposable OFFICIAL Zen 1.22b copy.
-This exercises a pinned Mac regression engine, NOT the latest release or a fresh build.
+"""Overlay terminal changes onto a disposable OFFICIAL Zen 1.22.2b copy.
+This exercises a pinned current Mac engine, NOT a fresh source build.
 Never edits /Applications, the original browser, or a real user profile.
 """
 import argparse
@@ -16,14 +16,14 @@ import zipfile
 root = Path(__file__).resolve().parents[2]
 test = root / '.terminal-test'
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--source-app', type=Path, default=test / 'Official Zen.app')
+parser.add_argument('--source-app', type=Path, default=test / 'Official Zen 1.22.2b.app')
 args = parser.parse_args()
 source = args.source_app.resolve()
-app = test / 'Zen Terminal Test.app'
+app = test / 'Zen Terminal Test 156.app'
 assert source.is_dir() and source != app.resolve()
 assert not app.is_symlink() and app.parent.resolve() == test.resolve()
 info = plistlib.loads((source / 'Contents/Info.plist').read_bytes())
-assert info.get('CFBundleShortVersionString') == '1.22b', 'Only official stable 1.22b is supported'
+assert info.get('CFBundleShortVersionString') == '1.22.2b', 'Only official stable 1.22.2b is supported'
 if app.exists():
     # Never reuse an old engine merely because the disposable output exists.
     for relative in ('Contents/Resources/platform.ini', 'Contents/Resources/application.ini'):
@@ -57,8 +57,11 @@ patches = [
     ('browser/components/contextualidentity/content/ContainerCreationPanel.mjs', 'ContainerCreationPanel-mjs.patch'),
     ('browser/components/preferences/config/containers.mjs', 'containers-mjs.patch'),
     ('browser/components/preferences/dialogs/containers.js', 'containers-js.patch'),
+    ('browser/components/tabbrowser/content/browser-allTabsMenu.js', 'browser-allTabsMenu-js.patch'),
+    ('browser/components/contextualidentity/content/container-select.mjs', 'container-select-mjs.patch'),
+    ('browser/components/preferences/dialogs/siteContainer.js', 'siteContainer-js.patch'),
 ]
-engine = test / 'stable-overlay-source'
+engine = test / 'stable156-overlay-source'
 for relative, patch_name in patches:
     rel = Path(relative)
     candidates = [name for name in entries if name.endswith('/' + rel.name)]
@@ -69,10 +72,14 @@ for relative, patch_name in patches:
     assert len(candidates) == 1, (relative, candidates)
     dest = engine / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
-    fixture = root / 'scripts/terminal-tabs/fixtures/firefox155-settings' / rel
+    fixture = root / 'scripts/terminal-tabs/fixtures/firefox156-settings' / rel
+    if rel.name in ('container-select.mjs', 'siteContainer.js'):
+        fixture = root / 'scripts/terminal-tabs/fixtures/firefox156-associations' / rel
+    if rel.name == 'browser-allTabsMenu.js':
+        fixture = root / 'scripts/terminal-tabs/fixtures/firefox-alltabs/156' / rel
     dest.write_bytes(fixture.read_bytes())
     patch_path = root / 'src' / rel.parent / patch_name
-    baseline_patch = subprocess.run(['git', 'show', '1.22b:' + str(patch_path.relative_to(root))], cwd=root, capture_output=True)
+    baseline_patch = subprocess.run(['git', 'show', '1.22.2b:' + str(patch_path.relative_to(root))], cwd=root, capture_output=True)
     if baseline_patch.returncode == 0:
         subprocess.run(['patch', '--batch', '--fuzz=0', '-p1'], input=baseline_patch.stdout, cwd=engine, check=True)
     assert dest.read_bytes() == entries[candidates[0]], f'Official bundled source differs from pinned fixture: {relative}'
@@ -87,12 +94,19 @@ for bundled, relative in [
     (prefix + 'ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
     (prefix + 'zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
     ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
+    ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
+    ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),
+    ('modules/zen/share/share.schema.json', 'src/zen/share/share.schema.json'),
+    ('modules/zen/share/ZenShareSafety.sys.mjs', 'src/zen/share/ZenShareSafety.sys.mjs'),
 ]:
-    assert bundled in entries, f'Cannot overlay an unregistered browser module: {bundled}'
+    if bundled == 'modules/zen/share/ZenShareSafety.sys.mjs':
+        assert '"ZenShareSafety.sys.mjs"' in (root / 'src/zen/share/moz.build').read_text()
+    else:
+        assert bundled in entries, f'Cannot overlay an unregistered browser module: {bundled}'
     entries[bundled] = (root / relative).read_bytes()
 
 # The native popup's shape comes from this stable checkout's committed baseline.
-old = subprocess.check_output(['git', 'show', '1.22b:src/browser/base/content/zen-panels/popups.inc'], cwd=root).decode()
+old = subprocess.check_output(['git', 'show', '1.22.2b:src/browser/base/content/zen-panels/popups.inc'], cwd=root).decode()
 new = (root / 'src/browser/base/content/zen-panels/popups.inc').read_text()
 def first_popup(text):
     start = text.index('<menupopup')
@@ -145,5 +159,6 @@ entitlements_file = test / 'local-test-entitlements.plist'
 entitlements_file.write_bytes(plistlib.dumps(entitlements))
 subprocess.run(['codesign', '--force', '--sign', '-', '--entitlements', str(entitlements_file), str(app)], check=True)
 subprocess.run(['codesign', '--verify', '--deep', '--strict', '--verbose=2', str(app)], check=True)
-print('Updated disposable stable 1.22b integration app:', app)
-print('Evidence scope: pinned 155 regression engine plus local overlay, NOT current-engine release acceptance.')
+subprocess.run(['python3', str(root / 'scripts/terminal-tabs/verify-terminal-app-assets.py'), str(app)], check=True)
+print('Updated disposable stable 1.22.2b integration app:', app)
+print('Evidence scope: pinned 156 engine plus local overlay, NOT a fresh compiled release.')

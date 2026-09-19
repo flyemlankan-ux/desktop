@@ -15,6 +15,8 @@ import {
 } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
 import {
   destroyTerminalSession,
+  getTerminalSessionRecord,
+  registerTerminalSession,
   normalizeTerminalSessionId,
   retryPendingTerminalSessionDeletes,
 } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
@@ -26,43 +28,78 @@ const { BrowserWindowTracker } = ChromeUtils.importESModule(
   "resource:///modules/BrowserWindowTracker.sys.mjs",
 );
 const { RunState } = ChromeUtils.importESModule(
-  "resource:///modules/sessionstore/RunState.sys.mjs",
+  "moz-src:///browser/components/sessionstore/RunState.sys.mjs",
 );
 
 export const ZEN_TERMINAL_TAB_ATTRIBUTE = "zen-terminal-tab";
 export const ZEN_TERMINAL_TAB_URL =
   "chrome://browser/content/zen-terminal/terminal.xhtml";
 
-function terminalSessionIdForTab(tab) {
-  let sessionId = normalizeTerminalSessionId(
-    tab?.getAttribute?.("zen-terminal-session-id"),
-  );
-  if (sessionId) {
-    return sessionId;
-  }
-
+function terminalPageParameters(spec) {
   try {
-    sessionId = normalizeTerminalSessionId(
-      SessionStore.getCustomTabValue(tab, "zenTerminalSessionId"),
-    );
-  } catch (_) {
-    // Older restored tabs may only have the id in their URL.
-  }
-  if (sessionId) {
-    return sessionId;
-  }
+    const url = new URL(spec);
+    if (`${url.protocol}//${url.host}${url.pathname}` !== ZEN_TERMINAL_TAB_URL) return null;
+    return url.searchParams;
+  } catch (_) { return null; }
+}
 
-  const spec = tab?.linkedBrowser?.currentURI?.spec || "";
-  if (!spec.startsWith(ZEN_TERMINAL_TAB_URL)) {
-    return "";
-  }
+function terminalTabContext(tab) {
+  if (!tab?.linkedBrowser) return null;
   try {
-    return normalizeTerminalSessionId(
-      new URL(spec).searchParams.get("session"),
+    const { PrivateBrowsingUtils } = ChromeUtils.importESModule(
+      "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
     );
-  } catch (_) {
-    return "";
+    if (PrivateBrowsingUtils.isWindowPrivate(tab.ownerGlobal || window)) return null;
+    const attributes = tab.linkedBrowser.browsingContext?.originAttributes ||
+      tab.linkedBrowser.docShell?.getOriginAttributes();
+    if (attributes) {
+      if (attributes.privateBrowsingId || !Number.isInteger(attributes.userContextId) ||
+          attributes.userContextId < 1) return null;
+      return String(attributes.userContextId);
+    }
+    // An unloaded restored browser may not have a live browsing context yet.
+    // SessionStore's saved identity, not a URL-written DOM attribute, owns it.
+    if (tab.hasAttribute("pending")) {
+      const state = JSON.parse(SessionStore.getTabState(tab));
+      if (Number.isInteger(state.userContextId) && state.userContextId > 0) {
+        return String(state.userContextId);
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+function terminalTabParameters(tab) {
+  let params = terminalPageParameters(tab?.linkedBrowser?.currentURI?.spec || "");
+  if (!params && tab?.hasAttribute?.("pending")) {
+    try {
+      const state = JSON.parse(SessionStore.getTabState(tab));
+      params = terminalPageParameters(state.entries?.[(state.index || 1) - 1]?.url);
+    } catch (_) {}
   }
+  return params;
+}
+
+function terminalOwnershipForTab(tab) {
+  const owner = terminalTabContext(tab);
+  if (!owner) return null;
+  let receipt = tab.__zenTerminalOwnership;
+  if (!receipt) {
+    try { receipt = JSON.parse(SessionStore.getCustomTabValue(tab, "zenTerminalOwnership")); }
+    catch (_) {}
+  }
+  const params = terminalTabParameters(tab);
+  // A legacy exact terminal page can establish its receipt only when its real
+  // browser identity and existing session record agree. Prefix lookalikes cannot.
+  if (!receipt && params?.get("userContextId") === owner) {
+    receipt = { id: normalizeTerminalSessionId(params.get("session")), userContextId: owner };
+  }
+  const id = normalizeTerminalSessionId(receipt?.id);
+  if (!id || receipt.userContextId !== owner) return null;
+  if (params && (normalizeTerminalSessionId(params.get("session")) !== id ||
+      params.get("userContextId") !== owner)) return null;
+  const record = getTerminalSessionRecord(id);
+  return record && String(record.userContextId) === owner ? { id, userContextId: owner } : null;
 }
 
 export class ZenTerminalTabs {
@@ -105,7 +142,7 @@ export class ZenTerminalTabs {
         tab.zenStaticIcon || tab.closing
       ) return;
       const spec = tab.linkedBrowser?.currentURI?.spec || "";
-      if (spec.split(/[?#]/u)[0] !== ZEN_TERMINAL_TAB_URL && !tab.hasAttribute("pending")) return;
+      if (!terminalPageParameters(spec) && !tab.hasAttribute("pending")) return;
       const icon = "chrome://browser/skin/zen-icons/selectable/terminal.svg";
       // setIcon emits the same event; checking the final attribute avoids recursion.
       if (tab.getAttribute("image") !== icon) gBrowser.setIcon(tab, icon);
@@ -300,12 +337,16 @@ export class ZenTerminalTabs {
         }
       }
     }
-    if (options.userContextId) {
-      tab.setAttribute("usercontextid", String(options.userContextId));
-      tab.setAttribute(
-        "zen-terminal-user-context-id",
-        String(options.userContextId),
-      );
+    if (options.userContextId && terminalTabContext(tab) === String(options.userContextId)) {
+      tab.setAttribute("zen-terminal-user-context-id", String(options.userContextId));
+      const id = normalizeTerminalSessionId(options.terminalSessionId);
+      const record = id && getTerminalSessionRecord(id);
+      if (record && String(record.userContextId) === String(options.userContextId)) {
+        const receipt = { id, userContextId: String(options.userContextId) };
+        tab.__zenTerminalOwnership = receipt;
+        try { SessionStore.setCustomTabValue(tab, "zenTerminalOwnership", JSON.stringify(receipt)); }
+        catch (_) {}
+      }
     }
 
     const existingLabel = tab.getAttribute("label");
@@ -356,16 +397,9 @@ export class ZenTerminalTabs {
 
   #markRestoredTerminalTab(tab) {
     if (!tab?.linkedBrowser || tab.closing) return;
-    let spec = tab.linkedBrowser.currentURI?.spec || "";
-    if (!spec.startsWith(ZEN_TERMINAL_TAB_URL) && tab.hasAttribute("pending")) {
-      try {
-        const state = JSON.parse(SessionStore.getTabState(tab));
-        spec = state.entries?.[(state.index || 1) - 1]?.url || spec;
-      } catch (_) {}
-    }
-    if (!spec.startsWith(ZEN_TERMINAL_TAB_URL)) return;
+    const params = terminalTabParameters(tab);
+    if (!params || params.get("userContextId") !== terminalTabContext(tab)) return;
     try {
-      const params = new URL(spec).searchParams;
       this.markTerminalTab(tab, {
         terminalSessionId: params.get("session"),
         terminalContainerId: params.get("container"),
@@ -382,6 +416,15 @@ export class ZenTerminalTabs {
       normalizeTerminalSessionId(options.terminalSessionId) ||
       Services.uuid.generateUUID().toString().slice(1, -1).toLowerCase();
     const terminalOptions = { ...options, terminalSessionId };
+    const owner = String(terminalOptions.userContextId || "");
+    if (!/^[1-9][0-9]*$/.test(owner) || !isTerminalContainerId(owner) ||
+        !ContextualIdentityService.getPublicIdentities().some(identity => String(identity.userContextId) === owner)) return null;
+    // Establish ownership before addTab: closing before page startup must still
+    // stop a pending creation, not rely on the page having registered already.
+    const existingRecord = getTerminalSessionRecord(terminalSessionId);
+    if (!registerTerminalSession(terminalSessionId, {
+      userContextId: owner, terminalContainerId: terminalOptions.terminalContainerId,
+    })) return null;
     const addTabOptions = {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     };
@@ -389,10 +432,13 @@ export class ZenTerminalTabs {
       addTabOptions.userContextId = Number(terminalOptions.userContextId);
     }
 
-    const tab = gBrowser.addTab(
-      this.#terminalUrl(terminalOptions),
-      addTabOptions,
-    );
+    let tab;
+    try {
+      tab = gBrowser.addTab(this.#terminalUrl(terminalOptions), addTabOptions);
+    } catch (error) {
+      if (!existingRecord) void destroyTerminalSession(terminalSessionId);
+      throw error;
+    }
     this.markTerminalTab(tab, terminalOptions);
     gBrowser.selectedTab = tab;
     return tab;
@@ -415,7 +461,7 @@ export class ZenTerminalTabs {
         if (
           tab !== closingTab &&
           !tab.closing &&
-          terminalSessionIdForTab(tab) === sessionId
+          terminalOwnershipForTab(tab)?.id === sessionId
         ) {
           return true;
         }
@@ -426,7 +472,8 @@ export class ZenTerminalTabs {
 
   #onTerminalTabClose(event) {
     const tab = event.target;
-    const sessionId = terminalSessionIdForTab(tab);
+    const ownership = terminalOwnershipForTab(tab);
+    const sessionId = ownership?.id;
     if (!sessionId) {
       return;
     }
@@ -442,7 +489,9 @@ export class ZenTerminalTabs {
     // Zen may close synchronized copies of one tab in quick succession. Wait
     // until that work finishes, then destroy only when no copy remains.
     window.setTimeout(() => {
-      if (!this.#hasAnotherOpenTerminalTab(sessionId, tab)) {
+      const record = getTerminalSessionRecord(sessionId);
+      if (record && String(record.userContextId) === ownership.userContextId &&
+          !this.#hasAnotherOpenTerminalTab(sessionId, tab)) {
         void destroyTerminalSession(sessionId);
       }
     }, 0);

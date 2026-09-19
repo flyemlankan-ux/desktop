@@ -21,7 +21,77 @@ export function getTerminalTmuxSocket() {
   );
 }
 export const ZEN_TERMINAL_TMUX_SESSION_PREFIX = "zt_";
-const operations = new Map();
+// The default ChromeUtils module loader owns this state once per profile.
+// Window-scoped imports must never create separate operation queues/observers.
+const coordinator = { operations: new Map(), containerCleanupObserver: null };
+export function getTerminalSessionCoordinator() { return coordinator; }
+function sharedCoordinator() {
+  return ChromeUtils.importESModule(
+    "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs",
+  ).getTerminalSessionCoordinator();
+}
+export const ZEN_TERMINAL_SESSION_DELETE_TOPIC = "zen-terminal-session-delete-requested";
+
+function currentTerminalOwner(userContextId) {
+  const owner = String(userContextId || "");
+  if (!/^[1-9][0-9]*$/u.test(owner) || !Number.isSafeInteger(Number(owner))) return false;
+  const { ContextualIdentityService } = ChromeUtils.importESModule(
+    "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs",
+  );
+  const { getTerminalContainerRecipe } = ChromeUtils.importESModule(
+    "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs",
+  );
+  return ContextualIdentityService.getPublicIdentities().some(identity => String(identity.userContextId) === owner) &&
+    Boolean(getTerminalContainerRecipe(owner));
+}
+
+/** One ES-module observer per profile, shared by all browser windows. */
+export function ensureTerminalContainerCleanupObserver() {
+  if (!Services.obs?.addObserver) return;
+  const shared = ChromeUtils.importESModule(
+    "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs",
+  );
+  // Create the long-lived observer in the shared module, not in the first
+  // browser window's module global (which would retain a closed window).
+  if (shared.ensureTerminalContainerCleanupObserver !== ensureTerminalContainerCleanupObserver) {
+    return shared.ensureTerminalContainerCleanupObserver();
+  }
+  const state = sharedCoordinator();
+  if (state.containerCleanupObserver) return;
+  const observer = {
+    observe(subject, topic) {
+      if (topic !== "contextual-identity-deleted") return;
+      const id = String(subject?.wrappedJSObject?.userContextId || "");
+      if (!/^[1-9][0-9]*$/u.test(id) || !Number.isSafeInteger(Number(id))) return;
+      try {
+        const { removeTerminalContainerRecipe } = ChromeUtils.importESModule(
+          "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs",
+        );
+        removeTerminalContainerRecipe(id);
+      } catch (error) {
+        console.error("Could not remove deleted terminal setup", error);
+      }
+      // This call marks every matching record pending synchronously, before its
+      // first await. A concurrent page cannot create a replacement for that ID.
+      void destroyTerminalSessionsForUserContextId(id).catch(error =>
+        console.error("Terminal cleanup remains pending", error));
+    },
+  };
+  Services.obs.addObserver(observer, "contextual-identity-deleted");
+  state.containerCleanupObserver = observer;
+}
+
+export function assertTerminalSessionCanStart(id) {
+  const record = getTerminalSessionRecord(id);
+  if (!record || record.pendingDelete) throw new Error("This terminal was closed");
+  // Old ownerless records cannot acquire a new owner through page registration.
+  // Retain their low-level cleanup compatibility, but validate every owned job.
+  if (record.userContextId && !currentTerminalOwner(record.userContextId)) {
+    throw new Error("This terminal setup was removed. Choose an existing setup from the new-tab menu.");
+  }
+  return record;
+}
+
 
 function getSubprocess() {
   return ChromeUtils.importESModule("resource://gre/modules/Subprocess.sys.mjs")
@@ -85,6 +155,7 @@ export function registerTerminalSession(
   sessionId,
   { userContextId = "", terminalContainerId = "" } = {},
 ) {
+  ensureTerminalContainerCleanupObserver();
   const id = normalizeTerminalSessionId(sessionId);
   if (!id) return null;
   const records = readTerminalSessionRecords();
@@ -160,6 +231,9 @@ function markPending(sessionId) {
   writeTerminalSessionRecords(records);
   // Write the intent now, before asynchronous cleanup or a fast app quit.
   Services.prefs.savePrefFile?.(null);
+  // Stop any attached local helper as well as background tmux work. Repeated
+  // notifications are harmless; pages unregister their listener when stopped.
+  Services.obs?.notifyObservers?.(null, ZEN_TERMINAL_SESSION_DELETE_TOPIC, id);
   return records[id];
 }
 function removeRecord(id) {
@@ -168,6 +242,7 @@ function removeRecord(id) {
   writeTerminalSessionRecords(records);
 }
 function serial(id, action) {
+  const { operations } = sharedCoordinator();
   const previous = operations.get(id) || Promise.resolve();
   const task = previous.catch(() => {}).then(action);
   operations.set(id, task);
@@ -322,6 +397,7 @@ export async function prepareTerminalTmuxSession(
       throw new Error("Invalid terminal startup settings");
     if (getTerminalSessionRecord(id)?.pendingDelete)
       throw new Error("This terminal was closed");
+    assertTerminalSessionCanStart(id);
     // Save before launch: a crash in the narrow launch window cannot silently
     // rerun commands whose side effects may already have happened.
     markTerminalSessionStartupAttempt(id, { persistent: true });
@@ -426,6 +502,7 @@ export async function destroyTerminalSession(id, { tmuxCommand = "" } = {}) {
   });
 }
 export async function retryPendingTerminalSessionDeletes() {
+  ensureTerminalContainerCleanupObserver();
   const pending = Object.values(readTerminalSessionRecords()).filter(
     (record) => record.pendingDelete,
   );

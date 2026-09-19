@@ -62,6 +62,7 @@ globalThis.Services = {
 };
 globalThis.ChromeUtils = {
   importESModule(name) {
+    if (name.endsWith("/ZenTerminalSessionManager.mjs")) return manager;
     if (name.endsWith("/Timer.sys.mjs")) return { setTimeout, clearTimeout };
     return {
       Subprocess: {

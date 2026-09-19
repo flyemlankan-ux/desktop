@@ -352,3 +352,42 @@ Added regression: a correct unused copy cannot hide a stale actually loaded modu
 All9 verifier tests pass. Previous broad workflow results remain genuine observations
 but do NOT prove these manager changes were exercised; corrected-overlay reruns
 are required. Native Essentials itself restored same PID; status-text test was stale.
+
+### September19 — current-engine integration and additional safety
+
+Committed reviewed first repair set6a8c5c4, retained pinned fixtures ec0aa10,
+and merged official1.22.2b at fa4e0d7 (upstream04e7db5...). Actual engine156.0,
+Rust1.95.0. This is a source merge, NOT a final release. Corrected155 overlay
+now passes full native organization/Essentials/shared preference/restart diagnostic;
+see organization-correct-resources-native-organization.json.
+
+C17 implementation continued: all nested share imports require absoluteHTTP(S)
+before mutation, terminal-marked exports excluded, empty uploads refused (63cases);
+service deletion exact-job cleanup and single shared-loader coordinator (8cases
+including realtmux); close ownership with realcontainer/receipt validation and
+creation-close race coverage (16cases);156 site-association selector+commit guards
+(21cases/3strictpatches). All remain subject to native acceptance. Rendered page12
+still passes. New AllTabs6cases pass155/156. Firefox156 native packaging fixtures
+are independently pinned by Gitblob+SHA256; all7 files happened to match155bytes,
+but provenance is refreshed and full inherited destination code is now verified;
+actual assembler4cases pass. Verifier10cases now checks actual registered managers,
+share modules and7 patched native UI assets, not unused copies.
+
+Built a NEW disposable156 output (never reuse155 executable), validates strict
+signature and sourcebytes. RunState import moved to actual156 moz-src path.
+First native156 project run proves startup/folders but realpointer reorder fails;
+recorded as failure, not replaced by method acceptance. Separate method-only suite
+is running to find unrelated regressions. Installed app/personal profiles untouched.
+Next highreasoning/strongproof: native156 full lifecycle/negative tests, pointer
+input and missing visual/native-picker checks, clean compiled release and rollback.
+
+Current156 native results: saved-setup9checks pass, including actual currentworking
+folder; mixed-project11checks pass after correcting test-only removed Firefox
+_tabposition field (`_tPos` -> actual tabs array position). Workspaces/split/mirrored
+windows/finalclose all preserve correct PIDs and recipe counts. Pointer run is
+separate and still unaccepted; do not count native methods as drag proof.
+New native negative scripts for service deletion, web/extensions and156 menus are
+written but pending actual runs. Full current source suite passes; new tests also
+wired into cloud workflow. Current engine156 overlay verifies actual sourcebytes
+and signatures. No personal copy, installed app change, signing claim or final
+release acceptance.

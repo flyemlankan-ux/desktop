@@ -338,7 +338,11 @@ try {
       };
       window.ChromeUtils = {
         importESModule: (name) =>
-          name.includes("ContextualIdentityService")
+          name.endsWith("/ZenTerminalSessionManager.mjs")
+            ? { getTerminalSessionCoordinator: () => (window.__testSessionCoordinator ||= { operations: new Map(), containerCleanupObserver: null }) }
+            : name.includes("ZenTerminalContainerStore")
+            ? { getTerminalContainerRecipe: id => JSON.parse(Services.prefs.getStringPref("zen.terminal.containerRecipes", "{}"))[id] || null }
+            : name.includes("ContextualIdentityService")
             ? { ContextualIdentityService: { getPublicIdentities: () => [{ userContextId: 1 }] } }
             : name.includes("Subprocess")
             ? { Subprocess }

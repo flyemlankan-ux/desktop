@@ -2,7 +2,7 @@
 """Real Mac app proof using Mozilla Marionette. Always an isolated synthetic profile.
 Install test-only dependency: python -m pip install marionette_driver.
 """
-import argparse, json, os, socket as net_socket, subprocess, time, uuid
+import argparse, configparser, datetime, json, os, socket as net_socket, subprocess, time, uuid
 from pathlib import Path
 from marionette_driver.marionette import Marionette
 from marionette_driver.keys import Keys
@@ -10,11 +10,12 @@ from marionette_driver.keys import Keys
 parser=argparse.ArgumentParser()
 parser.add_argument('--app', required=True, type=Path)
 parser.add_argument('--label', default='packaged')
+parser.add_argument('--require-package-identity', action='store_true')
 parser.add_argument('--cli-smoke', action='append', default=[], type=Path)
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[2]
 run=root/'.terminal-test'/('mac-'+uuid.uuid4().hex[:8]);run.mkdir(parents=True)
-proof=root/'docs/proof/2026-09-07';proof.mkdir(parents=True,exist_ok=True)
+proof=root/'docs/proof'/datetime.datetime.now(datetime.timezone.utc).date().isoformat();proof.mkdir(parents=True,exist_ok=True)
 home=run/'home';home.mkdir();profile=run/'profile';profile.mkdir()
 (home/'.zshenv').write_text('export PATH=/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin\n')
 with net_socket.socket() as listener:
@@ -57,9 +58,11 @@ try:
  start();socket=js('return ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs").getTerminalTmuxSocket();');record('real Mac app opens clean profile')
  assert js('return Services.dirsvc.get("UAppData", Ci.nsIFile).path;')==str(home/'app-data')
  record('test forces app-data into its disposable folder')
- if args.label == 'packaged':
+ engine_config=configparser.ConfigParser();engine_config.read(args.app.resolve()/'Contents/Resources/platform.ini')
+ assert engine_config['Build']['Milestone']==json.loads((root/'surfer.json').read_text())['version']['version']
+ record('actual engine matches current source')
+ if args.label == 'packaged' or args.require_package_identity:
   assert 'Profile=zen-terminal' in (args.app.resolve()/'Contents/Resources/application.ini').read_text()
-  assert '155.0.1' in (args.app.resolve()/'Contents/Resources/platform.ini').read_text()
   record('packaged app declares terminal profile identity and current engine')
  assert js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().some(x=>x.name==="Terminal");')
  record('plain Terminal setup is available on first launch')

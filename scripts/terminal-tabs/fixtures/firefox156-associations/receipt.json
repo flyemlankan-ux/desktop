@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/mozilla-firefox/firefox",
+  "tag": "FIREFOX_156_0_RELEASE",
+  "files": [
+    {
+      "path": "browser/components/contextualidentity/content/container-select.mjs",
+      "git_blob_sha": "f389fd7879fe16ad68ed28059d0022ef12a35ca5",
+      "sha256": "1fdee989d0e74474b7acb413df5753633ea27147a21daa4ecf880c8e4ce9a0ef"
+    },
+    {
+      "path": "browser/components/preferences/dialogs/siteContainer.js",
+      "git_blob_sha": "2c460b9bd4ae13deca773f3a41855035f1dc5f87",
+      "sha256": "eb4f3a0a04883ee830ac5dc6b2e3ac4709541fbb51e23b0a99c9caae8b2d4e97"
+    },
+    {
+      "path": "browser/components/preferences/config/containers.mjs",
+      "git_blob_sha": "ecd46c8cd4763c859476012c6a02c0e60a0c0e07",
+      "sha256": "716ba2b28c1bdf7f5ac3e360d4c16f16b221d013420e1ad32c89b53ac38dea17"
+    }
+  ]
+}

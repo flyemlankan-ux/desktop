@@ -1,0 +1,35 @@
+--- a/browser/components/preferences/dialogs/siteContainer.js
++++ b/browser/components/preferences/dialogs/siteContainer.js
+@@ -6,7 +6,7 @@
+   "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs"
+ );
+
+-const { containerOptions } = ChromeUtils.importESModule(
++const { containerOptions, isWebContainerId } = ChromeUtils.importESModule(
+   "chrome://browser/content/usercontext/container-select.mjs",
+   { global: "current" }
+ );
+@@ -114,10 +114,22 @@
+       return;
+     }
+
++    // Re-check at acceptance: the selected setup may have changed or vanished.
++    if (!isWebContainerId(gContainerSelect.value)) {
++      event.preventDefault();
++      gContainerSelect.value = "";
++      gContainerSelect.setAttribute("aria-invalid", "true");
++      gSiteError.removeAttribute("data-l10n-id");
++      gSiteError.textContent = "Choose an existing web container. Terminal setups cannot be used for websites.";
++      gContainerSelect.focus();
++      window.resizeDialog?.();
++      return;
++    }
++    gContainerSelect.removeAttribute("aria-invalid");
+     ContextualIdentityService.setSiteAssociation(
+       site,
+-      parseInt(gContainerSelect.value, 10)
++      Number(gContainerSelect.value)
+     );
+   });
+
+   await gSiteInput.updateComplete;

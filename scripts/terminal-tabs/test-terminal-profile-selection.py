@@ -61,7 +61,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", type=Path, required=True,
                         help="Final installed .app path; it is launched in place, never copied or changed.")
-    parser.add_argument("--expected-engine", default="155.0.1")
+    parser.add_argument("--expected-engine", default="156.0")
     parser.add_argument("--port", type=int, default=2833)
     args = parser.parse_args()
     if sys.platform != "darwin":

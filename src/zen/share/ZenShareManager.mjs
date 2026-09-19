@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import { assertSafeShareDocument, assertSafeShareWebURL, isSafeShareWebURL } from "resource:///modules/zen/share/ZenShareSafety.sys.mjs";
+
 import { nsZenDOMOperatedFeature } from "chrome://browser/content/zen-components/ZenCommonUtils.mjs";
 import { nsZenThemePicker } from "resource:///modules/zen/ZenGradientGenerator.mjs";
 
@@ -107,6 +109,10 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
 
   async #createAndCopyLink(item) {
     if (!this.enabled) {
+      return;
+    }
+    if (!assertSafeShareDocument({ shared: item })) {
+      this.#showCreateError(new lazy.ZenShareError("empty", "nothing to share"));
       return;
     }
     if (!(await this.#confirmShare())) {
@@ -236,7 +242,9 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
 
   #serializeTab(tab, { pinned = false } = {}) {
     const url = tab.linkedBrowser?.currentURI?.spec;
-    if (!url || !/^https?:\/\//.test(url)) {
+    // A terminal navigated to a website can still own a live shell. Never
+    // publish its identity/name as a web tab merely because its address changed.
+    if (tab.hasAttribute("zen-terminal-tab") || !isSafeShareWebURL(url)) {
       return null;
     }
     const item = { type: "tab", url };
@@ -393,12 +401,12 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
   async #openSharedSplitView(browser, share) {
     let item;
     const shareTab = gBrowser.getTabForBrowser(browser);
-    shareTab.style.display = "none";
     const failure = () => {
       shareTab.style.removeProperty("display");
     };
     try {
       const { doc } = await lazy.ZenShareClient.fetchSharePreview(share);
+      assertSafeShareDocument(doc);
       item = doc.shared?.type === "splitView" ? doc.shared : null;
     } catch (e) {
       console.error("ZenShare: could not load shared split view:", e);
@@ -418,6 +426,7 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
       failure();
       return;
     }
+    shareTab.style.display = "none";
     const workspaceId = gZenWorkspaces.activeWorkspace;
     const pinned = item.tabs.every(child => child.isPinned);
     const tabs = item.tabs.map(child => {
@@ -671,6 +680,7 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
   }
 
   async #importDocument(doc) {
+    assertSafeShareDocument(doc);
     const item = doc.shared;
     switch (item.type) {
       case "space":
@@ -794,6 +804,7 @@ class nsZenShareManager extends nsZenDOMOperatedFeature {
   }
 
   #importTab(item, workspaceId, { lazyBrowser = true } = {}) {
+    assertSafeShareWebURL(item.url);
     const tab = gBrowser.addTrustedTab(item.url, {
       createLazyBrowser: lazyBrowser,
       inBackground: true,

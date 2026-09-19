@@ -92,10 +92,13 @@ try:
  assert js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder);')
  same_jobs();record('native collapse/expand retains members and jobs')
  if args.pointer_drag:
+  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(projectDragEvents.length<30)projectDragEvents.push({type:e.type,trusted:e.isTrusted,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY});},true);}window.focus();')
+  time.sleep(.6)
   # W3C pointer actions hit actual browser chrome. Never inject drag events or
   # silently substitute DOM moves when real pointer dragging fails.
   rects=js('return [projectTerms[1],projectWeb].map(t=>{t.scrollIntoView({block:"nearest"});const r=t.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,top:r.y+2};});')
   source,target=rects
+  print('POINTER RECTS',rects,flush=True)
   m.actions.sequence('pointer','project-drag',{'pointerType':'mouse'}).pointer_move(int(source['x']),int(source['y'])).pointer_down().pause(250).pointer_move(int(target['x']),int(target['top']),duration=800).pause(500).pointer_up().perform()
   m.actions.release()
   wait(lambda:js('return projectTerms[1].group===projectFolder && projectFolder.tabs.indexOf(projectTerms[1])<projectFolder.tabs.indexOf(projectWeb);'),'actual pointer reorder')
@@ -103,7 +106,7 @@ try:
  else:
   results.append({'test':'actual pointer drag/drop','result':'not_run','detail':'Use --pointer-drag; native methods do not establish pointer acceptance'})
  # Use Zen's actual move helper, not direct DOM insertion.
- js('gBrowser.moveTabTo(projectTerms[1],{tabIndex:projectWeb._tPos});')
+ js('gBrowser.moveTabTo(projectTerms[1],{tabIndex:gBrowser.tabs.indexOf(projectWeb)});')
  assert js('return projectTerms[1].group===projectFolder && projectFolder.tabs.indexOf(projectTerms[1])<projectFolder.tabs.indexOf(projectWeb);')
  same_jobs();record('native tab reorder retains folder and live jobs')
  created=async_js('window.projectSpace=await gZenWorkspaces.createAndSaveWorkspace("Mixed proof workspace");return projectSpace?.uuid;')
@@ -141,6 +144,10 @@ try:
  screen('project-workflows')
 except Exception as error:
  failure=repr(error)
+ try:
+  print('NATIVE FAILURE STATE',js('return {terms:projectTerms?.map(t=>({id:t.id,index:t.index,oldIndex:t._tPos,group:t.group?.id,pending:t.hasAttribute("pending")})),web:projectWeb?.id,order:projectFolder?.tabs?.map(t=>t.id),drag:window.projectDragEvents||[]};'),flush=True)
+  screen('project-workflows-failure')
+ except Exception:pass
  raise
 finally:
  report={'app':str(args.app),'scope':'Synthetic data; native browser-method integration except explicitly labelled pointer action','results':results,'failure':failure,'run':str(run)}

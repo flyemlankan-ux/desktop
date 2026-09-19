@@ -37,6 +37,9 @@ globalThis.Services = {
 };
 globalThis.ChromeUtils = {
   importESModule(name) {
+    if (name.endsWith("/ZenTerminalSessionManager.mjs")) return manager;
+    if (name.includes("ContextualIdentityService")) return { ContextualIdentityService: { getPublicIdentities: () => [{userContextId: 10}] } };
+    if (name.includes("ZenTerminalContainerStore")) return { getTerminalContainerRecipe: () => ({recipe:{steps:[]}}) };
     if (name.endsWith("/Timer.sys.mjs"))
       return {
         setTimeout: (callback, delay) =>

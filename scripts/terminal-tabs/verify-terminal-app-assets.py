@@ -7,6 +7,8 @@ import json
 import plistlib
 import re
 import struct
+import subprocess
+import tempfile
 import sys
 import zipfile
 
@@ -35,6 +37,30 @@ def open_omni(path):
         archive.close()
         raise
     return archive
+
+
+def expected_native_assets(root):
+    """Compile only pinned small Firefox UI patches; compare actual shipped bytes."""
+    items = [
+        ('browser/components/contextualidentity/content/ContainerEditor.mjs', 'chrome/browser/content/browser/usercontext/ContainerEditor.mjs', 'firefox156-settings'),
+        ('browser/components/contextualidentity/content/ContainerCreationPanel.mjs', 'chrome/browser/content/browser/usercontext/ContainerCreationPanel.mjs', 'firefox156-settings'),
+        ('browser/components/preferences/config/containers.mjs', 'chrome/browser/content/browser/preferences/config/containers.mjs', 'firefox156-settings'),
+        ('browser/components/preferences/dialogs/containers.js', 'chrome/browser/content/browser/preferences/dialogs/containers.js', 'firefox156-settings'),
+        ('browser/components/tabbrowser/content/browser-allTabsMenu.js', 'chrome/browser/content/browser/tabbrowser/browser-allTabsMenu.js', 'firefox-alltabs/156'),
+        ('browser/components/contextualidentity/content/container-select.mjs', 'chrome/browser/content/browser/usercontext/container-select.mjs', 'firefox156-associations'),
+        ('browser/components/preferences/dialogs/siteContainer.js', 'chrome/browser/content/browser/preferences/dialogs/siteContainer.js', 'firefox156-associations'),
+    ]
+    result = {}
+    with tempfile.TemporaryDirectory(prefix='zen-native-assets-') as temporary:
+        for source, bundled, fixture in items:
+            relative = Path(source)
+            target = Path(temporary) / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((root / 'scripts/terminal-tabs/fixtures' / fixture / relative).read_bytes())
+            patch = root / 'src' / relative.parent / (relative.name.replace('.', '-') + '.patch')
+            subprocess.run(['patch', '--batch', '--fuzz=0', '-p1', '-i', str(patch)], cwd=temporary, check=True, capture_output=True)
+            result[bundled] = target.read_bytes()
+    return result
 
 
 def verify(app, root):
@@ -66,8 +92,14 @@ def verify(app, root):
             ('chrome/browser/content/browser/ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
             ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
             ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
+            ('modules/zen/share/ZenShareManager.mjs', 'src/zen/share/ZenShareManager.mjs'),
+            ('modules/zen/share/ZenShareClient.sys.mjs', 'src/zen/share/ZenShareClient.sys.mjs'),
+            ('modules/zen/share/ZenShareSafety.sys.mjs', 'src/zen/share/ZenShareSafety.sys.mjs'),
+            ('modules/zen/share/share.schema.json', 'src/zen/share/share.schema.json'),
         ]:
             require(read(bundled) == (root / source).read_bytes(), f'Stale browser integration: {bundled}')
+        for bundled, expected_bytes in expected_native_assets(root).items():
+            require(read(bundled) == expected_bytes, f'Stale native UI patch: {bundled}')
         require(b'gZenTerminalTabs.populateUnifiedContainerMenu(event)' in read('chrome/browser/content/browser/browser.xhtml'), 'Missing native terminal menu')
         return {'terminal_assets': count, 'engine': expected, 'layout': 'real GRE and browser omnijar resources'}
     finally:

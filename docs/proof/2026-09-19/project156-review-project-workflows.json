@@ -1,0 +1,28 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError('Timed out: actual pointer reorder; None')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-0b041656"
+}

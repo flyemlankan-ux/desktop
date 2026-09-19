@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused native-helper build and Firefox 155 bundle/repack proof.
+"""Focused native-helper build and Firefox 156 bundle/repack proof.
 
 Runs the pinned upstream assembler, not an imitation. Only temporary synthetic
 app data is used. This is not a full Firefox compile or final installer test.
@@ -18,12 +18,12 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURES = Path(__file__).with_name('fixtures') / 'firefox155-packaging'
+FIXTURES = Path(__file__).with_name('fixtures') / 'firefox156-packaging'
 ASSEMBLER = 'python/mozbuild/mozbuild/action/assemble_macos_bundle.py'
 MACOS_LIST = 'browser/app/macbuild/Contents/MacOS-files.in'
 
 
-# Exact excerpts from FIREFOX_155_0_1_RELEASE, read through GitHub contents.
+# Exact excerpts from FIREFOX_156_0_RELEASE, read through GitHub contents.
 # browser/moz.build blob 5a03cfc6d3f8fe3a677d4d9e9894e69a98d0c01f:
 INHERITED_BROWSER_DECLARATION = 'DIST_SUBDIR = "browser"\nexport("DIST_SUBDIR")\n'
 # python/mozbuild/mozbuild/frontend/context.py blob
@@ -61,7 +61,9 @@ def declared_install_target(declaration):
 class PackagingTests(unittest.TestCase):
     def test_pristine_source_receipts(self):
         receipt = json.loads((FIXTURES / 'receipt.json').read_text())
-        self.assertEqual(receipt['ref'], 'FIREFOX_155_0_1_RELEASE')
+        self.assertEqual(receipt['ref'], 'FIREFOX_156_0_RELEASE')
+        self.assertIn(INHERITED_BROWSER_DECLARATION, (FIXTURES / 'browser/moz.build').read_text())
+        self.assertIn(FINAL_TARGET_SOURCE.strip(), (FIXTURES / 'python/mozbuild/mozbuild/frontend/context.py').read_text())
         for name, expected in receipt['files'].items():
             data = (FIXTURES / name).read_bytes()
             self.assertEqual(hashlib.sha256(data).hexdigest(), expected['sha256'])

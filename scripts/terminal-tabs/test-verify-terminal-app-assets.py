@@ -23,7 +23,7 @@ class VerificationTests(unittest.TestCase):
         self.app = Path(self.temp.name) / 'Test.app'
         self.browser = self.app / 'Contents/Resources/browser'
         self.browser.mkdir(parents=True)
-        (self.browser.parent / 'platform.ini').write_text('[Build]\nMilestone=155.0.1\n')
+        (self.browser.parent / 'platform.ini').write_text('[Build]\nMilestone=156.0\n')
         (self.browser / 'chrome.manifest').write_text('manifest chrome/browser.manifest\n')
         entries = {}
         for line in (ROOT / 'src/zen/terminal/jar.inc.mn').read_text().splitlines():
@@ -32,15 +32,24 @@ class VerificationTests(unittest.TestCase):
                 entries[match[1]] = (ROOT / 'src/zen/terminal' / match[2]).read_bytes()
         entries['ZenPreloadedScripts.js'] = (ROOT / 'src/zen/common/ZenPreloadedScripts.js').read_bytes()
         entries['ZenUIManager.mjs'] = (ROOT / 'src/zen/common/modules/ZenUIManager.mjs').read_bytes()
-        module = self.browser / 'modules/zen/ZenSpaceManager.mjs'
-        module.parent.mkdir(parents=True, exist_ok=True)
-        module.write_bytes((ROOT / 'src/zen/spaces/ZenSpaceManager.mjs').read_bytes())
+        module_path = self.browser / 'modules/zen/ZenSpaceManager.mjs'
+        module_path.parent.mkdir(parents=True, exist_ok=True)
+        module_path.write_bytes((ROOT / 'src/zen/spaces/ZenSpaceManager.mjs').read_bytes())
+        for name in ('ZenShareManager.mjs', 'ZenShareClient.sys.mjs', 'ZenShareSafety.sys.mjs', 'share.schema.json'):
+            module_path = self.browser / 'modules/zen/share' / name
+            module_path.parent.mkdir(parents=True, exist_ok=True)
+            module_path.write_bytes((ROOT / 'src/zen/share' / name).read_bytes())
         entries['zen-components/ZenPinnedTabManager.mjs'] = (ROOT / 'src/zen/tabs/ZenPinnedTabManager.mjs').read_bytes()
         entries['browser.xhtml'] = b'gZenTerminalTabs.populateUnifiedContainerMenu(event)'
         for name, data in entries.items():
             path = self.browser / 'chrome/browser/content/browser' / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
+
+        for bundled, data in module.expected_native_assets(ROOT).items():
+            target = self.browser / bundled
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
 
     def pack(self):
         # Synthetic archive fixtures only, not claimed as a runnable browser.
@@ -75,6 +84,12 @@ class VerificationTests(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, 'Stale browser integration'):
                     module.verify(self.app, ROOT)
                 target.write_bytes((ROOT / source).read_bytes())
+
+    def test_stale_native_settings_rejected(self):
+        (self.browser / 'chrome/browser/content/browser/usercontext/ContainerEditor.mjs').write_text('old editor')
+        self.pack()
+        with self.assertRaisesRegex(AssertionError, 'Stale native UI patch'):
+            module.verify(self.app, ROOT)
 
     def test_stale_asset_rejected(self):
         path = self.browser / 'chrome/browser/content/browser/ZenUIManager.mjs'
