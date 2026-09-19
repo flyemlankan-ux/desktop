@@ -23,6 +23,7 @@ import {
 } from "../../src/zen/terminal/ZenTerminalContainerStore.mjs";
 import {
   TerminalRecipeError,
+  validateTerminalStartingDirectory,
   compileTerminalRecipeSteps,
   parseSshConnectionStep,
 } from "../../src/zen/terminal/ZenTerminalRecipeRunner.mjs";
@@ -41,13 +42,14 @@ function expectRecipeError(callback, messagePattern) {
   });
 }
 
-test("recipe data version is 3", () => {
-  assert.equal(ZEN_TERMINAL_RECIPE_VERSION, 3);
+test("recipe data version is 4", () => {
+  assert.equal(ZEN_TERMINAL_RECIPE_VERSION, 4);
 });
 
 test("legacy string becomes one ordered step", () => {
   assert.deepEqual(normalizeTerminalRecipe("claude"), {
     type: "ordered-steps",
+    startingDirectory: "",
     command: "claude",
     steps: [{ id: "step-1", command: "claude" }],
   });
@@ -62,13 +64,14 @@ test("legacy v2 command becomes one ordered step", () => {
     }),
     {
       type: "ordered-steps",
+    startingDirectory: "",
       command: "cd ~/work && codex",
       steps: [{ id: "step-1", command: "cd ~/work && codex" }],
     },
   );
 });
 
-test("a normalised legacy container reports the current v3 shape", () => {
+test("a normalised legacy container reports the current v4 shape", () => {
   assert.deepEqual(
     normalizeTerminalContainerRecord({
       version: 2,
@@ -76,10 +79,11 @@ test("a normalised legacy container reports the current v3 shape", () => {
       recipe: { type: "single-command", command: "codex", steps: [] },
     }),
     {
-      version: 3,
+      version: 4,
       kind: "terminal",
       recipe: {
         type: "ordered-steps",
+    startingDirectory: "",
         command: "codex",
         steps: [{ id: "step-1", command: "codex" }],
       },
@@ -87,7 +91,7 @@ test("a normalised legacy container reports the current v3 shape", () => {
   );
 });
 
-test("saving writes v3 while keeping one-command backwards compatibility", () => {
+test("saving writes v4 while keeping one-command backwards compatibility", () => {
   let saved = "{}";
   globalThis.Services = {
     prefs: {
@@ -105,10 +109,11 @@ test("saving writes v3 while keeping one-command backwards compatibility", () =>
   });
 
   assert.deepEqual(JSON.parse(saved)["7"], {
-    version: 3,
+    version: 4,
     kind: "terminal",
     recipe: {
       type: "ordered-steps",
+    startingDirectory: "",
       command: "claude",
       steps: [{ id: "launch", command: "claude" }],
     },
@@ -120,6 +125,7 @@ test("stored ordered steps win over the legacy command", () => {
   assert.deepEqual(
     normalizeTerminalRecipe({
       type: "ordered-steps",
+    startingDirectory: "",
       command: "old command",
       steps: [
         { id: "connect", command: " ssh chubs " },
@@ -129,6 +135,7 @@ test("stored ordered steps win over the legacy command", () => {
     }),
     {
       type: "ordered-steps",
+    startingDirectory: "",
       command: "",
       steps: [
         { id: "connect", command: "ssh chubs" },
@@ -141,6 +148,7 @@ test("stored ordered steps win over the legacy command", () => {
 test("blank and malformed recipes become a plain shell", () => {
   assert.deepEqual(normalizeTerminalRecipe(null), {
     type: "ordered-steps",
+    startingDirectory: "",
     command: "",
     steps: [],
   });
@@ -148,6 +156,7 @@ test("blank and malformed recipes become a plain shell", () => {
     normalizeTerminalRecipe({ command: "", steps: [null, {}, " "] }),
     {
       type: "ordered-steps",
+    startingDirectory: "",
       command: "",
       steps: [],
     },
@@ -478,6 +487,37 @@ exec "$ZEN_FAKE_SHELL" -c "$1"
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("starting folders preserve literal spaces, Unicode and shell characters", () => {
+  for (const folder of ["", "/tmp/ space 雪 ' $(touch nope); `false` "]) {
+    assert.equal(validateTerminalStartingDirectory(folder), folder);
+    assert.equal(normalizeTerminalRecipe({ startingDirectory: folder, steps: [] }).startingDirectory, folder);
+  }
+});
+test("invalid explicit starting folders fail rather than become home", () => {
+  for (const folder of [null, 4, {}, [], "~", "$HOME", "relative", "/tmp/\nother", "/tmp/\0other"]) {
+    const recipe = normalizeTerminalRecipe({ startingDirectory: folder });
+    assert.deepEqual(recipe.startingDirectory, folder);
+    expectRecipeError(() => validateTerminalStartingDirectory(recipe.startingDirectory), /full starting-folder path/);
+  }
+});
+
+test("filesystem validation rejects missing, non-folder and inaccessible paths", () => {
+  const previousCc = globalThis.Cc, previousCi = globalThis.Ci;
+  let exists = true, directory = true, readable = true;
+  globalThis.Ci = { nsIFile: {} };
+  globalThis.Cc = { "@mozilla.org/file/local;1": { createInstance: () => ({ initWithPath(value) { assert.equal(value, "/synthetic/folder"); }, exists: () => exists, isDirectory: () => directory, isReadable: () => readable }) } };
+  try {
+    assert.equal(validateTerminalStartingDirectory("/synthetic/folder", { checkExists: true }), "/synthetic/folder");
+    for (const flags of [[false,true,true], [true,false,true], [true,true,false]]) {
+      [exists,directory,readable] = flags;
+      expectRecipeError(() => validateTerminalStartingDirectory("/synthetic/folder", { checkExists: true }), /missing or unavailable/);
+    }
+    globalThis.Cc = { "@mozilla.org/file/local;1": { createInstance: () => { throw new Error("access denied"); } } };
+    expectRecipeError(() => validateTerminalStartingDirectory("/synthetic/folder", { checkExists: true }), /missing or unavailable/);
+    assert.equal(validateTerminalStartingDirectory("", { checkExists: true }), "");
+  } finally { globalThis.Cc = previousCc; globalThis.Ci = previousCi; }
 });
 
 let failures = 0;

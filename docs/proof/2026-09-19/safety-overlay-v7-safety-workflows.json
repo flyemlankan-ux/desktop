@@ -1,0 +1,58 @@
+{
+  "app": ".terminal-test/Zen Terminal Test.app",
+  "scope": "Synthetic profile, real browser mechanisms and rendered restart-button clicks; no personal data",
+  "results": [
+    {
+      "test": "owned app, profile and data roots confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mismatched actual container refused before records or command launch",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual private opener modal acceptance",
+      "result": "not_run",
+      "detail": "Explicit --skip-private-modal; Gecko155 WebDriver dismissal currently times out. No private-modal acceptance claimed."
+    },
+    {
+      "test": "direct private terminal address also refuses before record or command",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "fresh terminal starts once and retains ended-session history marker",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "lost process offers visible restart choice without rerunning startup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "reload cannot silently authorize another startup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "rendered Start again click creates a new job exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Undo Close keeps marker and never silently recreates intentionally closed work",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Undo Close rendered restart button starts one fresh job",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-f03528e5"
+}

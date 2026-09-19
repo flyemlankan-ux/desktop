@@ -1,0 +1,80 @@
+{
+  "app": ".terminal-test/Zen Terminal Test.app",
+  "scope": "Native method integration, not pointer drag/drop acceptance",
+  "results": [
+    {
+      "test": "mixed folder survives selection",
+      "result": "pass",
+      "detail": {
+        "terminalPinned": true,
+        "webPinned": true,
+        "terminalInFolder": true,
+        "webInFolder": true,
+        "terminalSelected": true
+      }
+    },
+    {
+      "test": "intentional unpin stays unpinned",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "intentional pin survives selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native separate-container Essentials refusal is preserved",
+      "result": "pass",
+      "detail": {
+        "before": {
+          "allowed": false,
+          "separate": true,
+          "tabContainer": "6",
+          "workspaceContainer": 0,
+          "max": 12,
+          "count": 0
+        },
+        "added": {
+          "added": false,
+          "marked": false,
+          "parent": "zen-workspace-tabs-section zen-workspace-pinned-tabs-section"
+        }
+      }
+    },
+    {
+      "test": "synthetic native preference changed to shared Essentials and restarted",
+      "result": "pass",
+      "detail": {
+        "preference": false,
+        "activeMode": false,
+        "allowed": true
+      }
+    },
+    {
+      "test": "shared Essential survives selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "shared Essential survives restart with same shell",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "regroup and collapse preserve membership",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "pin URL reset decoration stays suppressed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "grouped restart retains membership and same shell",
+      "result": "pass",
+      "detail": true
+    }
+  ]
+}

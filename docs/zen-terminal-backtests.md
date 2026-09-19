@@ -87,3 +87,31 @@ failure: native mixed-folder membership is lost when the terminal is selected;
 data. This diagnostic uses native methods, not drag/drop UI automation. Preserve the
 failure evidence, add a regression, then prove real interactions and restart on a
 newly built app.26 old passing cases are insufficient to close mixed organization.
+
+
+## September19 B15–B18 actual acceptance
+B15: existing folder failure must reproduce before repair. After repair, native mixed
+folder members survive select/unselect, timers, background restore and relaunch.
+Pin/unpin/Essentials choices remain; only actual last-view deletion stops a shell.
+Prove real pointer drag/drop separately from native-method integration diagnostics.
+B16: legacy recipe load, blank path, literal Unicode/space/quote/dollar paths,
+relative/NUL/non-directory/missing/unreadable rejection; failure runs no commands.
+Healthy existing process reconnects after invalid path/recipe edit; new session
+fails safely. Native picker cancellation saves nothing. Save/edit/cancel/restart
+plus independent launches and delete/cancel verified through actual Settings.
+B17: ordinary NewTab/link/reopen/workspace-default never accidentally starts a
+shell. Private launch refused without persistent files/session. Browser identity,
+URL requested setup and existing session owner mismatch fail closed. Cross-profile
+isolation persists; source data/other processes unchanged in all negative tests.
+B18: complete Chubs matrix remains authoritative. Real screenshots light/dark/compact
+and narrow splits; keyboard-only interactions; web/terminal grouping, splits,
+mirrored windows and recovery. Measure performance, test delivery/rollback and
+compare browser security baseline before migration. Never label pending cases pass.
+### Clarification Refresh unknown
+
+- Added: `2026-09-19T11:04:24Z`
+- Artifact: `backtests`
+- Reason: R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.
+- Update note: B15-B18 include adversarial and actual native user journeys, scoped evidence required
+- Impacted index tags: `ZT-MIGRATE`, `ZT-UI`, `ZT-LIFE`, `ZT-RECIPE`, `ZT-RELEASE`
+- Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`

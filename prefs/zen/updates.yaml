@@ -2,5 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Zen Terminal uses manual builds, not the stock Zen updater. Do not announce
+# "Update Complete" on a fresh profile or imply automatic updates are active.
 - name: zen.updates.show-update-notification
-  value: true
+  value: false

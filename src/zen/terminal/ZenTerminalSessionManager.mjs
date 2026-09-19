@@ -91,22 +91,49 @@ export function registerTerminalSession(
   const previous = records[id] || {};
   // A reload/late startup cannot cancel an explicit deletion request.
   if (previous.pendingDelete) return null;
+  const owner = String(userContextId || previous.userContextId || "");
+  const legacyOwner = String(
+    terminalContainerId || previous.terminalContainerId || "",
+  );
+  // Another view can reconnect, but cannot transfer a live shell to a different
+  // saved setup. Refuse before writes so cleanup still targets its true owner.
+  // Old ownerless records are not permission to claim an existing shell either.
+  if (
+    records[id] &&
+    (owner !== String(previous.userContextId || "") ||
+      legacyOwner !== String(previous.terminalContainerId || ""))
+  ) return null;
   const now = Date.now();
   records[id] = {
     version: 1,
     id,
     tmuxSessionName: getTerminalTmuxSessionName(id),
-    userContextId: String(userContextId || previous.userContextId || ""),
-    terminalContainerId: String(
-      terminalContainerId || previous.terminalContainerId || "",
-    ),
+    userContextId: owner,
+    terminalContainerId: legacyOwner,
     createdAt: Number(previous.createdAt || now),
     lastSeenAt: now,
     pendingDelete: false,
+    startupAttempted: previous.startupAttempted === true,
+    persistent: previous.persistent === true,
   };
   writeTerminalSessionRecords(records);
   return records[id];
 }
+export function markTerminalSessionStartupAttempt(id, { persistent = false } = {}) {
+  const records = readTerminalSessionRecords();
+  const record = records[normalizeTerminalSessionId(id)];
+  if (!record || record.pendingDelete) throw new Error("This terminal was closed");
+  record.startupAttempted = true;
+  record.persistent = persistent;
+  writeTerminalSessionRecords(records);
+  Services.prefs.savePrefFile?.(null);
+}
+export function terminalSessionEndedError() {
+  const error = new Error("This terminal ended. Its previous work cannot be restored. Start again to run the saved setup as a new job.");
+  error.code = "ZEN_TERMINAL_SESSION_ENDED";
+  return error;
+}
+
 export function getTerminalSessionRecord(id) {
   const clean = normalizeTerminalSessionId(id);
   return clean ? readTerminalSessionRecords()[clean] || null : null;
@@ -254,20 +281,24 @@ export async function terminalTmuxSessionExists(command, id) {
 function quote(value) {
   return `'${String(value).replaceAll("'", "'\\''")}'`;
 }
-export function terminalShellScript(shell, command = "") {
+export function terminalShellScript(shell, command = "", startingDirectory = "") {
   // Recipe is passed as a command argument, never typed into an unready prompt.
   // An interactive login shell loads the same user tools as a normal terminal.
-  return command
+  const folderGuard = startingDirectory
+    ? `cd -- ${quote(startingDirectory)} || { printf '%s\\n' 'Starting folder is unavailable. No startup steps were run.' >&2; exit 1; }\n`
+    : "";
+  return folderGuard + (command
     ? `${command}\nzen_terminal_exit=$?\nif [ "$zen_terminal_exit" -ne 0 ]; then printf '\\nStartup steps stopped (exit %s).\\n' "$zen_terminal_exit"; fi\nexec ${quote(shell)} -l`
-    : `exec ${quote(shell)} -l`;
+    : `exec ${quote(shell)} -l`);
 }
 export async function prepareTerminalTmuxSession(
   command,
   id,
-  { shell, home, startupCommand = "", rows = 24, columns = 80 },
+  options,
+  { allowRestart = false, previouslyStarted = false } = {},
 ) {
   const name = getTerminalTmuxSessionName(id);
-  if (!command || !name || !shell?.startsWith("/") || !home?.startsWith("/"))
+  if (!command || !name)
     throw new Error("Invalid terminal startup settings");
   return serial(id, async () => {
     if (
@@ -281,8 +312,19 @@ export async function prepareTerminalTmuxSession(
         "Cannot check the saved session. It has not been replaced.",
       );
     if (state === "present") return { created: false };
+    if (!allowRestart && (previouslyStarted || getTerminalSessionRecord(id)?.startupAttempted)) {
+      throw terminalSessionEndedError();
+    }
+    // Edits apply only when creating a job, never when reconnecting existing work.
+    const { shell, home, startupCommand = "", rows = 24, columns = 80 } =
+      typeof options === "function" ? await options() : options;
+    if (!shell?.startsWith("/") || !home?.startsWith("/") || /[\x00-\x1f\x7f]/u.test(home))
+      throw new Error("Invalid terminal startup settings");
     if (getTerminalSessionRecord(id)?.pendingDelete)
       throw new Error("This terminal was closed");
+    // Save before launch: a crash in the narrow launch window cannot silently
+    // rerun commands whose side effects may already have happened.
+    markTerminalSessionStartupAttempt(id, { persistent: true });
     const result = await callTmux(command, [
       "new-session",
       "-d",
@@ -296,7 +338,7 @@ export async function prepareTerminalTmuxSession(
       home,
       shell,
       "-lic",
-      terminalShellScript(shell, startupCommand),
+      terminalShellScript(shell, startupCommand, home),
     ]);
     state = await terminalTmuxSessionState(command, id);
     if (state !== "present")

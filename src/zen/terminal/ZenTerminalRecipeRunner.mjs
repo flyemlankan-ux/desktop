@@ -313,3 +313,20 @@ export function compileTerminalRecipeSteps(steps) {
   const commands = cleanTerminalRecipeSteps(steps);
   return commands.length ? compileFrom(commands) : "";
 }
+
+/** A saved folder is literal local filesystem data, never shell source. */
+export function validateTerminalStartingDirectory(value, { checkExists = false } = {}) {
+  if (typeof value !== "string" || (value && (!value.startsWith("/") || /[\x00-\x1f\x7f]/u.test(value)))) {
+    throw new TerminalRecipeError("Use a full starting-folder path beginning with /, or leave it blank for your home folder. Do not use ~ or environment variables.");
+  }
+  if (value && checkExists) {
+    try {
+      const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+      file.initWithPath(value);
+      if (!file.exists() || !file.isDirectory() || !file.isReadable()) throw new Error("unavailable");
+    } catch (_) {
+      throw new TerminalRecipeError("The starting folder is missing or unavailable. Choose an accessible folder, or leave it blank for your home folder.");
+    }
+  }
+  return value;
+}

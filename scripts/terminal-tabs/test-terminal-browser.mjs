@@ -19,7 +19,7 @@ const helper = path.resolve(
   process.env.ZEN_TERMINAL_PTY ||
     path.join(root, "build/terminal-native/zen-terminal-pty"),
 );
-const proof = path.join(root, "docs/proof/2026-09-07");
+const proof = path.resolve(process.env.ZEN_TERMINAL_PROOF_DIR || path.join(root, "docs/proof", new Date().toISOString().slice(0, 10)));
 const home = await mkdtemp(path.join(tmpdir(), "zen-terminal-browser-"));
 const socket = `zt-browser-proof-${process.pid}-${Date.now()}`;
 const tmux = execFileSync("/bin/zsh", ["-lc", "command -v tmux"], {
@@ -31,6 +31,8 @@ if (!existsSync(helper))
     helper,
   ]);
 await mkdir(proof, { recursive: true });
+const startingFolder = path.join(home, "folder 雪 ' $(literal); `name` ");
+await mkdir(startingFolder);
 await mkdir(path.join(home, "profile"));
 await mkdir(path.join(home, "profile-copy"));
 await writeFile(path.join(home, ".zshrc"), "PROMPT='proof> '\nRPROMPT=''\n");
@@ -147,6 +149,24 @@ function boundedReader(stream) {
     return "";
   };
 }
+async function closeWithUnload(page) {
+  // Playwright's default close skips unload handlers. Production cleanup lives
+  // there; run those handlers and prove their owned helpers actually exit.
+  const helpers = [...processes.values()].filter(item =>
+    item.ownerPage === page && item.command === helper &&
+    item.child.exitCode === null && item.child.signalCode === null);
+  const closed = page.waitForEvent("close");
+  await page.close({ runBeforeUnload: true });
+  let timer;
+  try {
+    await Promise.race([
+      Promise.all([closed, ...helpers.map(item => item.result)]),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(
+        "Page unload did not stop its owned helper: " + JSON.stringify(helpers.map(item => item.arguments)),
+      )), 5000); }),
+    ]);
+  } finally { clearTimeout(timer); }
+}
 function tmuxQuery(...args) {
   return execFileSync(tmux, ["-L", socket, "-f", "/dev/null", ...args], {
     env: environment,
@@ -197,6 +217,8 @@ try {
           child,
           result,
           command: options.command,
+          arguments: options.arguments,
+          ownerPage: _source.page,
           readers: {
             stdout: boundedReader(child.stdout),
             stderr: boundedReader(child.stderr),
@@ -236,7 +258,7 @@ try {
     },
   );
   await context.addInitScript(
-    ({ home, helper }) => {
+    ({ home, helper, startingFolder }) => {
       const prefs = {
         "zen.terminal.containerRecipes": JSON.stringify({
           1: {
@@ -277,7 +299,16 @@ try {
                 },
         },
       };
-      window.Ci = { nsIFile: {} };
+      window.Ci = { nsIFile: {}, nsILoadContext: {} };
+      window.docShell = { QueryInterface: () => ({ usePrivateBrowsing: false, originAttributes: { userContextId: 1 } }) };
+      // Only test-created directories are represented by this synchronous native facade.
+      // Actual process cwd and shell quoting are still exercised by the real helper/tmux.
+      window.Cc = { "@mozilla.org/file/local;1": { createInstance: () => ({
+        initWithPath(value) { this.path = value; },
+        exists() { return [home, startingFolder].includes(this.path); },
+        isDirectory() { return this.exists(); },
+        isReadable() { return this.exists(); },
+      }) } };
       const Subprocess = {
         call: async (options) => {
           if (
@@ -307,7 +338,9 @@ try {
       };
       window.ChromeUtils = {
         importESModule: (name) =>
-          name.includes("Subprocess")
+          name.includes("ContextualIdentityService")
+            ? { ContextualIdentityService: { getPublicIdentities: () => [{ userContextId: 1 }] } }
+            : name.includes("Subprocess")
             ? { Subprocess }
             : {
                 setTimeout: window.setTimeout.bind(window),
@@ -330,7 +363,7 @@ try {
         },
       });
     },
-    { home, helper },
+    { home, helper, startingFolder },
   );
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
@@ -485,6 +518,39 @@ try {
       await file("reload-proof", "after-reload\n");
     },
   );
+  await check("Saved starting folder is literal; edits apply only to new jobs", async () => {
+    const original = await page.evaluate(() => Services.prefs.getStringPref("zen.terminal.containerRecipes", "{}"));
+    try {
+      await page.evaluate(folder => {
+        const saved = JSON.parse(Services.prefs.getStringPref("zen.terminal.containerRecipes", "{}"));
+        saved[1].recipe = { startingDirectory: folder, steps: [{ id: "folder", command: 'printf "%s" "$PWD" > "$HOME/folder-proof"' }] };
+        Services.prefs.setStringPref("zen.terminal.containerRecipes", JSON.stringify(saved));
+      }, startingFolder);
+      const newTab = await context.newPage();
+      await newTab.goto(url.replace("session=browser-proof", "session=folder-proof"));
+      await newTab.waitForFunction(() => document.getElementById("zen-terminal-surface").hasAttribute("terminal-ready"));
+      await file("folder-proof", startingFolder);
+      await closeWithUnload(newTab);
+      await page.evaluate(() => {
+        const saved = JSON.parse(Services.prefs.getStringPref("zen.terminal.containerRecipes", "{}"));
+        saved[1].recipe = { startingDirectory: "/definitely-missing-zen-test", steps: [{ command: "ssh -N host" }, { command: "printf NEVER" }] };
+        Services.prefs.setStringPref("zen.terminal.containerRecipes", JSON.stringify(saved));
+      });
+      await page.reload(); await ready();
+      assert.equal(tmuxQuery("display-message", "-p", "-t", `zt_${session}:0.0`, "#{pane_pid}"), panePid);
+      const refused = await context.newPage();
+      await refused.goto(url.replace("session=browser-proof", "session=bad-folder-proof"));
+      await refused.waitForFunction(() => {
+        const b = window.__testTerminal.buffer.active;
+        return Array.from({ length: b.length }, (_, i) => b.getLine(i)?.translateToString(true) || "").join("\n").includes("starting folder");
+      });
+      assert(!tmuxQuery("list-sessions", "-F", "#{session_name}").split("\n").includes("zt_bad-folder-proof"));
+      await closeWithUnload(refused);
+      await file("startup-count", "startup\n");
+    } finally {
+      await page.evaluate(value => Services.prefs.setStringPref("zen.terminal.containerRecipes", value), original);
+    }
+  });
   await check(
     "Disconnect offers reconnect without deleting the saved shell",
     async () => {
@@ -494,7 +560,7 @@ try {
           p.child.exitCode === null &&
           p.child.signalCode === null,
       );
-      assert.equal(active.length, 1, "Reload must detach its previous helper");
+      assert.equal(active.length, 1, "Reload must detach its previous helper; active: " + JSON.stringify(active.map(item => item.arguments)));
       active[0].child.kill("SIGTERM");
       await page.waitForFunction(() =>
         document
@@ -527,7 +593,7 @@ try {
       await page.waitForFunction(() =>
         document
           .getElementById("zen-terminal-status-text")
-          .textContent.includes("could not connect"),
+          .textContent.includes("helper is missing"),
       );
       assert.equal(
         await page.locator("#zen-terminal-reconnect").isVisible(),
@@ -561,6 +627,9 @@ try {
       const copy = await context.newPage();
       copy.on("pageerror", (error) => errors.push(error.message));
       await copy.goto(`${url}&profile=copy`);
+      await copy.waitForFunction(() => document.getElementById("zen-terminal-reconnect").textContent === "Start again");
+      await file("startup-count", "startup\n");
+      await copy.locator("#zen-terminal-reconnect").click();
       await copy.waitForFunction(() =>
         document
           .getElementById("zen-terminal-surface")
@@ -602,9 +671,21 @@ try {
         panePid,
       );
       await file("startup-count", "startup\nstartup\n");
-      await copy.close();
+      await closeWithUnload(copy);
     },
   );
+  await check("Lost session requires explicit Start again and reload never repeats startup", async () => {
+    tmuxQuery("kill-session", "-t", `=zt_${session}`);
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById("zen-terminal-reconnect").textContent === "Start again");
+    await file("startup-count", "startup\nstartup\n");
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById("zen-terminal-reconnect").textContent === "Start again");
+    await file("startup-count", "startup\nstartup\n");
+    await page.locator("#zen-terminal-reconnect").click();
+    await ready();
+    await file("startup-count", "startup\nstartup\nstartup\n");
+  });
   await check(
     "Without tmux, live resizing and real scrollback remain usable and bounded",
     async () => {

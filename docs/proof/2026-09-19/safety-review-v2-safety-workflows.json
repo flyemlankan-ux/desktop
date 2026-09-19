@@ -1,0 +1,18 @@
+{
+  "app": ".terminal-test/Zen Terminal Test.app",
+  "scope": "Synthetic profile, real browser mechanisms and rendered restart-button clicks; no personal data",
+  "results": [
+    {
+      "test": "owned app, profile and data roots confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mismatched actual container refused before records or command launch",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "timeout('Connection timed out after 30.0s')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-d0571ebe"
+}

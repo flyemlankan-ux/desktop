@@ -13,7 +13,7 @@
 export const ZEN_TERMINAL_CONTAINER_RECIPES_PREF =
   "zen.terminal.containerRecipes";
 
-export const ZEN_TERMINAL_RECIPE_VERSION = 3;
+export const ZEN_TERMINAL_RECIPE_VERSION = 4;
 
 export function readTerminalContainerRecipes() {
   try {
@@ -90,6 +90,12 @@ export function normalizeTerminalRecipe(recipe) {
 
   return {
     type: "ordered-steps",
+    // Preserve explicit malformed values so launch validation can reject them;
+    // silently replacing a bad saved path with HOME would run work elsewhere.
+    startingDirectory:
+      recipe && typeof recipe === "object" && Object.hasOwn(recipe, "startingDirectory")
+        ? recipe.startingDirectory
+        : "",
     // Keep the old field readable until the terminal page moves to the v3
     // runner. New multi-step recipes intentionally have no misleading legacy
     // command.

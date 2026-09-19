@@ -8,7 +8,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import vm from "node:vm";
 import * as store from "../../src/zen/terminal/ZenTerminalContainerStore.mjs";
-import { compileTerminalRecipeSteps } from "../../src/zen/terminal/ZenTerminalRecipeRunner.mjs";
+import { compileTerminalRecipeSteps, validateTerminalStartingDirectory } from "../../src/zen/terminal/ZenTerminalRecipeRunner.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const fixture = path.join(import.meta.dirname, "fixtures/firefox155-settings");
@@ -60,6 +60,7 @@ class FakeEvent {
 class Element {
   constructor(tag, document) {
     this.tagName = tag;
+    this.isConnected = true;
     this.ownerDocument = document;
     this.children = [];
     this.listeners = new Map();
@@ -183,9 +184,24 @@ const identities = {
     calls.push(`close-tabs:${id}`);
   },
 };
+let pickerResult = 0, pickerPath = "/synthetic/space 雪 ' $(literal) ", pickerThrows = false;
+const validFolders = new Set([pickerPath]);
+const Ci = { nsIFile: {}, nsIFilePicker: { modeGetFolder: 2, returnOK: 0 } };
+const Cc = {
+  "@mozilla.org/file/local;1": { createInstance() {
+    return { initWithPath(value) { this.path = value; }, exists() { return validFolders.has(this.path); }, isDirectory() { return validFolders.has(this.path); }, isReadable() { return validFolders.has(this.path); } };
+  } },
+  "@mozilla.org/filepicker;1": { createInstance() {
+    if (pickerThrows) throw new Error("picker unavailable");
+    return { init(_context, _title, mode) { assert.equal(mode, 2); }, file: { path: pickerPath }, open(callback) { callback(pickerResult); } };
+  } },
+};
+Object.assign(globalThis, { Cc, Ci });
 const globals = {
+  Cc, Ci,
   ...store,
   compileTerminalRecipeSteps,
+  validateTerminalStartingDirectory,
   Services,
   destroyTerminalSessionsForUserContextId: (id) => {
     calls.push(`destroy:${id}`);
@@ -456,8 +472,42 @@ test("native creation panel remains open on invalid recipes", async () => {
   assert.equal(hidden, 1);
 });
 
+test("folder picker save and reopen preserves literal path; cancel does not save", () => {
+  const item = editor(); item._name.value = "Project"; item.chooseKind("terminal");
+  item.chooseTerminalStartingDirectory();
+  assert.equal(item._startingDirectory.value, pickerPath);
+  assert.equal(prefs.size, 0);
+  assert.equal(item.commit(), true);
+  assert.equal(store.getTerminalContainerRecipe(7).recipe.startingDirectory, pickerPath);
+  const reopened = editor({ userContextId: 7 });
+  assert.equal(reopened._startingDirectory.value, pickerPath);
+  pickerResult = 1;
+  reopened._startingDirectory.value = "/typed/unchanged";
+  reopened.chooseTerminalStartingDirectory();
+  assert.equal(reopened._startingDirectory.value, "/typed/unchanged");
+  assert.equal(store.getTerminalContainerRecipe(7).recipe.startingDirectory, pickerPath);
+});
+test("missing or relative folder cannot create an identity or modify saved setup", () => {
+  const item = editor(); item._name.value = "Project"; item.chooseKind("terminal");
+  for (const folder of ["relative", "~", "/missing"]) {
+    item._startingDirectory.value = folder;
+    assert.equal(item.commit(), false);
+    assert.equal(item._recipeError.hidden, false);
+    assert.equal(prefs.size, 0); assert.deepEqual(calls, []);
+  }
+});
+test("picker failure leaves editable input and never saves", () => {
+  const item = editor(); item.chooseKind("terminal"); pickerThrows = true;
+  item.chooseTerminalStartingDirectory();
+  assert.equal(item._folderButton.disabled, false);
+  assert.equal(item._recipeError.hidden, false);
+  assert.match(item._recipeError.textContent, /type the full folder path/);
+  assert.equal(prefs.size, 0);
+});
+
 for (const [name, run] of tests) {
   prefs.clear();
+  pickerResult = 0; pickerThrows = false;
   calls.length = 0;
   confirmation = true;
   tabsConfirmation = 0;

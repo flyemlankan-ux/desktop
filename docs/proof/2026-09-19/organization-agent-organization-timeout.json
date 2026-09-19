@@ -1,0 +1,83 @@
+{
+  "selected": "1789817375569-6",
+  "terminal": "1789817375569-6",
+  "uri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+  "selectedUri": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+  "status": "saved session reconnected",
+  "selectedStatus": "saved session reconnected",
+  "pending": false,
+  "sid": "11fe1046-daa6-4cec-a1ad-f0f84d183fe1",
+  "initial": {
+    "entry": {
+      "url": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+      "title": "Terminal"
+    },
+    "image": "chrome://browser/skin/zen-icons/selectable/terminal.svg"
+  },
+  "state": {
+    "entries": [
+      {
+        "url": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+        "title": "Terminal",
+        "cacheKey": 0,
+        "ID": 3110995290,
+        "docshellUUID": "{912346a8-60b6-4548-a665-fcc58ea6f238}",
+        "originalURI": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+        "resultPrincipalURI": null,
+        "principalToInherit_base64": "{\"0\":{\"0\":\"moz-nullprincipal:{66b5ec87-7527-4017-8285-f599fa623d96}\",\"1\":\"^userContextId=6\"}}",
+        "hasUserInteraction": false,
+        "triggeringPrincipal_base64": "{\"3\":{}}",
+        "docIdentifier": 14,
+        "structuredCloneState": "AgAAAAAA8f8AAAAAAAD//w==",
+        "structuredCloneVersion": 8,
+        "transient": false,
+        "navigationKey": "{a98d6dff-89a6-4e30-8aa4-1cbe7ee2b012}",
+        "navigationId": "{e31e04ce-9170-4cb2-ad75-90e8dea37e56}"
+      }
+    ],
+    "lastAccessed": 1789817415472,
+    "pinned": true,
+    "hidden": false,
+    "zenWorkspace": null,
+    "zenSyncId": "1789817375569-6",
+    "zenEssential": true,
+    "zenDefaultUserContextId": "true",
+    "zenPinnedIcon": null,
+    "zenIsEmpty": false,
+    "zenStaticLabel": "Terminal",
+    "zenHasStaticIcon": false,
+    "zenGlanceId": null,
+    "zenIsGlance": false,
+    "_zenPinnedInitialState": {
+      "entry": {
+        "url": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+        "title": "Terminal"
+      },
+      "image": "chrome://browser/skin/zen-icons/selectable/terminal.svg"
+    },
+    "_zenIsActiveTab": true,
+    "zenLiveFolderItemId": null,
+    "searchMode": null,
+    "userContextId": 6,
+    "attributes": {},
+    "extData": {
+      "zenTerminalSessionId": "11fe1046-daa6-4cec-a1ad-f0f84d183fe1"
+    },
+    "index": 1,
+    "requestedIndex": 0,
+    "formdata": {
+      "url": "chrome://browser/content/zen-terminal/terminal.xhtml?session=11fe1046-daa6-4cec-a1ad-f0f84d183fe1&name=Terminal&userContextId=6&started=1",
+      "xpath": {
+        "//xhtml:div[@id='zen-terminal-output']/xhtml:div/xhtml:div[2]/xhtml:div/xhtml:div/xhtml:textarea": ""
+      }
+    },
+    "image": "chrome://browser/skin/zen-icons/selectable/terminal.svg"
+  },
+  "terminalPrefs": [
+    [
+      "zen.terminal.sessions",
+      "{\"11fe1046-daa6-4cec-a1ad-f0f84d183fe1\":{\"version\":1,\"id\":\"11fe1046-daa6-4cec-a1ad-f0f84d183fe1\",\"tmuxSessionName\":\"zt_11fe1046-daa6-4cec-a1ad-f0f84d183fe1\",\"userContextId\":\"6\",\"terminalContainerId\":\"\",\"createdAt\":1789817375697,\"lastSeenAt\":1789817390489,\"pendingDelete\":false,\"startupAttempted\":true,\"persistent\":true}}"
+    ]
+  ],
+  "tmux": "zt_11fe1046-daa6-4cec-a1ad-f0f84d183fe1:1\n"
+}

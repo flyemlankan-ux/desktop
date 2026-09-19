@@ -11,12 +11,12 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +  setTerminalContainerRecipe,
 +  removeTerminalContainerRecipe,
 +} from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
-+import { compileTerminalRecipeSteps } from "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs";
++import { compileTerminalRecipeSteps, validateTerminalStartingDirectory } from "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs";
 +import { destroyTerminalSessionsForUserContextId } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
  
  const HTML_NS = "http://www.w3.org/1999/xhtml";
  
-@@ -31,6 +39,11 @@
+@@ -31,6 +39,12 @@
      this.host = host;
      this.document = host.ownerDocument;
      this.userContextId = userContextId;
@@ -24,11 +24,12 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +    this.containerKind = userContextId ? (saved ? "terminal" : "web") : null;
 +    this.wasTerminalContainer = Boolean(saved);
 +    this.terminalRecipeSteps = saved?.recipe?.steps || [];
++    this.terminalStartingDirectory = saved?.recipe?.startingDirectory ?? "";
 +    this.terminalStepIdCounter = 0;
      this.identity = identity || {
        name: "",
        icon: lazy.ContextualIdentityService.containerIcons[0],
-@@ -58,6 +71,7 @@
+@@ -58,6 +72,7 @@
      this._iconPicker.classList.add("icon-swatches");
  
      this.form.append(this._name, this._colorPicker, this._iconPicker);
@@ -36,7 +37,7 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
      this.host.append(this.form);
  
      this._name.value = this.identity.name;
-@@ -75,6 +89,155 @@
+@@ -75,6 +90,210 @@
        icon => `identity-icon-${icon}`,
        icon => lazy.ContextualIdentityService.getContainerIconLabel(icon)
      );
@@ -84,7 +85,29 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +      fieldset.style.marginInline = "0";
 +      fieldset.style.overflowWrap = "anywhere";
 +    }
-+    this._terminalFields.append(this._element("legend", "Startup steps"));
++    this._terminalFields.append(this._element("legend", "Terminal setup"));
++    const folderLabel = this._element("label", "Starting folder");
++    folderLabel.htmlFor = "zen-terminal-starting-directory";
++    this._startingDirectory = this._element("input");
++    this._startingDirectory.id = folderLabel.htmlFor;
++    this._startingDirectory.type = "text";
++    this._startingDirectory.value = this.terminalStartingDirectory;
++    this._startingDirectory.placeholder = "Home folder (default)";
++    this._startingDirectory.setAttribute("aria-describedby", "zen-terminal-folder-help");
++    this._startingDirectory.style.minWidth = "0";
++    this._startingDirectory.style.width = "100%";
++    this._startingDirectory.style.boxSizing = "border-box";
++    this._folderButton = this._button("Choose folder…", () => this.chooseTerminalStartingDirectory(), "zen-terminal-choose-directory");
++    const folderRow = this._element("div");
++    folderRow.style.display = "grid";
++    folderRow.style.gridTemplateColumns = "minmax(0, 1fr) auto";
++    folderRow.style.gap = "6px";
++    folderRow.append(this._startingDirectory, this._folderButton);
++    const folderHelp = this._element("p", "Leave blank for your home folder. Otherwise use a full path beginning with /. Folder names are literal: ~ and environment variables are not expanded.");
++    folderHelp.id = "zen-terminal-folder-help";
++    this._terminalFields.append(folderLabel, folderRow, folderHelp);
++    this._terminalFields.append(this._element("p", "Changes apply to new terminal tabs. Running terminals keep their current work."));
++    this._terminalFields.append(this._element("h3", "Startup steps"));
 +    this._terminalFields.append(this._element("p", "Steps run in order. A simple SSH connection moves following steps onto that computer. A failed step stops the following steps."));
 +    this._stepList = this._element("div");
 +    this._stepList.id = "zen-terminal-recipe-steps";
@@ -101,6 +124,39 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +    this._terminalFields.append(this._recipeError);
 +    this.form.append(this._terminalFields);
 +    this.renderTerminalRecipeSteps();
++  }
++
++  chooseTerminalStartingDirectory() {
++    const view = this.document.defaultView;
++    this._folderButton.disabled = true;
++    try {
++      const picker = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
++      picker.init(view.browsingContext, "Choose starting folder", Ci.nsIFilePicker.modeGetFolder);
++      picker.addToRecentDocs = false;
++      try {
++        const value = validateTerminalStartingDirectory(this._startingDirectory.value, { checkExists: true });
++        if (value) {
++          const directory = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
++          directory.initWithPath(value);
++          picker.displayDirectory = directory;
++        }
++      } catch (_) { /* A broken typed path must not prevent choosing a new one. */ }
++      picker.open(result => {
++        if (view.closed || !this.host.isConnected) return;
++        this._folderButton.disabled = false;
++        if (result === Ci.nsIFilePicker.returnOK && picker.file) {
++          this._startingDirectory.value = picker.file.path;
++          this._recipeError.hidden = true;
++          this._notifyTerminalChange();
++          this._startingDirectory.focus();
++        }
++      });
++    } catch (_) {
++      this._folderButton.disabled = false;
++      this._recipeError.textContent = "The folder picker could not open. You can type the full folder path instead.";
++      this._recipeError.hidden = false;
++      this._notifyTerminalChange();
++    }
 +  }
 +
 +  _notifyTerminalChange() {
@@ -192,7 +248,7 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
    }
  
    _createPicker(pickerName, l10nId) {
-@@ -112,10 +275,28 @@
+@@ -112,10 +331,29 @@
    }
  
    get isValid() {
@@ -205,9 +261,10 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +    this._recipeError.hidden = true;
 +    if (this.containerKind == "terminal") {
 +      try {
++        validateTerminalStartingDirectory(this._startingDirectory.value, { checkExists: true });
 +        compileTerminalRecipeSteps(this.getTerminalRecipeSteps());
 +      } catch (error) {
-+        this._recipeError.textContent = `Check your startup steps: ${error.message}`;
++        this._recipeError.textContent = `Check your terminal setup: ${error.message}`;
 +        this._recipeError.hidden = false;
 +        this._notifyTerminalChange();
 +        return false;
@@ -222,7 +279,7 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
      let formData = new FormData(this.form);
      let containerName = formData.get("name").trim();
      let color = formData.get("color");
-@@ -136,7 +317,16 @@
+@@ -136,7 +374,16 @@
          color
        );
      } else {
@@ -232,7 +289,7 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +      this.userContextId = identity.userContextId;
 +    }
 +    if (this.containerKind == "terminal") {
-+      setTerminalContainerRecipe(this.userContextId, { recipe: { steps: this.getTerminalRecipeSteps() } });
++      setTerminalContainerRecipe(this.userContextId, { recipe: { startingDirectory: this._startingDirectory.value, steps: this.getTerminalRecipeSteps() } });
 +    } else {
 +      if (this.wasTerminalContainer) void destroyTerminalSessionsForUserContextId(this.userContextId);
 +      removeTerminalContainerRecipe(this.userContextId);

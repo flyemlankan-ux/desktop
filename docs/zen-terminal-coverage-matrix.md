@@ -19,3 +19,5 @@ Recovered source decisions, not fabricated interview answers.
 | R13: direct founder request September 7 | Personal Zen setup copied; clean distributable | enforced | ZT-MIGRATE | C13 | ZT-MIGRATE | B13 | ZT-MIGRATE | planned |
 
 | R14: direct founder correction September8 | Complete native browser/terminal workflows, not functional-only completion | enforced | complete product review | C14 | ZT-UI / ZT-LIFE / ZT-RELEASE | B14 | product-review slices1–8 | audit in progress |
+
+| R15: September19 autonomous implementation approval | Build complete native journeys with scoped implementation and independent review | enforced | full remote product plan | C15 C16 C17 C18 | ZT-ORGANIZE ZT-SETUPS ZT-SECURITY ZT-PRODUCT | B15 B16 B17 B18 | ordered completion slices | implementation authorized; acceptance pending |

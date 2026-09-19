@@ -62,10 +62,12 @@ def verify(app, root):
             count += 1
         require(count >= 10, 'Terminal asset manifest is incomplete')
         for bundled, source in [
-            ('ZenPreloadedScripts.js', 'src/zen/common/ZenPreloadedScripts.js'),
-            ('ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
+            ('chrome/browser/content/browser/ZenPreloadedScripts.js', 'src/zen/common/ZenPreloadedScripts.js'),
+            ('chrome/browser/content/browser/ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
+            ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+            ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
         ]:
-            require(read('chrome/browser/content/browser/' + bundled) == (root / source).read_bytes(), f'Stale browser integration: {bundled}')
+            require(read(bundled) == (root / source).read_bytes(), f'Stale browser integration: {bundled}')
         require(b'gZenTerminalTabs.populateUnifiedContainerMenu(event)' in read('chrome/browser/content/browser/browser.xhtml'), 'Missing native terminal menu')
         return {'terminal_assets': count, 'engine': expected, 'layout': 'real GRE and browser omnijar resources'}
     finally:

@@ -7,7 +7,7 @@
   "coverage_matrix_required": true,
   "existing_project_path": "/Users/ar/zen-terminal-research/desktop-stable",
   "created_at": "2026-09-07T21:32:14Z",
-  "updated_at": "2026-09-08T14:54:57Z",
+  "updated_at": "2026-09-19T11:05:33Z",
   "checkpoint_every": 10,
   "completed_pairs": 0,
   "last_checkpoint_at_pair": 0,
@@ -16,9 +16,9 @@
   "cd_path": "/Users/ar/zen-terminal-research/desktop-stable",
   "qna_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a.md",
   "structural_gap_register_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-structural-gaps.md",
-  "ready_for_build": false,
-  "ready_for_build_marked_at": "2026-09-07T21:34:14Z",
-  "ready_for_build_reason": "R14 complete product review reopened; workflow audit and affected-area refresh required before new product implementation.",
+  "ready_for_build": true,
+  "ready_for_build_marked_at": "2026-09-19T11:05:33Z",
+  "ready_for_build_reason": "R15 approved autonomous implementation; C15-C18 and B15-B18 define scoped repairs and full product obligations. Ready to build does not mean ready to deploy.",
   "artifact_chain": {
     "initialized_at": "2026-09-07T21:32:14Z",
     "artifacts": {
@@ -38,13 +38,13 @@
     "completed_steps": 7,
     "last_contract_ref": "C13",
     "last_index_tag": "ZT-MIGRATE",
-    "pending_change_mode": "rewire-affected-area",
-    "pending_change_reason": "Founder explicitly rejects functional-only completion and requires complete native-quality end-to-end workflows: terminal entry points, reusable terminal setups, mixed web/terminal grouping, visual polish and every relevant lifecycle. Audit existing decisions first, reopen product acceptance, hold personal migration.",
-    "pending_change_at": "2026-09-08T14:54:57Z",
-    "needs_artifact_refresh": true,
+    "pending_change_mode": null,
+    "pending_change_reason": null,
+    "pending_change_at": null,
+    "needs_artifact_refresh": false,
     "last_clarification_number": 0,
-    "last_clarification_reason": "R13 direct founder instruction supplies complete personal migration intent; no new question needed.",
-    "artifact_refresh_completed_at": "2026-09-07T21:51:57Z",
+    "last_clarification_reason": "R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.",
+    "artifact_refresh_completed_at": "2026-09-19T11:04:24Z",
     "updated_at": "2026-09-07T22:15:20Z",
     "remaining_work": "Complete end-to-end product review and build, starting with confirmed native mixed-folder/pin defect. Personal migration on hold, not merely waiting for Zen closure."
   },
@@ -65,25 +65,31 @@
       "ZT-LIFE",
       "ZT-RELEASE"
     ],
-    "requires_qna_extension": true,
-    "requires_artifact_refresh": true
+    "requires_qna_extension": false,
+    "requires_artifact_refresh": false,
+    "last_completed_at": "2026-09-19T11:04:24Z"
   },
   "clarification": {
-    "status": "open",
+    "status": "resolved",
     "mode": "rewire-affected-area",
     "reason": "Founder explicitly rejects functional-only completion and requires complete native-quality end-to-end workflows: terminal entry points, reusable terminal setups, mixed web/terminal grouping, visual polish and every relevant lifecycle. Audit existing decisions first, reopen product acceptance, hold personal migration.",
     "opened_at": "2026-09-08T14:54:57Z",
-    "last_updated_at": "2026-09-08T14:54:57Z",
-    "entries_added": 0,
+    "last_updated_at": "2026-09-19T11:04:24Z",
+    "entries_added": 1,
     "requires_single_question": true,
-    "artifact_refresh_required": true
+    "artifact_refresh_required": false,
+    "source_entry": "R15 direct autonomous build approval plus explicitly labelled builder decisions within R01-R14",
+    "last_refresh_marked_at": "2026-09-19T11:03:01Z",
+    "last_clarification_number": 0,
+    "resolved_at": "2026-09-19T11:04:24Z",
+    "resolution_note": "R15 direct approval plus recovered settled intent closes design ambiguity; implementation and acceptance gaps remain tracked, never marked passed."
   },
   "artifact_refresh": {
     "required": false,
     "refresh_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-artifact-refresh.md",
-    "last_reason": "R13 direct founder instruction supplies complete personal migration intent; no new question needed.",
+    "last_reason": "R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.",
     "last_clarification_number": 0,
-    "last_refresh_marked_at": "2026-09-07T21:51:57Z",
+    "last_refresh_marked_at": "2026-09-19T11:03:01Z",
     "impacted_artifacts": [
       "plan",
       "contract",
@@ -91,12 +97,16 @@
       "backtests"
     ],
     "impacted_index_tags": [
-      "ZT-MIGRATE"
+      "ZT-MIGRATE",
+      "ZT-UI",
+      "ZT-LIFE",
+      "ZT-RECIPE",
+      "ZT-RELEASE"
     ],
     "contradiction_review_path": "/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md",
     "contradiction_status": "clean",
-    "completed_at": "2026-09-07T21:51:57Z",
-    "completion_note": "R13 is the user supplied change, fully mapped to C13 and B13. No invented interview exchange.",
+    "completed_at": "2026-09-19T11:04:24Z",
+    "completion_note": "R15 direct approval plus recovered settled intent closes design ambiguity; implementation and acceptance gaps remain tracked, never marked passed.",
     "completed_artifacts": [
       "plan",
       "contract",
@@ -104,19 +114,30 @@
       "backtests"
     ],
     "completed_index_tags": [
-      "ZT-MIGRATE"
+      "ZT-MIGRATE",
+      "ZT-UI",
+      "ZT-LIFE",
+      "ZT-RECIPE",
+      "ZT-RELEASE"
     ],
     "artifact_mtimes_verified": {
-      "plan": "2026-09-07T21:51:57Z",
-      "contract": "2026-09-07T21:51:57Z",
-      "index": "2026-09-07T21:51:57Z",
-      "backtests": "2026-09-07T21:51:57Z"
+      "plan": "2026-09-19T11:04:24Z",
+      "contract": "2026-09-19T11:04:24Z",
+      "index": "2026-09-19T11:04:24Z",
+      "backtests": "2026-09-19T11:04:24Z"
     },
     "artifact_notes": {
-      "plan": "Added isolated personal copy after packaged app proof",
-      "contract": "C13 forbids shared profiles, overwrites, active copying and downgrade",
-      "index": "ZT-MIGRATE added with explicit proof obligations",
-      "backtests": "B13 synthetic failure cases and private hash verification"
+      "plan": "Sequenced approved full-product implementation with bounded agent ownership and parent UI proof",
+      "contract": "C15-C18 define native preservation, safe saved directories, security entry points and complete acceptance",
+      "index": "Explicit organization, setup, security and fullproduct slices remain unproved",
+      "backtests": "B15-B18 include adversarial and actual native user journeys, scoped evidence required"
     }
+  },
+  "product_review_location": {
+    "host": "chubs@100.92.30.93",
+    "path": "/home/chubs/zen-terminal/docs/zen-terminal-product-review.md",
+    "sha256": "a30b47db73feca15c3442e272c7947f6f62b44768147be6bf4037f7b1e2f0f9c",
+    "local_working_copy_removed": true,
+    "scope": "Product review plan only; source project remains on Mac. Prior Git history not rewritten."
   }
 }

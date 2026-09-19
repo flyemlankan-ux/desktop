@@ -66,6 +66,24 @@ function terminalSessionIdForTab(tab) {
 }
 
 export class ZenTerminalTabs {
+  #terminalMenuPopups = new WeakSet();
+
+  #isPrivateWindow() {
+    return ChromeUtils.importESModule(
+      "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
+    ).PrivateBrowsingUtils.isWindowPrivate(window);
+  }
+
+  #allowTerminalLaunch() {
+    if (!this.#isPrivateWindow()) return true;
+    Services.prompt.alert(
+      window,
+      "Terminal unavailable in private windows",
+      "Terminals can save shell history and files outside the browser. Open a normal window to use a terminal.",
+    );
+    return false;
+  }
+
   constructor() {
     this.#ensureDefaultTerminalContainer();
     this.#patchFirefoxContainerMenuBuilder();
@@ -77,6 +95,21 @@ export class ZenTerminalTabs {
         this.#markRestoredTerminalTab(event.target), true
       );
     }
+    // Native location changes can clear a page's icon after restore/selection.
+    // Repair the ordinary icon slot from the native notification, not a timer.
+    window.addEventListener("TabAttrModified", (event) => {
+      const tab = event.target;
+      if (
+        !event.detail?.changed?.includes("image") ||
+        !tab?.hasAttribute?.(ZEN_TERMINAL_TAB_ATTRIBUTE) ||
+        tab.zenStaticIcon || tab.closing
+      ) return;
+      const spec = tab.linkedBrowser?.currentURI?.spec || "";
+      if (spec.split(/[?#]/u)[0] !== ZEN_TERMINAL_TAB_URL && !tab.hasAttribute("pending")) return;
+      const icon = "chrome://browser/skin/zen-icons/selectable/terminal.svg";
+      // setIcon emits the same event; checking the final attribute avoids recursion.
+      if (tab.getAttribute("image") !== icon) gBrowser.setIcon(tab, icon);
+    }, true);
     void retryPendingTerminalSessionDeletes();
   }
 
@@ -112,10 +145,16 @@ export class ZenTerminalTabs {
    * Firefox's extra "No Container" row is deliberately omitted.
    */
   populateUnifiedContainerMenu(event) {
-    const result = window.createUserContextMenu(event, {
-      isContextMenu: true,
-      showDefaultTab: false,
-    });
+    this.#terminalMenuPopups.add(event.target);
+    let result;
+    try {
+      result = window.createUserContextMenu(event, {
+        isContextMenu: true,
+        showDefaultTab: false,
+      });
+    } finally {
+      this.#terminalMenuPopups.delete(event.target);
+    }
     this.#routeNativeTerminalContainerRows(event.target);
     window.setTimeout(
       () => this.#routeNativeTerminalContainerRows(event.target),
@@ -139,9 +178,29 @@ export class ZenTerminalTabs {
         return;
       }
 
+      // Existing link, tab-reopen and workspace menus mean website identity,
+      // not "run a saved command". Keep terminal choices only at explicit New Tab.
+      const originalUserContextMenu = window.createUserContextMenu;
+      window.createUserContextMenu = (event, options) => {
+        const result = originalUserContextMenu.call(window, event, options);
+        if (!this.#terminalMenuPopups.has(event.target) || this.#isPrivateWindow()) {
+          for (const item of event.target.querySelectorAll("[data-usercontextid]")) {
+            if (isTerminalContainerId(item.getAttribute("data-usercontextid"))) {
+              item.remove();
+            }
+          }
+        }
+        return result;
+      };
       const originalCreateContainerTabMenu = window.CreateContainerTabMenu;
       const patchedCreateContainerTabMenu = (event) => {
-        const result = originalCreateContainerTabMenu.call(window, event);
+        this.#terminalMenuPopups.add(event.target);
+        let result;
+        try {
+          result = originalCreateContainerTabMenu.call(window, event);
+        } finally {
+          this.#terminalMenuPopups.delete(event.target);
+        }
         this.#routeNativeTerminalContainerRows(event.target);
         window.setTimeout(
           () => this.#routeNativeTerminalContainerRows(event.target),
@@ -209,34 +268,22 @@ export class ZenTerminalTabs {
     return Boolean(tab?.hasAttribute?.(ZEN_TERMINAL_TAB_ATTRIBUTE));
   }
 
-  #forceNormalZenTab(tab) {
-    if (!tab) {
-      return;
-    }
-
-    tab.removeAttribute("zen-essential");
-    tab.removeAttribute("zenDefaultUserContextId");
-    tab.removeAttribute("zen-pinned-changed");
-    delete tab._zenPinnedInitialState;
-    if (tab.pinned) {
-      gBrowser.unpinTab(tab);
-    }
-  }
-
-  #forceNormalZenTabSoon(tab) {
-    for (const delay of [0, 100, 500, 1500]) {
-      window.setTimeout(() => this.#forceNormalZenTab(tab), delay);
-    }
-  }
-
   markTerminalTab(tab, options = {}) {
     if (!tab) {
       return;
     }
-    this.#forceNormalZenTab(tab);
-    this.#forceNormalZenTabSoon(tab);
     tab.setAttribute(ZEN_TERMINAL_TAB_ATTRIBUTE, "true");
+    // Use Zen's real icon slot and keep any icon the user deliberately chose.
+    gBrowser.setIcon(
+      tab,
+      tab.zenStaticIcon || "chrome://browser/skin/zen-icons/selectable/terminal.svg",
+    );
+    // Marking a terminal must never undo native folders, pins or Essentials.
+    // Only website URL-reset decoration is inappropriate for a terminal.
     tab.removeAttribute("zen-show-sublabel");
+    tab.removeAttribute("zen-pinned-changed");
+    tab.removeAttribute("had-zen-pinned-changed");
+    tab.style.removeProperty("--zen-original-tab-icon");
 
     if (options.terminalSessionId) {
       const sessionId = normalizeTerminalSessionId(options.terminalSessionId);
@@ -330,6 +377,7 @@ export class ZenTerminalTabs {
   }
 
   openTerminalTab(options = {}) {
+    if (!this.#allowTerminalLaunch()) return null;
     const terminalSessionId =
       normalizeTerminalSessionId(options.terminalSessionId) ||
       Services.uuid.generateUUID().toString().slice(1, -1).toLowerCase();
@@ -345,7 +393,6 @@ export class ZenTerminalTabs {
       this.#terminalUrl(terminalOptions),
       addTabOptions,
     );
-    this.#forceNormalZenTab(tab);
     this.markTerminalTab(tab, terminalOptions);
     gBrowser.selectedTab = tab;
     return tab;

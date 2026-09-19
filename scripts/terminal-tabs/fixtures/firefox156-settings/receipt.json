@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/mozilla-firefox/firefox",
+  "tag": "FIREFOX_156_0_RELEASE",
+  "files": [
+    {
+      "path": "browser/components/contextualidentity/content/ContainerEditor.mjs",
+      "git_blob_sha": "7d789c2a1d9b12e875ed0fa638036dd85d8827b4",
+      "sha256": "a8a57d0536c7e6f7cde110aed12c0bfcc5576ea3cb362b4a4c6d84e9c62d8f4b"
+    },
+    {
+      "path": "browser/components/contextualidentity/content/ContainerCreationPanel.mjs",
+      "git_blob_sha": "9868c288653b83717afb0403901c8adc0058bd4d",
+      "sha256": "5a2921ad459cefc8326c1a215f482e06abe6a52c9cd28046a0775c52df909f55"
+    },
+    {
+      "path": "browser/components/preferences/config/containers.mjs",
+      "git_blob_sha": "ecd46c8cd4763c859476012c6a02c0e60a0c0e07",
+      "sha256": "716ba2b28c1bdf7f5ac3e360d4c16f16b221d013420e1ad32c89b53ac38dea17"
+    },
+    {
+      "path": "browser/components/preferences/dialogs/containers.js",
+      "git_blob_sha": "52d38c8bddb53ff113013357f714d43381184502",
+      "sha256": "bf30b1e5c715f938e9dbe9dc6c967caf2175036e837cda734e4f8c6049071879"
+    },
+    {
+      "path": "browser/installer/package-manifest.in",
+      "git_blob_sha": "46725ca0498537098daebed34a5e503306e44882",
+      "sha256": "ba18ff3089ba57bee4fb61602e38873fb56ca53e4b176bafee8f743c432da4b5"
+    }
+  ]
+}

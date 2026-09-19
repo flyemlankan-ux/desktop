@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Overlay terminal changes onto a disposable OFFICIAL Zen 1.22b copy.
-This exercises the real current Mac engine, but is NOT a fresh release build.
+This exercises a pinned Mac regression engine, NOT the latest release or a fresh build.
 Never edits /Applications, the original browser, or a real user profile.
 """
 import argparse
@@ -24,7 +24,11 @@ assert source.is_dir() and source != app.resolve()
 assert not app.is_symlink() and app.parent.resolve() == test.resolve()
 info = plistlib.loads((source / 'Contents/Info.plist').read_bytes())
 assert info.get('CFBundleShortVersionString') == '1.22b', 'Only official stable 1.22b is supported'
-if not app.exists():
+if app.exists():
+    # Never reuse an old engine merely because the disposable output exists.
+    for relative in ('Contents/Resources/platform.ini', 'Contents/Resources/application.ini'):
+        assert (app / relative).read_bytes() == (source / relative).read_bytes(), 'Existing test app has a different engine; use a fresh destination'
+else:
     subprocess.run(['ditto', str(source), str(app)], check=True)
 base = source / 'Contents/Resources/browser/omni.ja'
 data = base.read_bytes()
@@ -79,7 +83,13 @@ for relative, patch_name in patches:
 for name in ['ZenPreloadedScripts.js', 'zen-sets.js']:
     entries[prefix + name] = (root / 'src/zen/common' / name).read_bytes()
 
-entries[prefix + 'ZenUIManager.mjs'] = (root / 'src/zen/common/modules/ZenUIManager.mjs').read_bytes()
+for bundled, relative in [
+    (prefix + 'ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),
+    (prefix + 'zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+    ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
+]:
+    assert bundled in entries, f'Cannot overlay an unregistered browser module: {bundled}'
+    entries[bundled] = (root / relative).read_bytes()
 
 # The native popup's shape comes from this stable checkout's committed baseline.
 old = subprocess.check_output(['git', 'show', '1.22b:src/browser/base/content/zen-panels/popups.inc'], cwd=root).decode()
@@ -99,6 +109,16 @@ if css not in page:
     position = anchor.end()
     page = page[:position] + '\n' + declaration + page[position:]
 entries[prefix + 'browser.xhtml'] = page.encode()
+# Apply the fork's real default, not a test-profile suppression. Full builds
+# compile prefs/zen/updates.yaml; this disposable overlay must match it.
+updates = (root / 'prefs/zen/updates.yaml').read_text()
+assert 'name: zen.updates.show-update-notification\n  value: false' in updates
+pref_name = 'defaults/preferences/firefox.js'
+pref_source = entries[pref_name].decode()
+pattern = r'(pref\("zen\.updates\.show-update-notification",\s*)true(\s*\);)'
+pref_source, changed = re.subn(pattern, r'\g<1>false\2', pref_source)
+assert changed == 1, 'Expected exactly one upstream update-notification default'
+entries[pref_name] = pref_source.encode()
 archive = app / 'Contents/Resources/browser/omni.ja'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as output:
     for name, data in entries.items():
@@ -126,4 +146,4 @@ entitlements_file.write_bytes(plistlib.dumps(entitlements))
 subprocess.run(['codesign', '--force', '--sign', '-', '--entitlements', str(entitlements_file), str(app)], check=True)
 subprocess.run(['codesign', '--verify', '--deep', '--strict', '--verbose=2', str(app)], check=True)
 print('Updated disposable stable 1.22b integration app:', app)
-print('Evidence scope: official current engine plus local overlay, NOT a fresh compiled release.')
+print('Evidence scope: pinned 155 regression engine plus local overlay, NOT current-engine release acceptance.')

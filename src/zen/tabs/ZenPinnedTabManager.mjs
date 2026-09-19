@@ -980,6 +980,14 @@ class nsZenPinnedTabManager extends nsZenDOMOperatedFeature {
   }
 
   pinHasChangedUrl(tab) {
+    // Terminals keep native pin/folder identity, but do not navigate websites.
+    // Progress notifications must not add a misleading "Back to pinned URL".
+    if (tab.hasAttribute("zen-terminal-tab")) {
+      tab.removeAttribute("zen-pinned-changed");
+      tab.removeAttribute("had-zen-pinned-changed");
+      tab.style.removeProperty("--zen-original-tab-icon");
+      return;
+    }
     if (tab.hasAttribute("zen-pinned-changed")) {
       const showSublabel = tab.hasAttribute("zen-show-sublabel");
       if (showSublabel) {

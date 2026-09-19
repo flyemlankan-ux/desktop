@@ -1,0 +1,6 @@
+{
+  "src/zen/terminal/ZenTerminalTabs.mjs": "4eee3e6c5a04f81b0dc775a8660764b76ac881a6bf5c55ddc801b074f8bdb1a1",
+  "src/zen/tabs/ZenPinnedTabManager.mjs": "a817d093e363448990d9c40246e0352ff362f442423674cd7463e409662448da",
+  "src/zen/terminal/ZenTerminalPage.mjs": "e581a2d9510d08feee6f84a878b37ca3b6cc22d6bc032f8e70a13631196a0c17",
+  "src/zen/terminal/ZenTerminalSessionManager.mjs": "43f4a1dfc9243a16ecc7e43ef42d31f2c9178f39968ea4ff13271ecb75d13967"
+}

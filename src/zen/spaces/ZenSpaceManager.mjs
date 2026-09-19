@@ -6,6 +6,7 @@
 
 import { nsZenThemePicker } from "resource:///modules/zen/ZenGradientGenerator.mjs";
 import { ZenSpacesSwipe } from "resource:///modules/zen/ZenSpacesSwipe.mjs";
+import { isTerminalContainerId } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
 
 const lazy = {};
 
@@ -3003,7 +3004,10 @@ class nsZenWorkspaces {
     }
 
     const activeWorkspace = this.getActiveWorkspaceFromCache();
-    const activeWorkspaceUserContextId = activeWorkspace?.containerTabId;
+    // A setup converted to Terminal must not become a website cookie default.
+    // Keep the stored workspace choice intact, but use ordinary web identity.
+    const activeWorkspaceUserContextId = isTerminalContainerId(activeWorkspace?.containerTabId)
+      ? 0 : activeWorkspace?.containerTabId;
 
     if (
       fromExternal !== true &&

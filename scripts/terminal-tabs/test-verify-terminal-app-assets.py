@@ -32,6 +32,10 @@ class VerificationTests(unittest.TestCase):
                 entries[match[1]] = (ROOT / 'src/zen/terminal' / match[2]).read_bytes()
         entries['ZenPreloadedScripts.js'] = (ROOT / 'src/zen/common/ZenPreloadedScripts.js').read_bytes()
         entries['ZenUIManager.mjs'] = (ROOT / 'src/zen/common/modules/ZenUIManager.mjs').read_bytes()
+        module = self.browser / 'modules/zen/ZenSpaceManager.mjs'
+        module.parent.mkdir(parents=True, exist_ok=True)
+        module.write_bytes((ROOT / 'src/zen/spaces/ZenSpaceManager.mjs').read_bytes())
+        entries['zen-components/ZenPinnedTabManager.mjs'] = (ROOT / 'src/zen/tabs/ZenPinnedTabManager.mjs').read_bytes()
         entries['browser.xhtml'] = b'gZenTerminalTabs.populateUnifiedContainerMenu(event)'
         for name, data in entries.items():
             path = self.browser / 'chrome/browser/content/browser' / name
@@ -44,9 +48,10 @@ class VerificationTests(unittest.TestCase):
             archive.writestr('chrome.manifest', 'synthetic')
             archive.writestr('modules/AppConstants.sys.mjs', 'synthetic')
         with zipfile.ZipFile(self.browser / 'omni.ja', 'w') as archive:
-            for path in (self.browser / 'chrome').rglob('*'):
-                if path.is_file():
-                    archive.write(path, path.relative_to(self.browser))
+            for directory in ('chrome', 'modules'):
+                for path in (self.browser / directory).rglob('*'):
+                    if path.is_file():
+                        archive.write(path, path.relative_to(self.browser))
 
     def test_loose_resources_rejected(self):
         with self.assertRaisesRegex(AssertionError, 'Missing required packaged resources'):
@@ -55,6 +60,21 @@ class VerificationTests(unittest.TestCase):
     def test_compressed_resources(self):
         self.pack()
         self.assertEqual(module.verify(self.app, ROOT)['terminal_assets'], 12)
+
+    def test_unused_copy_does_not_hide_stale_registered_module(self):
+        for entry, source in [
+            ('chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs', 'src/zen/tabs/ZenPinnedTabManager.mjs'),
+            ('modules/zen/ZenSpaceManager.mjs', 'src/zen/spaces/ZenSpaceManager.mjs'),
+        ]:
+            with self.subTest(entry=entry):
+                target = self.browser / entry
+                target.write_text('stale actual loaded module')
+                wrong = self.browser / 'chrome/browser/content/browser' / Path(entry).name
+                wrong.write_bytes((ROOT / source).read_bytes())
+                self.pack()
+                with self.assertRaisesRegex(AssertionError, 'Stale browser integration'):
+                    module.verify(self.app, ROOT)
+                target.write_bytes((ROOT / source).read_bytes())
 
     def test_stale_asset_rejected(self):
         path = self.browser / 'chrome/browser/content/browser/ZenUIManager.mjs'

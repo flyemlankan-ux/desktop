@@ -149,6 +149,43 @@ test("validates identifiers and repairs stored target names", () => {
   assert.equal(manager.getTerminalSessionRecord("bad"), null);
 });
 
+test("lost work requires explicit restart and never validates or reruns steps silently", async () => {
+  const sessions = mockServer();
+  manager.registerTerminalSession("lost", { userContextId: "10" });
+  await manager.prepareTerminalTmuxSession(command, "lost", settings);
+  assert.equal(manager.getTerminalSessionRecord("lost").startupAttempted, true);
+  assert.equal(manager.getTerminalSessionRecord("lost").persistent, true);
+  assert.ok(saved > 0, "startup intent is flushed before launch");
+  sessions.clear();
+  let compiled = 0;
+  const lazy = () => { compiled++; return settings; };
+  await assert.rejects(manager.prepareTerminalTmuxSession(command, "lost", lazy),
+    error => error.code === "ZEN_TERMINAL_SESSION_ENDED");
+  assert.equal(compiled, 0);
+  assert.equal(sessions.size, 0);
+  manager.registerTerminalSession("lost", { userContextId: "10" });
+  assert.equal(manager.getTerminalSessionRecord("lost").startupAttempted, true);
+  assert.deepEqual(await manager.prepareTerminalTmuxSession(command, "lost", lazy,
+    { allowRestart: true }), { created: true });
+  assert.equal(compiled, 1);
+});
+test("Undo Close URL marker requires consent even after session record deletion", async () => {
+  mockServer();
+  manager.registerTerminalSession("undo");
+  await assert.rejects(manager.prepareTerminalTmuxSession(command, "undo", settings,
+    { previouslyStarted: true }), error => error.code === "ZEN_TERMINAL_SESSION_ENDED");
+  assert.equal(calls.filter(call=>call.arguments.includes("new-session")).length, 0);
+  assert.deepEqual(await manager.prepareTerminalTmuxSession(command, "undo", settings,
+    { previouslyStarted: true, allowRestart: true }), { created: true });
+});
+test("restart consent cannot override unknown inventory", async () => {
+  manager.registerTerminalSession("uncertain");
+  handler = () => processResult("", "permission denied", 1);
+  await assert.rejects(manager.prepareTerminalTmuxSession(command, "uncertain", settings,
+    { allowRestart: true, previouslyStarted: true }), /Cannot check/);
+  assert.equal(calls.filter(call=>call.arguments.includes("new-session")).length, 0);
+});
+
 test("failed tool probes remain unknown and keep deletion pending", async () => {
   manager.registerTerminalSession("probe-failure");
   handler = () => {
@@ -237,6 +274,32 @@ test("two simultaneous prepares create and launch the recipe once", async () => 
     calls.filter((call) => call.arguments.includes("new-session")).length,
     1,
   );
+});
+
+test("existing sessions never read edited settings; new sessions validate before launch", async () => {
+  mockServer();
+  manager.registerTerminalSession("existing-edit");
+  await manager.prepareTerminalTmuxSession(command, "existing-edit", settings);
+  const invalid = () => { throw new Error("Starting folder missing; recipe invalid"); };
+  assert.deepEqual(await manager.prepareTerminalTmuxSession(command, "existing-edit", invalid), { created: false });
+  const before = calls.filter(call => call.arguments.includes("new-session")).length;
+  manager.registerTerminalSession("new-edit");
+  await assert.rejects(manager.prepareTerminalTmuxSession(command, "new-edit", invalid), /Starting folder missing/);
+  assert.equal(calls.filter(call => call.arguments.includes("new-session")).length, before);
+});
+
+test("literal folder guard prevents path injection and fails before startup commands", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "zen-start-folder-"));
+  try {
+    const missing = path.join(directory, "missing ' ; $(printf INJECTED) 雪");
+    const result = spawnSync("/bin/sh", ["-c", manager.terminalShellScript("/bin/sh", "printf COMMAND_RAN; exit 0", missing)], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /No startup steps were run/);
+    const good = spawnSync("/bin/sh", ["-c", manager.terminalShellScript("/bin/sh", "pwd; exit 0", directory)], { encoding: "utf8" });
+    assert.equal(good.status, 0);
+    assert.ok(good.stdout.trim().endsWith(path.basename(directory)));
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
 test("deletion waits for in-flight creation and prevents later recreation", async () => {
@@ -583,11 +646,15 @@ async function realTmuxTest() {
       "absent",
     );
     const copyMarker = path.join(directory, "copy-startup.txt");
+    await assert.rejects(
+      manager.prepareTerminalTmuxSession(tmux, "real-target", realSettings),
+      error => error.code === "ZEN_TERMINAL_SESSION_ENDED",
+    );
     assert.deepEqual(
       await manager.prepareTerminalTmuxSession(tmux, "real-target", {
         ...realSettings,
         startupCommand: `printf copy > '${copyMarker}'`,
-      }),
+      }, { allowRestart: true }),
       { created: true },
     );
     const copyPid = direct(

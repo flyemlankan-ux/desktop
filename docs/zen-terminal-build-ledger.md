@@ -269,3 +269,86 @@ Recommended reasoning high; proof strong focused native lifecycle/organization
 checks, not unrelated broad Core regressions. Drift check: preserve Zen's single
 native model; do not create a second terminal dashboard or call failed old
 requirements new features.
+
+### 2026-09-19 — C15–C17 implementation and first native review (ongoing)
+
+Founder authorized autonomous completion. Full product-review plan remains on
+Chubs; the local pointer is `zen-terminal-plan-location.md`.
+
+Implemented native organization preservation, saved starting folders, immutable
+session ownership, deliberate/private entry checks, and explicit restart consent.
+These are working-tree changes under review, not final release acceptance.
+
+Parent independently ran the latest disposable app: ten native-method mixed-project
+checks passed (two independent shells, folder selection/collapse/reorder, workspace
+move, split/resize/unsplit, mirrored second window, window-close survival, precise
+final-tab cleanup). Evidence: `proof/2026-09-19/project-review-project-workflows.json`.
+Pointer drag/drop was explicitly not run. Inspected screenshot: native layout is
+retained, but address field exposes an ugly internal query string; visual acceptance
+is NOT complete. The independent grouping test passes selection/pin/unpin but
+fails Essentials; investigation remains open. Rendered-page testing passes first
+seven checks then fails helper cleanup count after the new folder scenario.
+These failures are not waived. Eight packaged-resource verifier checks pass.
+
+Next: resolve both failures, native setup/recovery journeys, pointer actions and
+visual polish, then upgrade to current Zen/Firefox and rebuild cleanly. Latest
+upstream sharing features need explicit terminal-data exclusion review.
+Reasoning: high. Proof: strong focused lifecycle/security/native checks, plus
+fresh-package end-to-end acceptance before personal migration.
+Drift: native Zen remains the product; passing method calls is not complete UX
+proof. No personal data or installed application changed in this slice.
+
+Follow-up proof: rendered-page failure resolved in test only. Playwright default
+page.close skips unload handlers; secondary test pages now run real unload and
+wait for their exact helper to exit without killing it. All 12 rendered checks
+pass, including lost-session explicit consent/reload and copied-profile isolation.
+Current evidence moved to `proof/2026-09-19/terminal-page-results.json`; original
+tracked September7 evidence restored. Future outputs use current UTC date or an
+explicit proof folder. Independent current module suite passes recipes27,
+persistence19, ownership6, entrypoints19, organization8 and Settings12.
+Native safety first two checks pass; real Mac alert dismissal testing remains
+under investigation. Native saved setup first run proves missing-folder refusal,
+layout containment and literal save; its PID lookup was corrected, then a separate
+first-open dialog race was found. Neither pending native journey is marked passed.
+
+Native saved-setup journey now passes all9 checks on the latest overlay: invalid
+folder cannot save, long literal folder stays inside dialog, startup/shell cwd match
+exactly, two opens are independent, cancel preserves setup, edits affect only new
+jobs, reopen retains replacement folder. Native chooser interaction is NOT yet
+covered. Screenshots inspected: native form retained but tall/wordy; further polish
+and keyboard/chooser proof required. Latest icon fix has focused mock assertions
+(organization10, entrypoints21, workspace-default4); no duplicate pseudoglyph.
+Essentials failure isolated to legitimate upstream separate-container rule:
+workspace0 versus terminal6 is ineligible, so native add returns false. Diagnostic
+will test this refusal plus shared-Essentials preference explicitly; no production
+bypass or broader success claim. False updater-toast default now applied from
+source into overlay; actual release must compile the same preference.
+
+Native safety now9pass with one explicit private-modal NOT_RUN. Actual rendered
+restart clicks and Undo Close retain marker/require consent; lost/reload never
+rerun commands silently. Evidence safety-overlay-v7-safety-workflows.json. Visual
+inspection confirms honest ended-session message and visible Start again; native
+icon is still overwritten on location change after reload, repair in progress.
+
+Firefox156 preparation: parent retargeted only common Settings import anchor;
+all5 production patches strictly apply and all12 Settings behavior tests pass on
+BOTH155 and156 hash-verified fixtures. This does not prove new156 site-association
+UI or native156 packaging. Official1.22.2b DMG hash verified and copied to disposable
+storage; no installed app changed. Upstream merge not yet performed.
+
+Security source review found additional non-accepted paths: All Tabs builds its own
+container list (shared menu filter does not cover it), extension removal can bypass
+terminal Settings cleanup, and156 sharing can import arbitrary URI through trusted
+creation. These are source findings, not claims of demonstrated remote execution.
+All Tabs strict-fixture repair is underway; extension cleanup and sharing remain
+release blockers pending scoped implementation/proof. No acceptance narrowing.
+
+Important packaging correction discovered by native proof: overlay/verifier were
+checking UNUSED copies of pin/workspace managers, not the browser's registered
+locations. Corrected to `chrome/browser/content/browser/zen-components/ZenPinnedTabManager.mjs`
+and `modules/zen/ZenSpaceManager.mjs`, verified against jar/build/preloader and
+actual official archive. Preparer now refuses nonexistent module destinations.
+Added regression: a correct unused copy cannot hide a stale actually loaded module.
+All9 verifier tests pass. Previous broad workflow results remain genuine observations
+but do NOT prove these manager changes were exercised; corrected-overlay reruns
+are required. Native Essentials itself restored same PID; status-text test was stale.

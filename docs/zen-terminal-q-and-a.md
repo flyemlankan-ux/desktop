@@ -77,3 +77,27 @@ all journeys, and hold personal migration. Preserve existing decisions: one nati
 container list; normal New Tab remains web; saved setups are separate from live
 shells; no automatic permission bypass; original Zen remains untouched.
 Detailed findings and workflow inventory: `zen-terminal-product-review.md`.
+
+
+## R15 — September19 explicit autonomous build approval
+Founder: “Go for it. Use as many sub-agents as you need. I've given you full autonomy.
+I want a fully, fully, fully done end-to-end project. Perfect.”
+This authorizes implementation and independent review of the recovered full product
+plan on Chubs. It does not erase original-browser safety or permit false completion
+claims. The builder chooses safe implementation details within the existing intent.
+No invented interview exchange or question count.
+
+### Delegated implementation decisions, not additional founder answers
+- Preserve native tab organization; selecting/restoring a terminal never unpins it.
+- A native pinned-tab reset/unload is not permanent deletion. Keep the shell unless
+  the last actual tab is removed; provide no misleading navigation/reset controls.
+- Saved starting folder is optional: empty means home; explicit absolute path, with native folder chooser. Validate before a NEW job; missing
+  directory stops safely. Existing healthy sessions reconnect independent of later edits.
+- Website link/open/reopen and ordinary NewTab stay web actions. Terminal launch is
+  deliberate. Private browsing refuses persistent terminal launch with clear feedback.
+- A live session's owner cannot change merely because a URL supplies another
+  container number. Copied profiles remain isolated; no automatic command execution
+  from untrusted website input.
+- Native visual components and system theme rather than a second terminal dashboard.
+- Latest compatible supported browser engine required before final deployment.
+  Real user journey proof, security review and honest release limits remain mandatory.

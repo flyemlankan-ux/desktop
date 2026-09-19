@@ -1,0 +1,18 @@
+{
+  "app": ".terminal-test/Zen Terminal Test.app",
+  "test_data": "synthetic profile and folders only",
+  "results": [
+    {
+      "test": "App owns only disposable profile and app-data",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "saved-setup native journey",
+      "result": "fail",
+      "detail": "Timed out: setup dialog; None"
+    }
+  ],
+  "native_picker_tested": false,
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/saved-setups-22cb01f6/gecko.log"
+}

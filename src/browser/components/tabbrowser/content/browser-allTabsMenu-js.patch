@@ -1,0 +1,18 @@
+diff --git a/browser/components/tabbrowser/content/browser-allTabsMenu.js b/browser/components/tabbrowser/content/browser-allTabsMenu.js
+--- a/browser/components/tabbrowser/content/browser-allTabsMenu.js
++++ b/browser/components/tabbrowser/content/browser-allTabsMenu.js
+@@ -175,7 +175,14 @@
+       let elements = [];
+       let frag = document.createDocumentFragment();
+ 
++      const { isTerminalContainerId } = ChromeUtils.importESModule(
++        "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs"
++      );
+       ContextualIdentityService.getPublicIdentities().forEach(identity => {
++        // This native list opens website identities, not saved shell commands.
++        if (isTerminalContainerId(identity.userContextId)) {
++          return;
++        }
+         let menuitem = document.createXULElement("toolbarbutton");
+         menuitem.setAttribute("class", "subviewbutton subviewbutton-iconic");
+         if (identity.name) {

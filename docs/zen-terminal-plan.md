@@ -40,3 +40,24 @@ all entry points, mixed-project organization/recovery, visual/accessibility chec
 security/performance and clean delivery. Personal migration is last and on hold.
 Reasoning high for behavior and ownership; medium for styling-only changes.
 Proof: complete native journeys and negative cases, not code-presence checks.
+
+
+## September19 approved execution
+Full product plan remains solely on Chubs at the saved SSH location. R15 authorizes
+parallel bounded implementation and independent review. First implement C15 native
+organization and C16 saved starting-folder lifecycle, with separate file ownership.
+Audit C17 concurrently, then integrate it without editing shared files concurrently.
+Parent alone runs native UI tests to prevent focus interference, builds disposable
+apps and independently reviews results. Next: mixed drag/drop/workspace/split/window
+journeys, visual/accessibility polish, security/remote/load, current-engine rebuild,
+clean package and upgrade/rollback, then safe personal copying. No terminal feature
+passing is a claim the whole matrix is complete. Reasoning high for behavior,
+strong focused tests + real Mac journeys; medium only for isolated visual styling.
+### Clarification Refresh unknown
+
+- Added: `2026-09-19T11:04:24Z`
+- Artifact: `plan`
+- Reason: R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.
+- Update note: Sequenced approved full-product implementation with bounded agent ownership and parent UI proof
+- Impacted index tags: `ZT-MIGRATE`, `ZT-UI`, `ZT-LIFE`, `ZT-RECIPE`, `ZT-RELEASE`
+- Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`

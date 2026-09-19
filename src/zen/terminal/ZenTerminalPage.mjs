@@ -6,12 +6,15 @@ import {
   getTerminalContainerRecipe,
   normalizeTerminalRecipe,
 } from "chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs";
-import { compileTerminalRecipeSteps } from "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs";
+import { compileTerminalRecipeSteps, validateTerminalStartingDirectory } from "chrome://browser/content/zen-terminal/ZenTerminalRecipeRunner.mjs";
 import {
   findTerminalTmuxCommand,
   getTerminalTmuxSessionName,
   normalizeTerminalSessionId,
   registerTerminalSession,
+  getTerminalSessionRecord,
+  markTerminalSessionStartupAttempt,
+  terminalSessionEndedError,
   resizeTerminalTmuxSession,
   prepareTerminalTmuxSession,
   terminalShellScript,
@@ -51,6 +54,7 @@ let inputQueue = Promise.resolve();
 let queuedInputBytes = 0;
 let pendingHighSurrogate = "";
 let tmuxSessionWasNew = false;
+let restartOffered = false;
 
 const MACOS_SUBPROCESS_OPTIONS =
   Services.appinfo.OS === "Darwin" ? { disclaim: true } : {};
@@ -99,10 +103,14 @@ function getStartupRecord() {
   return getTerminalContainerRecipe(userContextId);
 }
 
-function getStartupCommand() {
+function getNewSessionSettings() {
   const record = getStartupRecord();
   const recipe = normalizeTerminalRecipe(record?.recipe);
-  return compileTerminalRecipeSteps(recipe.steps);
+  const home = validateTerminalStartingDirectory(
+    recipe.startingDirectory || (recipe.startingDirectory === "" ? getHomeDirectory() : recipe.startingDirectory),
+    { checkExists: true },
+  );
+  return { shell: getShellCommand(), home, startupCommand: compileTerminalRecipeSteps(recipe.steps), rows: terminal.rows, columns: terminal.cols };
 }
 
 function shellQuote(value) {
@@ -128,6 +136,7 @@ function getShellLaunch({
   tmuxCommand = "",
   sessionId = "",
   startupCommand = "",
+  home = "",
 } = {}) {
   if (Services.appinfo.OS !== "Darwin") {
     throw new Error("This terminal build supports macOS only.");
@@ -151,7 +160,7 @@ function getShellLaunch({
         "-t",
         `=${getTerminalTmuxSessionName(sessionId)}`,
       ]
-    : ["-lic", terminalShellScript(shell, startupCommand)];
+    : ["-lic", terminalShellScript(shell, startupCommand, home)];
   return {
     command: helper.path,
     arguments: [
@@ -283,19 +292,50 @@ async function readPipe(pipe, className = "") {
   }
 }
 
-async function startShell() {
+function validateTerminalPageContext() {
+  const context = window.docShell.QueryInterface(Ci.nsILoadContext);
+  if (context.usePrivateBrowsing) {
+    throw new Error(
+      "Terminals are unavailable in private windows because shell history and files are not private. Open a normal window instead.",
+    );
+  }
+  const requested = getTerminalUserContextId();
+  const actual = context.originAttributes.userContextId;
+  if (!/^[1-9][0-9]*$/.test(requested || "") ||
+      !Number.isSafeInteger(Number(requested)) || Number(requested) !== actual) {
+    throw new Error("This terminal does not match its browser container. Open a new terminal from the New Tab menu.");
+  }
+  const { ContextualIdentityService } = ChromeUtils.importESModule(
+    "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs",
+  );
+  if (!ContextualIdentityService.getPublicIdentities().some(
+    identity => identity.userContextId === actual,
+  )) {
+    throw new Error("This saved terminal setup no longer exists. Choose another setup from the New Tab menu.");
+  }
+}
+
+async function startShell({ allowRestart = false } = {}) {
   try {
+    restartOffered = false;
+    document.getElementById("zen-terminal-reconnect").hidden = true;
     setStatus("starting terminal", false);
-    initTerminal();
+    if (!terminal) initTerminal();
+    validateTerminalPageContext();
     if (!getStartupRecord()) {
       throw new Error(
         "Choose a terminal container from the new-tab menu to open a terminal.",
       );
     }
-    // Validate before creating a session or launching any command.
-    const startupCommand = getStartupCommand();
+    // Existing work ignores later setup edits; only a new shell reads settings.
     const terminalSessionId = getTerminalSessionId();
     activeTerminalSessionId = terminalSessionId;
+    const oldRecord = getTerminalSessionRecord(terminalSessionId);
+    // The URL keeps this marker when Undo Close restores a tab whose session
+    // record was intentionally removed. It is never an automatic restart grant.
+    const previouslyStarted = getSearchParams().get("started") === "1" ||
+      oldRecord?.startupAttempted === true ||
+      (oldRecord && !Object.hasOwn(oldRecord, "startupAttempted"));
     if (
       !registerTerminalSession(terminalSessionId, {
         userContextId: getTerminalUserContextId(),
@@ -303,38 +343,53 @@ async function startShell() {
       })
     ) {
       throw new Error(
-        "This session is being closed. Open a new terminal tab instead.",
+        "This session is closed or belongs to another setup. Open a new terminal tab instead.",
       );
     }
     const tmuxCommand = await findTerminalTmuxCommand();
     if (stopping) return;
     activeTmuxCommand = tmuxCommand;
     // Check the installation before any saved recipe can execute.
+    if (!tmuxCommand && oldRecord?.persistent) {
+      throw new Error("The saved terminal needs tmux, which is unavailable. Restore tmux and retry; the existing job has not been replaced.");
+    }
+    if (!tmuxCommand && previouslyStarted && !allowRestart) {
+      throw terminalSessionEndedError();
+    }
+    const markTabStarted = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("started", "1");
+      window.history.replaceState(null, "", url.href);
+    };
+    const freshSettings = () => {
+      const settings = getNewSessionSettings();
+      markTabStarted();
+      return settings;
+    };
+    const directSettings = tmuxCommand ? null : freshSettings();
     activeShellLaunch = getShellLaunch({
+      ...directSettings,
       tmuxCommand,
       sessionId: terminalSessionId,
-      startupCommand,
     });
     if (tmuxCommand) {
       const result = await prepareTerminalTmuxSession(
         tmuxCommand,
         terminalSessionId,
-        {
-          shell: getShellCommand(),
-          home: getHomeDirectory(),
-          startupCommand,
-          rows: terminal.rows,
-          columns: terminal.cols,
-        },
+        freshSettings,
+        { allowRestart, previouslyStarted: Boolean(previouslyStarted) },
       );
       if (stopping) return;
       tmuxSessionWasNew = result.created;
     }
+    // Mark live reconnects too, so an old restored tab gains the Undo Close guard.
+    markTabStarted();
+    if (!tmuxCommand) markTerminalSessionStartupAttempt(terminalSessionId);
     const createdProcess = await Subprocess.call({
       ...MACOS_SUBPROCESS_OPTIONS,
       command: activeShellLaunch.command,
       arguments: activeShellLaunch.arguments,
-      workdir: getHomeDirectory(),
+      workdir: directSettings?.home || getHomeDirectory(),
       environmentAppend: true,
       environment: {
         TERM: "xterm-256color",
@@ -371,16 +426,23 @@ async function startShell() {
     terminal.options.disableStdin = true;
     if (!stopping) {
       terminal.writeln(`\r\nTerminal disconnected (exit ${result.exitCode}).`);
-      setStatus("disconnected · saved work has not been deleted", false);
-      document.getElementById("zen-terminal-reconnect").hidden = false;
+      setStatus("terminal disconnected · check whether its job is still running", false);
+      const button = document.getElementById("zen-terminal-reconnect");
+      button.textContent = "Check session";
+      button.hidden = false;
     }
   } catch (error) {
     shellReady = false;
     if (stopping) return;
     if (terminal) terminal.options.disableStdin = true;
     terminal?.writeln(`Could not open terminal: ${error.message}`);
-    setStatus("could not connect · saved work has not been deleted", false);
-    document.getElementById("zen-terminal-reconnect").hidden = false;
+    restartOffered = error.code === "ZEN_TERMINAL_SESSION_ENDED";
+    setStatus(restartOffered
+      ? "previous terminal ended · starting again runs your setup as a new job"
+      : error.message, false);
+    const button = document.getElementById("zen-terminal-reconnect");
+    button.textContent = restartOffered ? "Start again" : "Retry check";
+    button.hidden = false;
   }
 }
 
@@ -485,7 +547,7 @@ surface.addEventListener("mousedown", (event) => {
 });
 document
   .getElementById("zen-terminal-reconnect")
-  .addEventListener("click", () => window.location.reload());
+  .addEventListener("click", () => void startShell({ allowRestart: restartOffered }));
 window.addEventListener("pagehide", stopShell, { once: true });
 window.addEventListener("beforeunload", stopShell, { once: true });
 window.addEventListener("pageshow", () => {

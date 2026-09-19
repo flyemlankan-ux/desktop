@@ -63,3 +63,31 @@ sessions and whole-browser profiles. Every relevant entry point, destructive act
 recovery state and visual state requires scoped evidence or an explicit limitation.
 Reopen broad proved labels; do not erase historical passing evidence. Hold personal
 migration until the complete product review passes, even if original Zen closes.
+
+
+## September19 implementation rules — R15
+C15 (R01/R14/R15): tab marking must preserve pin, Essentials, group, workspace and
+native saved pin state. Hide terminal URL-reset decoration only. Website behavior
+unchanged. Actual permanent tab removal follows C05; pinned reset/unload does not.
+C16 (R02/R07/R14/R15): saved setup has optional absolute startingDirectory; blank
+means home, native folder picker and editable path. No shell/environment expansion
+of this path. Missing/inaccessible directory prevents all configured commands in a
+new session. Opening an existing live session ignores later setup edits. Setup
+edits never mutate existing jobs. Legacy stored recipes remain readable.
+C17 (R10/R14/R15): explicit terminal launch only; ordinary NewTab/link/navigation
+remain web. Private windows refuse persistent terminals. Actual browsing identity
+and immutable session ownership must agree with requested setup; no cross-owner
+reattach/deletion. Browser profiles stay separate. No secrets in diagnostics.
+C18 (R11/R14/R15): preserve native appearance in light/dark/compact and small split
+panes; inspect screenshots, keyboard paths and focus. All full-product matrix rows
+need evidence or an explicit supported-limit statement; latest compatible engine,
+clean packaging and upgrade/rollback proof precede personal deployment. Public
+notarization requires a real Apple identity; never impersonate one or weaken macOS.
+### Clarification Refresh unknown
+
+- Added: `2026-09-19T11:04:24Z`
+- Artifact: `contract`
+- Reason: R15 explicitly approves autonomous implementation; recovered original requirements and labelled conservative implementation decisions resolve build behavior, not acceptance evidence.
+- Update note: C15-C18 define native preservation, safe saved directories, security entry points and complete acceptance
+- Impacted index tags: `ZT-MIGRATE`, `ZT-UI`, `ZT-LIFE`, `ZT-RECIPE`, `ZT-RELEASE`
+- Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`
