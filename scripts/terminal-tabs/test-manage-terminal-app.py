@@ -42,6 +42,37 @@ class Tests(unittest.TestCase):
     def test_dry_run_has_no_filesystem_changes(self):
         before=set(self.root.iterdir());self.run_action();self.assertEqual(set(self.root.iterdir()),before)
 
+    def assert_update_refused(self):
+        with mock.patch.object(delivery.subprocess, 'run') as signature:
+            with self.assertRaisesRegex(ValueError, 'updat'):
+                delivery.verify(self.source, self.root, 'new', '156.0')
+            signature.assert_not_called()
+        self.assertFalse(self.dest.exists())
+        self.assertFalse(self.backup.exists())
+
+    def test_production_verifier_refuses_both_stock_updater_locations(self):
+        for relative in ('Contents/MacOS/updater.app',
+                         'Contents/Library/LaunchServices/org.mozilla.updater'):
+            with self.subTest(relative=relative):
+                path=self.source/relative;path.parent.mkdir(parents=True,exist_ok=True)
+                path.mkdir();self.assert_update_refused();path.rmdir()
+
+    def test_production_verifier_refuses_app_update_metadata(self):
+        path=self.source/'Contents/Resources/application.ini';original=path.read_bytes()
+        for suffix in (b'\n[AppUpdate]\n', b'\n;updates.zen-browser.app\n'):
+            with self.subTest(suffix=suffix):
+                path.write_bytes(original+suffix);self.assert_update_refused()
+
+    def test_production_verifier_refuses_stock_host_across_binary_chunk_boundary(self):
+        path=self.source/'Contents/MacOS/zen-terminal';path.parent.mkdir()
+        path.write_bytes(b'x'*(1024*1024-7)+b'updates.zen-browser.app'+b'x')
+        self.assert_update_refused()
+
+    def test_updater_isolation_allows_clean_binary_and_metadata(self):
+        path=self.source/'Contents/MacOS/zen-terminal';path.parent.mkdir()
+        path.write_bytes(b'synthetic clean executable')
+        delivery.reject_stock_updater(self.source)
+
     def test_install_verifies_source_and_stage_then_publishes(self):
         self.run_action(apply=True);self.assertEqual((self.dest/'payload').read_text(),'new')
         self.assertEqual(len(self.checks),2);self.assertFalse(self.backup.exists());self.assertTrue(self.source.exists())
@@ -191,12 +222,36 @@ class Tests(unittest.TestCase):
         self.assertEqual(result['large-native-fixture'][1],delivery.hashlib.sha256(b'x'*(4*1024*1024)).hexdigest())
 
     def test_production_verifier_requires_signature_and_exact_assets(self):
+        helper=self.source/'Contents/MacOS/zen-terminal-pty';helper.parent.mkdir(exist_ok=True)
+        helper.write_bytes(b'synthetic helper');helper.chmod(0o755)
         with mock.patch.object(delivery.subprocess,'run',side_effect=subprocess.CalledProcessError(1,['codesign'])):
             with self.assertRaises(subprocess.CalledProcessError):delivery.verify(self.source,self.root,'new','156.0')
         with mock.patch.object(delivery.subprocess,'run') as command:
             with self.assertRaises((AssertionError,FileNotFoundError)):
                 delivery.verify(self.source,self.root,'new','156.0')
             self.assertIn('--strict',command.call_args.args[0])
+
+    def test_production_verifier_requires_regular_executable_helper(self):
+        helper=self.source/'Contents/MacOS/zen-terminal-pty';helper.parent.mkdir()
+        with mock.patch.object(delivery.subprocess,'run') as signature:
+            for kind in ('missing','directory','nonexecutable'):
+                with self.subTest(kind=kind):
+                    if kind=='directory':helper.mkdir()
+                    elif kind=='nonexecutable':helper.write_bytes(b'synthetic');helper.chmod(0o644)
+                    with self.assertRaisesRegex(ValueError,'helper is required'):
+                        delivery.verify(self.source,self.root,'new','156.0')
+                    if helper.is_dir():helper.rmdir()
+            signature.assert_not_called()
+
+    def test_production_verifier_checks_helper_signature_after_app_signature(self):
+        helper=self.source/'Contents/MacOS/zen-terminal-pty';helper.parent.mkdir()
+        helper.write_bytes(b'synthetic');helper.chmod(0o755)
+        failure=subprocess.CalledProcessError(1,['codesign','helper'])
+        with mock.patch.object(delivery.subprocess,'run',side_effect=[None,failure]) as signature:
+            with self.assertRaises(subprocess.CalledProcessError):
+                delivery.verify(self.source,self.root,'new','156.0')
+            self.assertEqual(signature.call_args_list[0].args[0][-1],str(self.source))
+            self.assertEqual(signature.call_args_list[1].args[0],['codesign','--verify','--strict',str(helper)])
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

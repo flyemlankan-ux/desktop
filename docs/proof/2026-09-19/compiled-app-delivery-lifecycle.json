@@ -1,0 +1,155 @@
+{
+  "scope": "Real compiled app-only lifecycle; no UI, profiles or injected verification",
+  "results": [
+    {
+      "test": "dry-run older install",
+      "result": "pass",
+      "seconds": 1.42,
+      "detail": {
+        "action": "install",
+        "applied": false,
+        "profiles_changed": false,
+        "launch_performed": false,
+        "app": {
+          "version": "156.0-terminal-dev-20260919125712",
+          "engine": "156.0",
+          "build_id": "20260919125711"
+        },
+        "warning": "Retained apps do not make upgraded profiles backward-compatible. No browser is launched."
+      }
+    },
+    {
+      "test": "dry-run creates no installed app or files",
+      "result": "pass"
+    },
+    {
+      "test": "real older install",
+      "result": "pass",
+      "seconds": 3.84,
+      "detail": {
+        "action": "install",
+        "applied": true,
+        "profiles_changed": false,
+        "launch_performed": false,
+        "app": {
+          "version": "156.0-terminal-dev-20260919125712",
+          "engine": "156.0",
+          "build_id": "20260919125711"
+        },
+        "warning": "Retained apps do not make upgraded profiles backward-compatible. No browser is launched.",
+        "previous_app_retained": false,
+        "backup": null
+      }
+    },
+    {
+      "test": "installed older byte/mode snapshot matches source",
+      "result": "pass"
+    },
+    {
+      "test": "real newer upgrade retaining older",
+      "result": "pass",
+      "seconds": 6.34,
+      "detail": {
+        "action": "upgrade",
+        "applied": true,
+        "profiles_changed": false,
+        "launch_performed": false,
+        "app": {
+          "version": "156.0-terminal-dev-20260919142104",
+          "engine": "156.0",
+          "build_id": "20260919142104"
+        },
+        "warning": "Retained apps do not make upgraded profiles backward-compatible. No browser is launched.",
+        "previous_app_retained": true,
+        "backup": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-delivery-axyge2jk/older-retained.app"
+      }
+    },
+    {
+      "test": "upgrade retains exact old and installs exact new",
+      "result": "pass"
+    },
+    {
+      "test": "rollback refuses missing profile-risk acknowledgement without mutation",
+      "result": "pass"
+    },
+    {
+      "test": "explicit app-only rollback retaining newer",
+      "result": "pass",
+      "seconds": 4.92,
+      "detail": {
+        "action": "rollback",
+        "applied": true,
+        "profiles_changed": false,
+        "launch_performed": false,
+        "app": {
+          "version": "156.0-terminal-dev-20260919125712",
+          "engine": "156.0",
+          "build_id": "20260919125711"
+        },
+        "warning": "Retained apps do not make upgraded profiles backward-compatible. No browser is launched.",
+        "previous_app_retained": true,
+        "backup": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-delivery-axyge2jk/newer-retained.app"
+      }
+    },
+    {
+      "test": "rollback retains exact new and installs exact old",
+      "result": "pass"
+    },
+    {
+      "test": "app-only removal retains installed app",
+      "result": "pass",
+      "seconds": 2.19,
+      "detail": {
+        "action": "remove",
+        "applied": true,
+        "profiles_changed": false,
+        "launch_performed": false,
+        "app": {
+          "version": "156.0-terminal-dev-20260919125712",
+          "engine": "156.0",
+          "build_id": "20260919125711"
+        },
+        "warning": "Retained apps do not make upgraded profiles backward-compatible. No browser is launched.",
+        "previous_app_retained": true,
+        "backup": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-delivery-axyge2jk/removed-retained.app"
+      }
+    },
+    {
+      "test": "removal leaves exact retained copy and no installed app",
+      "result": "pass"
+    },
+    {
+      "test": "both source apps remain byte/mode identical",
+      "result": "pass"
+    }
+  ],
+  "fixture_additions": [
+    {
+      "path": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-0d0b370/source/scripts/terminal-tabs/fixtures/firefox156-sessionstore",
+      "reason": "Pristine upstream inputs only, used with this archived checkout's own patches; no production source or app edits"
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-0d0b370/Zen Terminal.app",
+      "identity": {
+        "version": "156.0-terminal-dev-20260919125712",
+        "engine": "156.0",
+        "build_id": "20260919125711"
+      },
+      "snapshot_sha256": "134216d46d419f6d127bc5a75011d864844e54ad93349395d14022f3c19e222b"
+    },
+    {
+      "path": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-0c2b163/Zen Terminal.app",
+      "identity": {
+        "version": "156.0-terminal-dev-20260919142104",
+        "engine": "156.0",
+        "build_id": "20260919142104"
+      },
+      "snapshot_sha256": "f923912d9fbeff014a62f74eb40bc7d55bd3ec429a41635faa8033c6ee32898d"
+    }
+  ],
+  "disposable_directory": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-delivery-axyge2jk",
+  "failure": null,
+  "disposable_copies_removed": true
+}

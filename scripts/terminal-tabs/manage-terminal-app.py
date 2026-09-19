@@ -49,6 +49,29 @@ def file_digest(path):
     return value.hexdigest()
 
 
+def reject_stock_updater(app):
+    """Apply the DMG inspector's update-isolation checks to app-only delivery."""
+    for relative in ('Contents/MacOS/updater.app',
+                     'Contents/Library/LaunchServices/org.mozilla.updater'):
+        if (app / relative).exists():
+            raise ValueError('Stock browser updater must not be packaged')
+    host = b'updates.zen-browser.app'
+    ini = (app / 'Contents/Resources/application.ini').read_bytes()
+    if b'[AppUpdate]' in ini or host in ini:
+        raise ValueError('Application metadata enables the stock browser updater')
+    executable = app / 'Contents/MacOS/zen-terminal'
+    # Missing executable is rejected by the complete signature check. Stream
+    # real binaries and retain the suffix so a chunk boundary cannot hide a host.
+    if executable.is_file():
+        tail = b''
+        with executable.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                data = tail + chunk
+                if host in data:
+                    raise ValueError('Terminal executable contains the stock update address')
+                tail = data[-(len(host) - 1):]
+
+
 def snapshot(app):
     safe_path(app)
     if not app.is_dir(): raise ValueError('App directory disappeared')
@@ -96,7 +119,12 @@ def identity(app, expected_version=None, expected_engine=None):
 
 def verify(app, root, expected_version, expected_engine):
     result = identity(app, expected_version, expected_engine)
+    reject_stock_updater(app)
+    helper = app / 'Contents/MacOS/zen-terminal-pty'
+    if not helper.is_file() or not os.access(helper, os.X_OK):
+        raise ValueError('Executable native terminal helper is required')
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
+    subprocess.run(['codesign', '--verify', '--strict', str(helper)], check=True)
     module('verify-terminal-app-assets').verify(app, root)
     if module('check-terminal-package-privacy').check_image(app):
         raise ValueError('Recognizable profile data found inside app')
