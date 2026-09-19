@@ -10,6 +10,7 @@ from marionette_driver.keys import Keys
 parser=argparse.ArgumentParser()
 parser.add_argument('--app', required=True, type=Path)
 parser.add_argument('--label', default='packaged')
+parser.add_argument('--extended', action='store_true', help='Also click an actual synthetic toolbar bookmark and test away/Return in a mirrored window')
 args=parser.parse_args()
 if not args.label.replace('-', '').replace('_', '').isalnum():parser.error('label must contain letters, digits, hyphens or underscores')
 root=Path(__file__).resolve().parents[2]
@@ -49,6 +50,8 @@ def start():
  assert Path(js('return Services.dirsvc.get("ProfD",Ci.nsIFile).path;')).resolve()==profile.resolve()
  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'browser ready')
 def js(script,args=None):return m.execute_script(script,script_args=args or [])
+def async_js(script,args=None):
+ return m.execute_async_script('const done=arguments[arguments.length-1];(async()=>{'+script+'})().then(value=>done({value}),error=>done({error:String(error)}));',script_args=args or [])
 def terminal_status():return js('return gBrowser.selectedBrowser.contentDocument?.getElementById("zen-terminal-status-text")?.textContent;')
 def tmux(*args):return subprocess.run(['/opt/homebrew/bin/tmux','-L',socket,*args],capture_output=True,text=True,timeout=5)
 def screen(name):
@@ -101,6 +104,45 @@ try:
  record('real address-bar navigation keeps job and shows native return notice')
  screen('navigation-away')
  click_notification_return();record('rendered native Return button reconnects same job without startup')
+ if args.extended:
+  # Creating test data and revealing native toolbar are explicitly method-based;
+  # activating the actual generated bookmark is a Marionette pointer click.
+  bookmark_url=website+'bookmark-click'
+  bookmark=async_js('Services.prefs.setBoolPref("browser.tabs.loadBookmarksInTabs",false);setToolbarVisibility(document.getElementById("PersonalToolbar"),true);const item=await PlacesUtils.bookmarks.insert({parentGuid:PlacesUtils.bookmarks.toolbarGuid,url:arguments[0],title:"Synthetic terminal navigation"});return item.guid;',[bookmark_url])
+  assert bookmark.get('value'),bookmark
+  before=js('return {count:gBrowser.tabs.length,id:navTab.id};')
+  bookmark_button=wait(lambda:js('return [...document.querySelectorAll("#PlacesToolbarItems toolbarbutton")].find(button=>button._placesNode?.uri===arguments[0]);',[bookmark_url]),'actual Places toolbar bookmark')
+  wait(lambda:bookmark_button.is_displayed() and bookmark_button.is_enabled(),'bookmark visible and enabled')
+  bookmark_button.click()
+  wait(lambda:current_url()==bookmark_url,'bookmark actual current-tab navigation')
+  wait(lambda:notification() and notification()['ready'],'bookmark away notice')
+  assert js('return gBrowser.selectedTab===navTab && gBrowser.tabs.length===arguments[0] && navTab.id===arguments[1] && navTab.linkedBrowser.contentPrincipal.isContentPrincipal;',[before['count'],before['id']])
+  same_job();record('actual synthetic bookmark click navigates owned terminal tab and preserves job',{'setup':'native Places insert and toolbar visibility methods','activation':'real rendered toolbar bookmark click'})
+  click_notification_return();record('actual Return after bookmark navigation reconnects original shell')
+  first_handle=m.current_chrome_window_handle
+  tab_id=js('return navTab.id;')
+  handles=set(m.chrome_window_handles);js('OpenBrowserWindow();')
+  second_handle=wait(lambda:next(iter(set(m.chrome_window_handles)-handles),None),'new owned mirrored window')
+  m.switch_to_window(second_handle);m.set_context('chrome')
+  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'mirrored window startup')
+  assert js('return Services.appinfo.processID;')==process.pid
+  assert Path(js('return Services.dirsvc.get("ProfD",Ci.nsIFile).path;')).resolve()==profile.resolve()
+  initialized=async_js('await gZenWorkspaces.promiseInitialized;return gZenWorkspaces.currentWindowIsSyncing;')
+  assert initialized.get('value'),initialized
+  wait(lambda:js('window.navTab=gBrowser.tabs.find(t=>t.id===arguments[0]);if(navTab)gBrowser.selectedTab=navTab;return !!navTab;',[tab_id]),'actual mirrored terminal tab')
+  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'mirrored terminal attaches same job')
+  same_job()
+  navigate_address(website+'mirrored-away')
+  assert 'Closing its last copy' in notification()['message']
+  record('actual address-bar navigation in mirrored window shows native away notice',{'windowSetup':'native OpenBrowserWindow and select mirrored tab methods','navigation':'actual address-bar keyboard input','ownedPID':process.pid})
+  click_notification_return()
+  js('window.close();')
+  wait(lambda:second_handle not in m.chrome_window_handles,'only second window closes')
+  m.switch_to_window(first_handle);m.set_context('chrome')
+  js('gBrowser.selectedTab=navTab;')
+  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'original view remains connected after mirror return/close')
+  same_job();assert notification() is None
+  record('actual mirrored Return and closing its window preserve original terminal job')
  navigate_address(website+'back-proof')
  js('navTab.linkedBrowser.goBack();')
  wait(lambda:terminal_status() and 'reconnected' in terminal_status(),'Back reconnect')
@@ -134,7 +176,7 @@ try:
  js('gBrowser.removeTab(navTab,{animate:false});')
  wait(lambda:tmux('has-session','-t','=zt_'+sid).returncode!=0,'final website view close destroys owned job')
  record('only final actual tab close ends the retained terminal job')
- for case in ['bookmark current-tab navigation','actual URL drag/drop into terminal','mirrored-window away notice','non-tmux native away wording']:
+ for case in (['actual URL drag/drop into terminal','non-tmux native away wording'] if args.extended else ['bookmark current-tab navigation','actual URL drag/drop into terminal','mirrored-window away notice','non-tmux native away wording']):
   results.append({'test':case,'result':'not_run','detail':'Separate native journey required; no substitution by address-bar/module checks.'})
 except Exception as error:
  failure=repr(error);raise
