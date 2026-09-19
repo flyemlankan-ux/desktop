@@ -1,0 +1,127 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Actual Gecko composition update/commit sends CJK, emoji and combining Unicode exactly once into real PTY",
+      "result": "pass",
+      "detail": {
+        "trusted_event_count": 4,
+        "byte_count": 10
+      }
+    },
+    {
+      "test": "Actual Gecko composition cancellation writes no bytes to shell receiver",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Real browser Option-b key action sends one Meta escape sequence to PTY",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "Timed out: real search match selected before composing Enter; None",
+  "search_diagnostics": {
+    "query": "SEARCH\u96ea",
+    "result": "Match found",
+    "selection": null,
+    "rows": 29,
+    "columns": 127,
+    "activeElement": "zen-terminal-find-input",
+    "composing": true,
+    "recentBuffer": [
+      "SEARCH\u96ea one",
+      "SEARCH\u96ea two",
+      "INPUT_RECEIVER_READY",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "inputEvents": [
+      {
+        "trusted": true,
+        "composing": true,
+        "inputType": "insertCompositionText",
+        "value": "SEARCH",
+        "time": 1789823486112
+      },
+      {
+        "trusted": true,
+        "composing": false,
+        "inputType": "insertCompositionText",
+        "value": "SEARCH",
+        "time": 1789823486114
+      },
+      {
+        "trusted": true,
+        "composing": true,
+        "inputType": "insertCompositionText",
+        "value": "SEARCH\u96ea",
+        "time": 1789823486119
+      }
+    ],
+    "layoutEvents": [
+      {
+        "type": "resize",
+        "time": 1789823485503,
+        "rows": 30,
+        "columns": 127
+      },
+      {
+        "type": "parsed",
+        "time": 1789823485513,
+        "rows": 30,
+        "columns": 127
+      },
+      {
+        "type": "parsed",
+        "time": 1789823485515,
+        "rows": 30,
+        "columns": 127
+      },
+      {
+        "type": "resize",
+        "time": 1789823486130,
+        "rows": 29,
+        "columns": 127
+      },
+      {
+        "type": "parsed",
+        "time": 1789823486134,
+        "rows": 29,
+        "columns": 127
+      },
+      {
+        "type": "parsed",
+        "time": 1789823486134,
+        "rows": 29,
+        "columns": 127
+      }
+    ]
+  },
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-b6928f73",
+  "scope": "real Firefox nsITextInputProcessor plus real PTY bytes; NOT actual macOS input-method/candidate UI"
+}

@@ -131,10 +131,11 @@ jobs:
           python3 scripts/terminal-tabs/test-package-terminal-macos.py
           python3 scripts/terminal-tabs/test-verify-terminal-app-assets.py
 
-      - name: Check rendered reduced-motion cursor protection
+      - name: Check rendered motion and search layout
         run: |
           npx playwright install chromium
           node scripts/terminal-tabs/test-terminal-reduced-motion.mjs
+          node scripts/terminal-tabs/test-terminal-search-layout.mjs
 
       - name: Prepare terminal fork identity
         shell: bash

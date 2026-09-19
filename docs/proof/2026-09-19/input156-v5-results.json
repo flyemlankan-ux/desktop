@@ -1,0 +1,42 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Actual Gecko composition update/commit sends CJK, emoji and combining Unicode exactly once into real PTY",
+      "result": "pass",
+      "detail": {
+        "trusted_event_count": 4,
+        "byte_count": 10
+      }
+    },
+    {
+      "test": "Actual Gecko composition cancellation writes no bytes to shell receiver",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Real browser Option-b key action sends one Meta escape sequence to PTY",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Gecko composing Enter remains composing; does not advance search selection or send shell bytes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Search Unicode commit and real Shift-Left selection stay inside search, not shell",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual macOS input source, candidate UI, dead keys and VoiceOver",
+      "result": "not_run",
+      "detail": "This test covers Firefox text-input integration only; no OS input-source/settings changes"
+    }
+  ],
+  "failure": null,
+  "search_diagnostics": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-54145d51",
+  "scope": "real Firefox nsITextInputProcessor plus real PTY bytes; NOT actual macOS input-method/candidate UI"
+}

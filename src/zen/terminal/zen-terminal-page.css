@@ -177,5 +177,6 @@ body {
   font: inherit;
 }
 #zen-terminal-find :focus-visible { outline: 2px solid AccentColor; outline-offset: 1px; }
-#zen-terminal-find-result { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
-#zen-terminal-find-result:empty { display: none; }
+/* Reserve the result line before the first query. Growing this row after a
+   match would resize the terminal and let a tmux redraw clear its selection. */
+#zen-terminal-find-result { grid-column: 1 / -1; min-width: 0; min-height: 1.25em; overflow-wrap: anywhere; }

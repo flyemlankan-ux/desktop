@@ -1,0 +1,26 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Actual Gecko composition update/commit sends CJK, emoji and combining Unicode exactly once into real PTY",
+      "result": "pass",
+      "detail": {
+        "trusted_event_count": 4,
+        "byte_count": 10
+      }
+    },
+    {
+      "test": "Actual Gecko composition cancellation writes no bytes to shell receiver",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Real browser Option-b key action sends one Meta escape sequence to PTY",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "Timed out: real search match selected before composing Enter; None",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-6467ab5f",
+  "scope": "real Firefox nsITextInputProcessor plus real PTY bytes; NOT actual macOS input-method/candidate UI"
+}
