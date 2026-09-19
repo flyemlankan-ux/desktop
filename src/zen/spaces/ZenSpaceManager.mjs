@@ -433,8 +433,9 @@ class nsZenWorkspaces {
     // Set a hidden state if the essentials section is not supposed
     // to be shown on the current workspace, else remove the hidden state
     if (
-      this.containerSpecificEssentials &&
-      this.getActiveWorkspaceFromCache()?.containerTabId != container
+      this.activeWorkspace === this.creatingWorkspaceId ||
+      (this.containerSpecificEssentials &&
+        this.getActiveWorkspaceFromCache()?.containerTabId + 0 != container)
     ) {
       essentialsContainer.setAttribute("hidden", "true");
     } else {
@@ -873,7 +874,7 @@ class nsZenWorkspaces {
       ) {
         this.log(`Found tab to select: ${this._tabToSelect}, ${tabs.length}`);
         let tabToUse = gZenGlanceManager.getTabOrGlanceParent(
-          tabs[this._tabToSelect + 1] || this._emptyTab
+          tabs[this._tabToSelect] || this._emptyTab
         );
         gBrowser.selectedTab = tabToUse;
         this._removedByStartupPage = true;
@@ -1773,10 +1774,10 @@ class nsZenWorkspaces {
     if (this.tabContainer) {
       this.tabContainer._invalidateCachedTabs();
     }
-    // Fix tabs _tPos values relative to the actual order
+    // Fix tabs _index values relative to the actual order
     const tabs = gBrowser.tabs;
     const usedGroups = new Set();
-    let tPos = 0; // _tPos is used for the session store, not needed for folders
+    let tPos = 0; // _index is used for the session store, not needed for folders
     let pPos = 0; // _pPos is used for the pinned tabs manager
     const recurseFolder = tab => {
       if (tab.group) {
@@ -1789,7 +1790,7 @@ class nsZenWorkspaces {
     };
     for (const tab of tabs) {
       recurseFolder(tab);
-      tab._tPos = tPos++;
+      tab._index = tPos++;
       if (!tab.hasAttribute("zen-empty-tab")) {
         tab._pPos = pPos++;
       }
@@ -2342,9 +2343,13 @@ class nsZenWorkspaces {
       )
     ) {
       tabToSelect = lastSelectedTab;
+    } else if (!onInit && !tabToSelect) {
+      // Create new tab if needed and no suitable tab was found
+      tabToSelect = this._emptyTab;
     }
     // Find first suitable tab
-    else {
+    // If we found a tab to select, select it
+    if (!tabToSelect || tabToSelect.closing) {
       tabToSelect = gBrowser.visibleTabs.find(tab => !tab.pinned);
       if (!tabToSelect && gBrowser.visibleTabs.length) {
         tabToSelect = gBrowser.visibleTabs[gBrowser.visibleTabs.length - 1];
@@ -2355,12 +2360,6 @@ class nsZenWorkspaces {
       }
     }
 
-    // If we found a tab to select, select it
-    if (!onInit && !tabToSelect) {
-      // Create new tab if needed and no suitable tab was found
-      const newTab = this.selectEmptyTab();
-      tabToSelect = newTab;
-    }
     if (tabToSelect && !onInit) {
       tabToSelect._visuallySelected = true;
     }
@@ -2891,6 +2890,12 @@ class nsZenWorkspaces {
     });
   }
 
+  contextShareWorkspace() {
+    const workspaceId =
+      this.#contextMenuData?.workspaceId || this.activeWorkspace;
+    gZenShareManager.shareSpace(workspaceId);
+  }
+
   async contextDeleteWorkspace() {
     const workspaceId =
       this.#contextMenuData?.workspaceId || this.activeWorkspace;
@@ -2907,7 +2912,10 @@ class nsZenWorkspaces {
   }
 
   findTabToBlur(tab) {
-    if ((!this._shouldChangeToTab(tab) || !tab) && this._emptyTab) {
+    if (
+      (!tab || !this._shouldChangeToTab(tab) || !gBrowser.tabs.includes(tab)) &&
+      this._emptyTab
+    ) {
       return this._emptyTab;
     }
     return tab;
@@ -3022,7 +3030,6 @@ class nsZenWorkspaces {
   getTabsToExclude(aTab) {
     const tabWorkspaceId = aTab.getAttribute("zen-workspace-id");
     const containerId = aTab.getAttribute("usercontextid") ?? "0";
-    // Return all tabs that are not on the same workspace
     return gBrowser.tabs.filter(
       tab =>
         !this._shouldShowTab(
@@ -3287,7 +3294,7 @@ class nsZenWorkspaces {
     if (!(!event || event.target === window)) {
       return;
     }
-    gZenUIManager.updateTabsToolbar();
+    gZenUIManager.updateTabsToolbar(!!event);
     // Check if workspace icons overflow the parent container
     let parent = this.workspaceIcons;
     if (!parent || this._processingResize) {

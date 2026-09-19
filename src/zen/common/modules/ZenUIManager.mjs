@@ -257,7 +257,7 @@ window.gZenUIManager = {
     };
   },
 
-  updateTabsToolbar() {
+  updateTabsToolbar(fromResizeEvent = false) {
     const kUrlbarHeight = 333;
     gURLBar.style.setProperty(
       "--zen-urlbar-top",
@@ -270,8 +270,8 @@ window.gZenUIManager = {
     gZenVerticalTabsManager.actualWindowButtons.removeAttribute(
       "zen-has-hover"
     );
-    gZenVerticalTabsManager.recalculateURLBarHeight(true);
-    if (!this._preventToolbarRebuild) {
+    gZenVerticalTabsManager.recalculateURLBarHeight(!fromResizeEvent);
+    if (!this._preventToolbarRebuild && !fromResizeEvent) {
       setTimeout(() => {
         gZenWorkspaces.updateTabsContainers();
       }, 0);
@@ -990,14 +990,7 @@ window.gZenVerticalTabsManager = {
     });
 
     ChromeUtils.defineLazyGetter(this, "hidesTabsToolbar", () => {
-      return (
-        document.documentElement
-          .getAttribute("chromehidden")
-          ?.includes("toolbar") ||
-        document.documentElement
-          .getAttribute("chromehidden")
-          ?.includes("menubar")
-      );
+      return document.documentElement.hasAttribute("popup-window");
     });
 
     XPCOMUtils.defineLazyPreferenceGetter(
@@ -1278,8 +1271,16 @@ window.gZenVerticalTabsManager = {
     if (gZenWorkspaces._processingResize) {
       return;
     }
+    this._pendingUrlbarFormatUpdate ||= updateFormat;
+    if (this._urlbarHeightRecalcScheduled) {
+      return;
+    }
+    this._urlbarHeightRecalcScheduled = true;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        delete this._urlbarHeightRecalcScheduled;
+        const shouldUpdateFormat = this._pendingUrlbarFormatUpdate;
+        delete this._pendingUrlbarFormatUpdate;
         gURLBar.removeAttribute("--urlbar-height");
         let height;
         if (!this._hasSetSingleToolbar) {
@@ -1290,7 +1291,7 @@ window.gZenVerticalTabsManager = {
         if (typeof height !== "undefined") {
           gURLBar.style.setProperty("--urlbar-height", `${height}px`);
         }
-        if (updateFormat) {
+        if (shouldUpdateFormat) {
           gURLBar.zenFormatURLValue();
         }
       });
@@ -1579,9 +1580,7 @@ window.gZenVerticalTabsManager = {
       return;
     }
     gURLBar._initCopyCutController();
-    gURLBar._initPasteAndGo();
-    gURLBar._initStripOnShare();
-    gURLBar._updatePlaceholderFromDefaultEngine();
+    gURLBar.updatePlaceholder();
   },
 
   rebuildAreas() {

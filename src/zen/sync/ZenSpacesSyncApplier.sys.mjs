@@ -11,12 +11,25 @@ import {
   ZenSpacesSyncModel,
 } from "resource:///modules/zen/ZenSpacesSyncModel.sys.mjs";
 
+import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
+
 const lazy = {};
 
+XPCOMUtils.defineLazyPreferenceGetter(
+  lazy,
+  "syncNormalTabs",
+  "zen.spaces-sync.normal-tabs",
+  false
+);
+
 ChromeUtils.defineESModuleGetters(lazy, {
-  SessionSaver: "resource:///modules/sessionstore/SessionSaver.sys.mjs",
+  SessionSaver:
+    "moz-src:///browser/components/sessionstore/SessionSaver.sys.mjs",
+  SessionStore:
+    "moz-src:///browser/components/sessionstore/SessionStore.sys.mjs",
   E10SUtils: "resource://gre/modules/E10SUtils.sys.mjs",
-  TabStateCache: "resource:///modules/sessionstore/TabStateCache.sys.mjs",
+  TabStateCache:
+    "moz-src:///browser/components/sessionstore/TabStateCache.sys.mjs",
   ZenWindowSync: "resource:///modules/zen/ZenWindowSync.sys.mjs",
   ZenLiveFoldersManager:
     "resource:///modules/zen/ZenLiveFoldersManager.sys.mjs",
@@ -84,6 +97,11 @@ class nsZenSpacesSyncApplier {
       if (!data) {
         continue;
       }
+      if (data.pinned === false && !lazy.syncNormalTabs) {
+        // Normal-tab syncing is off here: leave the record untouched and
+        // unacknowledged, like an unknown kind.
+        continue;
+      }
       const entry = { key: record.id, data, record };
       switch (record.cleartext.kind) {
         case RECORD_KINDS.CONTAINER:
@@ -141,6 +159,7 @@ class nsZenSpacesSyncApplier {
         fail(entry.record, noWindow);
       }
     } else {
+      await lazy.SessionStore.promiseAllWindowsRestored;
       await win.gZenWorkspaces.promiseInitialized;
       this.#maybePlayFirstSyncAnimation(win);
       // A sync apply is a materialization just like session restore,
@@ -510,9 +529,6 @@ class nsZenSpacesSyncApplier {
         if (!folder?.isZenFolder) {
           continue;
         }
-        // Members without their own tombstone survive: unpack, then delete
-        // the (now empty) folder.
-        await folder.unpackTabs();
         await folder.delete();
       } catch (e) {
         fail(record, e);
@@ -567,7 +583,9 @@ class nsZenSpacesSyncApplier {
       if (data.workspaceUuid) {
         tab.setAttribute("zen-workspace-id", data.workspaceUuid);
       }
-      win.gBrowser.pinTab(tab);
+      if (data.pinned !== false) {
+        win.gBrowser.pinTab(tab);
+      }
       if (data.workspaceUuid) {
         win.gZenWorkspaces.moveTabToWorkspace(tab, data.workspaceUuid);
       }
@@ -593,7 +611,10 @@ class nsZenSpacesSyncApplier {
     const identityChanged =
       initial?.entry?.url !== data.url ||
       (initial?.entry?.title || "") !== (data.title || "");
-    if (identityChanged || syncableIconUrl(initial?.image || "") !== icon) {
+    if (
+      data.pinned !== false &&
+      (identityChanged || syncableIconUrl(initial?.image || "") !== icon)
+    ) {
       lazy.ZenWindowSync.setPinnedInitialState(
         tab,
         { url: data.url, title: data.title || "" },
@@ -633,7 +654,7 @@ class nsZenSpacesSyncApplier {
         );
         win.gBrowser.setIcon(tab, icon);
         lazy.TabStateCache.update(tab.linkedBrowser.permanentKey, {
-          image: null,
+          image: icon || null,
         });
       } catch (e) {
         console.error("ZenSpacesSync: failed to set tab icon", e);
@@ -745,6 +766,17 @@ class nsZenSpacesSyncApplier {
       // The split record governs placement of its members.
       return;
     }
+    const wantPinned = data.pinned !== false;
+    if (wantPinned !== tab.pinned) {
+      if (wantPinned) {
+        win.gBrowser.pinTab(tab);
+      } else {
+        win.gBrowser.unpinTab(tab);
+        // Pin identity would otherwise freeze the projection of what is now
+        // a normal tab.
+        delete tab._zenPinnedInitialState;
+      }
+    }
     this.#applyFolderMembership(win, tab, data.folderId);
     if (
       !data.folderId &&
@@ -848,7 +880,7 @@ class nsZenSpacesSyncApplier {
         prev &&
         prev.parentNode &&
         prev.parentNode === el.parentNode &&
-        prev.nextElementSibling !== el
+        prev.compareDocumentPosition(el) & win.Node.DOCUMENT_POSITION_PRECEDING
       ) {
         win.gBrowser.zenHandleTabMove(el, () => prev.after(el));
       }
