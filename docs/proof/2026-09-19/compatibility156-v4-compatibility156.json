@@ -1,0 +1,79 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Native public methods, real DOM and one rendered dialog accept click; no remote sharing",
+  "results": [
+    {
+      "test": "owned Firefox156 process and synthetic browser data confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual All Tabs menu DOM excludes terminal setup and retains selected website",
+      "result": "pass",
+      "detail": [
+        {
+          "id": 1,
+          "label": null
+        },
+        {
+          "id": 2,
+          "label": null
+        },
+        {
+          "id": 3,
+          "label": null
+        },
+        {
+          "id": 4,
+          "label": null
+        },
+        {
+          "id": 7,
+          "label": "Website proof"
+        }
+      ]
+    },
+    {
+      "test": "loaded Firefox156 association choices exclude terminal and preserve web choice",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual ordinary New Tab ignores stale terminal workspace default",
+      "result": "pass",
+      "detail": {
+        "id": 0,
+        "terminal": false,
+        "uri": "about:blank",
+        "sessions": "{}"
+      }
+    },
+    {
+      "test": "native shared-document validation rejects nested chrome address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested javascript address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested file address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested data address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation preserves safe HTTPS support without loading a site",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError('Timed out: native preferences dialog controller; TypeError: can\\'t access property \"cloneNode\", template is null\\nstacktrace:\\n\\tSubDialog@resource://gre/modules/SubDialog.sys.mjs:56:3\\n\\tSubDialogManager@resource://gre/modules/SubDialog.sys.mjs:971:27\\n\\t@chrome://browser/content/preferences/preferences.js:128:10\\n\\t@scripts/terminal-tabs/test-terminal-compatibility156-macos.py:122:22\\n\\t@scripts/terminal-tabs/test-terminal-compatibility156-macos.py:123:8\\n\\tevaluate.sandbox/promise<@chrome://remote/content/marionette/evaluate.sys.mjs:127:10\\n\\tevaluate.sandbox@chrome://remote/content/marionette/evaluate.sys.mjs:103:17\\n\\texecuteScript@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:353:26\\n\\treceiveMessage@chrome://remote/content/marionette/actors/MarionetteCommandsChild.sys.mjs:209:31\\n')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-1431530b"
+}

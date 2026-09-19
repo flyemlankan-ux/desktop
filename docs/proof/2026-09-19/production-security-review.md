@@ -212,3 +212,66 @@ creation-before-page-start and failed addTab cleanup. Organization14, entrypoint
 workspace-default4 and native-polish logic also passed. No UI launched. Parent
 must rerun actual native last-close, duplication, lazy restore and Undo Close with
 the rebuilt receipt code before final acceptance.
+
+## Authorized follow-up implemented: visible navigation-away ownership
+
+The builder decision preserves native navigation and C05 process lifetime. An
+owned terminal tab displaying a website now receives one native per-tab,
+non-modal notification and a native **Return to terminal** context-menu action.
+Website address, favicon and page security controls are not overridden. The
+persistent-session wording explains final-close ownership; non-tmux wording says
+its unsaved connection disconnected rather than promising live recovery.
+
+Return reconstructs the internal address only from verified actual-container
+ownership and a still-existing setup. It includes `started=1`, so return cannot
+authorize a fresh recipe after the old process ended. There is no global redirect,
+modal warning or process destruction on navigation. A dismissed notice is saved
+in SessionStore for that session/owner and stays dismissed over web reload/restore;
+returning to the real terminal clears the dismissal for the next away journey.
+A native tab progress listener and restore/select events update the UI without
+polling. The per-window deletion observer only removes obsolete UI and is removed
+on window unload; shared process observers remain in SessionManager.
+
+`test-terminal-navigation-return.mjs`: **14 passed** for notification/message,
+one notice, persisted dismissal, context-menu return, started-marker address,
+no automatic load/kill/icon changes, next journey, plain-helper wording, private/
+wrong-owner/unowned refusal, deletion cleanup, late notification race and observer
+teardown. Existing close16, organization14, entrypoints21/workspace4 also passed.
+
+Added `test-terminal-navigation-macos.py` (syntax checked, NOT launched by this
+worker). It drives actual address-bar typing and rendered notification controls,
+Back/reload, persisted dismissal through quit/restart, native context return and
+final close with exact shell PID/startup counters. Bookmark/URL-drag/mirrored-away/
+non-tmux native journeys are explicitly not_run until separately exercised; module
+logic is not substituted for those native acceptance cases.
+
+### Independent follow-up: navigation ownership and callback review
+
+Read the implemented return action, progress listener, saved dismissal, observer
+cleanup and final-close ownership scan again. No confirmed privilege bypass or
+new process-destruction path was found. Return reconstructs the terminal address
+from the existing receipt and actual browser identity, rechecks the live record
+at click time, and adds `started=1`; it never grants restart consent. Dismissal
+belongs to one tab's saved data, not the shared job, so another copy keeps its
+notice. Last-close detection scans all live browser windows, including trusted
+website views retaining the receipt.
+
+Expanded production-class tests (synthetic browser services; no native UI):
+
+- `test-terminal-navigation-return.mjs`: **22 passed**. New checks cover ignored
+  subframe navigation, an unstarted receipt, a formerly valid button after pending
+  deletion, public identity removal, late append completion after close/deletion,
+  independent dismissal across two views, and multiselect menu hiding.
+- `test-terminal-close-ownership.mjs`: **19 passed**. New checks cover an away
+  owner in another live window and private/wrong-container copies that must not
+  prevent the real last owner from ending its job.
+
+Native notification source calls the `dismissed` callback synchronously inside
+`dismiss()`. A delayed native dismissal callback was therefore not treated as a
+confirmed race. Remaining low-impact uncertainty: the product removes its window
+observer/listener on unload, but does not explicitly invalidate an already-pending
+notification append solely because the whole window unloaded. Native append has
+its own disappearing-document error handling, and no automatic shell launch or
+kill is reachable from that completion. This is not claimed as native acceptance.
+The parent's actual navigation journey remains the evidence for rendered native
+controls, quit restoration and real process lifetime.

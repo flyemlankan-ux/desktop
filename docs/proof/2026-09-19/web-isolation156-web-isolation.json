@@ -1,0 +1,68 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Real localhost web actions, optional ordinary temporary extension, synthetic orphan fixture; no personal profiles",
+  "results": [
+    {
+      "test": "owned native browser with synthetic terminal setup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "ordinary same-container website cannot launch terminal via iframe",
+      "result": "pass",
+      "detail": {
+        "kind": "web",
+        "mode": "iframe",
+        "result": "attempted"
+      }
+    },
+    {
+      "test": "ordinary same-container website cannot launch terminal via top",
+      "result": "pass",
+      "detail": {
+        "kind": "web",
+        "mode": "top",
+        "result": "TypeError: Location.assign: Access to 'chrome://browser/content/zen-terminal/terminal.xhtml?session=web-top-0f25826b2b&userContextId=7' from script denied."
+      }
+    },
+    {
+      "test": "ordinary same-container website cannot launch terminal via popup",
+      "result": "pass",
+      "detail": {
+        "kind": "web",
+        "mode": "popup",
+        "result": "Error: Access to 'chrome://browser/content/zen-terminal/terminal.xhtml?session=web-popup-ba2be2b5ea&userContextId=7' from script denied"
+      }
+    },
+    {
+      "test": "ordinary temporary extension tabs.create/update reject terminal chrome",
+      "result": "pass",
+      "detail": {
+        "kind": "extension",
+        "results": [
+          {
+            "operation": "create",
+            "rejected": true,
+            "message": "Error: Illegal URL: chrome://browser/content/zen-terminal/terminal.xhtml?session=extension-07eb5a3a46&userContextId=7"
+          },
+          {
+            "operation": "update",
+            "rejected": true,
+            "message": "Error: Illegal URL: chrome://browser/content/zen-terminal/terminal.xhtml?session=extension-07eb5a3a46&userContextId=7"
+          }
+        ]
+      }
+    },
+    {
+      "test": "closing rejected mismatched page cannot destroy a known orphan session",
+      "result": "pass",
+      "detail": {
+        "session": "163d2ff9-9710-490c-89dc-941973af361c",
+        "pid": "77798",
+        "fixture": "synthetic owned viewer receipt deliberately cleared after detachment"
+      }
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-4377be58"
+}

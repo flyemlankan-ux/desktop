@@ -115,3 +115,9 @@ compare browser security baseline before migration. Never label pending cases pa
 - Update note: B15-B18 include adversarial and actual native user journeys, scoped evidence required
 - Impacted index tags: `ZT-MIGRATE`, `ZT-UI`, `ZT-LIFE`, `ZT-RECIPE`, `ZT-RELEASE`
 - Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`
+
+C17 navigation-away additions: native addressbar/bookmark/drop navigation, Back,
+reload, duplicate/mirror, final-close, quit/restore while away, dismissed-message
+context-menu Return, ended-session consent, deleted/wrong/private setup refusal.
+Measure exact PID/startup count and ownership throughout; never substitute function
+extraction for actual UI acceptance. Keep actual website address/favicon unchanged.

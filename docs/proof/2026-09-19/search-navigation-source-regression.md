@@ -1,0 +1,9 @@
+# Search/navigation source regression and build checks
+
+1. Where we are: current Firefox156 terminal source passes all 22 current build-check commands run here. Native keyboard/navigation and final package acceptance remain parent-owned.
+2. Changed: GitHub terminal macOS development build now runs `test-terminal-search.mjs` and `test-terminal-navigation-return.mjs` alongside existing checks. No production source changes.
+3. Overall: normal Zen with working terminal tabs and safe saved setups, rather than a separate terminal-looking website.
+4. Not built: no cloud build started, no native browser launched, no personal data touched, no new binary compiled. PTY checks use the already-built helper.
+5. Proof: full command/output details in adjacent `.json` and `.log`. All current156 non-UI JS tests pass, including settings, associations, organization, entrypoints, ownership, sharing, search and navigation. Current CI Python checks pass: synthetic profile copy, real helper, signed development-DMG fixture, Firefox156 native assembly/repack, packaging commands, exact asset verifier. `git diff --check` passes. Legacy Firefox155 settings were intentionally excluded because they are not the current engine target; rendered-browser/native-app tests excluded because parent owns UI.
+6. Additional honest limit: an extra legacy recovery safety suite (outside current CI) ran 9 tests: 8 passed and 1 could not import its pinned155 packager because system Python lacks the `packaging` module. This environment error is retained in the log; it is not called a pass or a product defect. No dependency installation was attempted.
+7. Next and drift: parent completes actual native keyboard/navigation and source-built package checks. Recommended reasoning high for key/focus/security failures; proof level focused source plus actual native journey. Scope remains the requested browser-terminal experience, not a redesign.

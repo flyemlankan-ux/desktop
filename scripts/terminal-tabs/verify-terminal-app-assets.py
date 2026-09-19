@@ -86,7 +86,7 @@ def verify(app, root):
             entry = 'chrome/browser/content/browser/' + match[1]
             require(read(entry) == (root / 'src/zen/terminal' / match[2]).read_bytes(), f'Missing or stale terminal asset: {entry}')
             count += 1
-        require(count >= 10, 'Terminal asset manifest is incomplete')
+        require(count >= 14, 'Terminal asset manifest is incomplete')
         for bundled, source in [
             ('chrome/browser/content/browser/ZenPreloadedScripts.js', 'src/zen/common/ZenPreloadedScripts.js'),
             ('chrome/browser/content/browser/ZenUIManager.mjs', 'src/zen/common/modules/ZenUIManager.mjs'),

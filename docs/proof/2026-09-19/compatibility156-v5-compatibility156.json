@@ -1,0 +1,94 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Native public methods, real DOM and one rendered dialog accept click; no remote sharing",
+  "results": [
+    {
+      "test": "owned Firefox156 process and synthetic browser data confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual All Tabs menu DOM excludes terminal setup and retains selected website",
+      "result": "pass",
+      "detail": [
+        {
+          "id": 1,
+          "label": null
+        },
+        {
+          "id": 2,
+          "label": null
+        },
+        {
+          "id": 3,
+          "label": null
+        },
+        {
+          "id": 4,
+          "label": null
+        },
+        {
+          "id": 7,
+          "label": "Website proof"
+        }
+      ]
+    },
+    {
+      "test": "loaded Firefox156 association choices exclude terminal and preserve web choice",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual ordinary New Tab ignores stale terminal workspace default",
+      "result": "pass",
+      "detail": {
+        "id": 0,
+        "terminal": false,
+        "uri": "about:blank",
+        "sessions": "{}"
+      }
+    },
+    {
+      "test": "native shared-document validation rejects nested chrome address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested javascript address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested file address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation rejects nested data address without browser changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native shared-document validation preserves safe HTTPS support without loading a site",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "rendered native site-association dialog contains web choices and excludes terminal",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual accept click refuses a setup changed to terminal and keeps dialog open",
+      "result": "pass",
+      "detail": "Choose an existing web container. Terminal setups cannot be used for websites."
+    },
+    {
+      "test": "full native share import UI",
+      "result": "not_run",
+      "detail": "Public validation proved; no network share fetched and no private method extracted"
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-c1cb23ef"
+}

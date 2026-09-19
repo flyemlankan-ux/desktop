@@ -57,6 +57,11 @@ let queuedInputBytes = 0;
 let pendingHighSurrogate = "";
 let tmuxSessionWasNew = false;
 let restartOffered = false;
+let readyStatusText = "";
+let inputWarningActive = false;
+let inputWarningVersion = 0;
+let reducedMotionQuery = null;
+let searchAddon = null;
 
 const MACOS_SUBPROCESS_OPTIONS =
   Services.appinfo.OS === "Darwin" ? { disclaim: true } : {};
@@ -126,9 +131,79 @@ function getHomeDirectory() {
 }
 
 function setStatus(text, isReady = false) {
+  if (isReady) readyStatusText = text;
+  inputWarningActive = false;
+  surface.toggleAttribute("terminal-input-warning", false);
   terminalPrompt.textContent = isReady ? "›_" : "…";
   statusText.textContent = text;
   surface.toggleAttribute("terminal-ready", isReady);
+}
+
+function setInputWarning(text) {
+  // Rejected input did not disconnect the shell. Keep its real ready state.
+  inputWarningActive = true;
+  inputWarningVersion++;
+  statusText.textContent = text;
+  surface.toggleAttribute("terminal-input-warning", true);
+}
+
+function updateTerminalMotion() {
+  if (!terminal || stopping) return;
+  const reduced = Boolean(reducedMotionQuery?.matches);
+  terminal.options.cursorBlink = !reduced;
+  terminal.options.smoothScrollDuration = reduced ? 0 : 80;
+}
+
+// Search only reads this viewer's bounded scrollback. It never writes shell input.
+function runTerminalSearch(previous = false, incremental = false) {
+  const input = document.getElementById("zen-terminal-find-input");
+  const result = document.getElementById("zen-terminal-find-result");
+  if (!searchAddon) return;
+  if (!input.value) {
+    searchAddon.clearDecorations();
+    terminal.clearSelection();
+    result.textContent = "";
+    return;
+  }
+  const options = { regex: false, caseSensitive: false, incremental };
+  const found = previous
+    ? searchAddon.findPrevious(input.value, options)
+    : searchAddon.findNext(input.value, options);
+  result.textContent = found ? "Match found" : "No matches";
+}
+
+function openTerminalSearch() {
+  if (!terminal || stopping) return;
+  document.getElementById("zen-terminal-find").hidden = false;
+  surface.toggleAttribute("terminal-search-open", true);
+  const input = document.getElementById("zen-terminal-find-input");
+  input.focus();
+  input.select();
+  scheduleTerminalFit();
+}
+
+function closeTerminalSearch() {
+  document.getElementById("zen-terminal-find").hidden = true;
+  surface.toggleAttribute("terminal-search-open", false);
+  searchAddon?.clearDecorations();
+  terminal?.clearSelection();
+  scheduleTerminalFit();
+  terminal?.focus();
+}
+
+function handleTerminalSearchKey(event) {
+  const open = !document.getElementById("zen-terminal-find").hidden;
+  const shortcut = (event.metaKey || event.ctrlKey) && !event.altKey &&
+    !event.shiftKey && event.key.toLowerCase() === "f";
+  if (shortcut || (open && !event.isComposing &&
+      (event.key === "Escape" || event.key === "Enter"))) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (event.type !== "keydown") return;
+    if (shortcut) openTerminalSearch();
+    else if (event.key === "Escape") closeTerminalSearch();
+    else runTerminalSearch(event.shiftKey);
+  }
 }
 
 function getShellCommand() {
@@ -224,10 +299,11 @@ function initTerminal() {
     throw new Error("xterm.js FitAddon did not load");
   }
 
+  reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
   terminal = new window.Terminal({
     allowProposedApi: false,
     convertEol: false,
-    cursorBlink: true,
+    cursorBlink: !reducedMotionQuery?.matches,
     cursorStyle: "bar",
     customGlyphs: false,
     disableStdin: true,
@@ -241,7 +317,7 @@ function initTerminal() {
     lineHeight: 1.18,
     macOptionIsMeta: true,
     scrollback: 10000,
-    smoothScrollDuration: 80,
+    smoothScrollDuration: reducedMotionQuery?.matches ? 0 : 80,
     theme: {
       background: "#050505",
       foreground: "#eeeeee",
@@ -269,6 +345,9 @@ function initTerminal() {
   fitAddon = new window.FitAddon.FitAddon();
   terminal.loadAddon(fitAddon);
   terminal.open(output);
+  searchAddon = new window.SearchAddon.SearchAddon({ highlightLimit: 100 });
+  terminal.loadAddon(searchAddon);
+  reducedMotionQuery?.addEventListener("change", updateTerminalMotion);
   // One screen and one subscription per page; never suppress valid repeated keys.
   fitTerminalToSurface();
   terminal.focus();
@@ -498,16 +577,25 @@ async function flushTmuxResizeQueue() {
   }
 }
 
-function writeFrame(frame) {
+function writeFrame(frame, { isInput = false } = {}) {
   const bytes = new TextEncoder().encode(frame).length;
   if (!shellProcess || !shellReady || stopping) return Promise.resolve();
   if (queuedInputBytes + bytes > 4 * 1024 * 1024) {
-    setStatus("input is busy · wait before pasting more", false);
+    setInputWarning("input is busy · wait before pasting more");
     return Promise.resolve();
   }
   queuedInputBytes += bytes;
+  const warningAtAcceptance = inputWarningVersion;
   const task = inputQueue.then(async () => {
-    if (!stopping && shellReady) await shellProcess.stdin.write(frame);
+    if (!stopping && shellReady) {
+      await shellProcess.stdin.write(frame);
+      // Only later successful user input clears feedback. An earlier queued
+      // write or a resize must not erase a newly reported rejected paste.
+      if (isInput && !stopping && shellReady && inputWarningActive &&
+          warningAtAcceptance === inputWarningVersion) {
+        setStatus(readyStatusText, true);
+      }
+    }
   });
   inputQueue = task
     .catch((error) => {
@@ -533,7 +621,7 @@ function writeToShell(text) {
   const encoder = new TextEncoder();
   // Reject an oversized paste as a whole, never execute a truncated command.
   if (encoder.encode(text).length + queuedInputBytes > 4 * 1024 * 1024) {
-    setStatus("paste too large · limit is 4 MB", false);
+    setInputWarning("paste too large · limit is 4 MB");
     return Promise.resolve();
   }
   let framed = "";
@@ -544,7 +632,7 @@ function writeToShell(text) {
     framed += `I${encoder.encode(chunk).length}\n${chunk}`;
     offset = end;
   }
-  return writeFrame(framed);
+  return writeFrame(framed, { isInput: true });
 }
 
 const sessionDeleteObserver = {
@@ -559,8 +647,17 @@ const sessionDeleteObserver = {
 Services.obs?.addObserver?.(sessionDeleteObserver, ZEN_TERMINAL_SESSION_DELETE_TOPIC);
 
 surface.addEventListener("mousedown", (event) => {
-  if (!event.target.closest("button")) terminal?.focus();
+  if (!event.target.closest("button, input, #zen-terminal-find")) terminal?.focus();
 });
+// Capture before xterm sees the shortcut; search input lives outside its textarea.
+for (const type of ["keydown", "keypress", "keyup"]) {
+  window.addEventListener(type, handleTerminalSearchKey, true);
+}
+document.getElementById("zen-terminal-find-input").addEventListener("input", () => runTerminalSearch(false, true));
+document.getElementById("zen-terminal-find-previous").addEventListener("click", () => runTerminalSearch(true));
+document.getElementById("zen-terminal-find-next").addEventListener("click", () => runTerminalSearch());
+document.getElementById("zen-terminal-find-close").addEventListener("click", closeTerminalSearch);
+
 document
   .getElementById("zen-terminal-reconnect")
   .addEventListener("click", () => void startShell({ allowRestart: restartOffered }));
@@ -575,6 +672,13 @@ async function stopShell() {
   try { Services.obs?.removeObserver?.(sessionDeleteObserver, ZEN_TERMINAL_SESSION_DELETE_TOPIC); } catch (_) {}
   stopping = true;
   shellReady = false;
+  for (const type of ["keydown", "keypress", "keyup"]) {
+    window.removeEventListener(type, handleTerminalSearchKey, true);
+  }
+  searchAddon?.dispose();
+  searchAddon = null;
+  reducedMotionQuery?.removeEventListener("change", updateTerminalMotion);
+  reducedMotionQuery = null;
   try {
     resizeObserver?.disconnect();
     resizeObserver = null;

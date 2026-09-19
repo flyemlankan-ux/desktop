@@ -1,0 +1,126 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic profile; W3C native keyboard input; constructor capture is test-only observation, not patched product logic",
+  "results": [
+    {
+      "test": "owned process, synthetic profile, real terminal and shell confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "synthetic reduced-motion preference reaches actual matchMedia and xterm options",
+      "result": "pass",
+      "detail": {
+        "matches": true,
+        "blink": false,
+        "scroll": 0
+      }
+    },
+    {
+      "test": "Cmd+F native keyboard: terminal-only find, literal text, navigation, no-match, no shell execution, Escape focus",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Ctrl+F native keyboard: terminal-only find, literal text, navigation, no-match, no shell execution, Escape focus",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "reload restores terminal focus and same saved shell",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "detached viewer reconnect restores focus without changing saved shell",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "light system preference small window controls/status fit; terminal intentionally stays dark",
+      "result": "pass",
+      "detail": [
+        {
+          "id": "zen-terminal-find",
+          "width": 376,
+          "height": 60,
+          "left": 0,
+          "right": 376,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-find-input",
+          "width": 256.66668701171875,
+          "height": 27,
+          "left": 12,
+          "right": 268.66668701171875,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-find-result",
+          "width": 352,
+          "height": 15,
+          "left": 12,
+          "right": 364,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-status",
+          "width": 376,
+          "height": 33,
+          "left": 0,
+          "right": 376,
+          "viewport": 376,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "test": "dark system preference small window controls/status fit; terminal intentionally stays dark",
+      "result": "pass",
+      "detail": [
+        {
+          "id": "zen-terminal-find",
+          "width": 376,
+          "height": 60,
+          "left": 0,
+          "right": 376,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-find-input",
+          "width": 256.66668701171875,
+          "height": 27,
+          "left": 12,
+          "right": 268.66668701171875,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-find-result",
+          "width": 352,
+          "height": 15,
+          "left": 12,
+          "right": 364,
+          "viewport": 376,
+          "overflow": false
+        },
+        {
+          "id": "zen-terminal-status",
+          "width": 376,
+          "height": 33,
+          "left": 0,
+          "right": 376,
+          "viewport": 376,
+          "overflow": false
+        }
+      ]
+    }
+  ],
+  "failure": "AssertionError('Timed out: live reduced-motion off; None')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-7cea9050"
+}

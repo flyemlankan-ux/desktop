@@ -1,0 +1,9 @@
+# Cloud build 35441216400: narrow configure fix
+
+1. Where we are: the Apple Silicon cloud build failed during Gecko configuration, before compilation. It did not produce an accepted app.
+2. Cause and change: `src/zen/share/moz.build` listed `ZenShareSafety.sys.mjs` before `ZenShareManager.mjs`. Mozilla requires this list to be alphabetically sorted ignoring case. Reordered those two entries; neither module nor security logic was removed or modified.
+3. Overall goal: a source-built Zen Terminal app, not a repackaged old engine shortcut.
+4. Not done: no new build dispatched by this worker, no claim that compilation/package creation now passes, no native UI run.
+5. Proof: exact failed cloud log retrieved using `gh run view 35441216400 -R flyemlankan-ux/desktop --log-failed`. It reports `mozbuild.util.UnsortedError`, expected `ZenShareManager.mjs` but got `ZenShareSafety.sys.mjs`, at `engine/zen/share/moz.build` line5. New `test-terminal-build-declarations.py` passes four tests: catches that historical failure, scans literal sorted module/source lists across24 Zen build declarations, preserves meaningful DIRS ordering, and confirms security module remains registered exactly once. Wired this preflight into the development build workflow. Share-safety63cases, terminal wiring/syntax and diff whitespace checks pass.
+6. Next: parent commits complete current source and dispatches the new source build; monitor configure then compile then package stages separately. Recommended reasoning medium for this mechanical declaration fix; proof focused source test plus actual cloud build, not unrelated UI regressions.
+7. Drift: no feature/security-policy change. Previous source checks missed a build-language ordering rule; the new preflight catches that specific class without pretending to replace full Gecko configuration.

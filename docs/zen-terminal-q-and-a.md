@@ -101,3 +101,14 @@ No invented interview exchange or question count.
 - Native visual components and system theme rather than a second terminal dashboard.
 - Latest compatible supported browser engine required before final deployment.
   Real user journey proof, security review and honest release limits remain mandatory.
+
+### R15 implementation decision — navigation away (builder, not a new founder answer)
+
+Within the founder's autonomous completion approval and C05/C17, retain normal Zen
+navigation. A website replacing a terminal viewer must not secretly hide the owned
+job: show one native nonmodal per-tab explanation and a Return to terminal button,
+plus a normal tab-context-menu fallback after dismissal. Return uses verified owner
+receipt, never webpage input, and includes previously-started protection. Saved
+jobs detach/reconnect; missing/direct-ended jobs require explicit Start again.
+No modal on reload/Back/quit; no broad redirect into new tabs; no fake website
+address/favicon. Final actual last-copy close still ends the matching job.

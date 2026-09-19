@@ -15,3 +15,6 @@
         content/browser/zen-terminal/vendor/xterm.css                       (../../zen/terminal/vendor/xterm.css)
 
         content/browser/zen-terminal/vendor/LICENSE.xterm.txt              (../../zen/terminal/vendor/LICENSE.xterm.txt)
+
+        content/browser/zen-terminal/vendor/addon-search.js                    (../../zen/terminal/vendor/addon-search.js)
+        content/browser/zen-terminal/vendor/LICENSE.addon-search.txt                    (../../zen/terminal/vendor/LICENSE.addon-search.txt)

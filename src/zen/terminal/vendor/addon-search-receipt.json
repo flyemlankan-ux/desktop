@@ -1,0 +1,11 @@
+{
+  "package": "@xterm/addon-search",
+  "version": "0.16.0",
+  "gitHead": "f447274f430fd22513f6adbf9862d19524471c04",
+  "tarball": "https://registry.npmjs.org/@xterm/addon-search/-/addon-search-0.16.0.tgz",
+  "integrity": "sha512-9OeuBFu0/uZJPu+9AHKY6g/w0Czyb/Ut0A5t79I4ULoU4IfU5BEpPFVGQxP4zTTMdfZEYkVIRYbHBX1xWwjeSA==",
+  "sha256": {
+    "addon-search.js": "7bc1b8c7b3549411f6f6f779524c4ded6ca621fd80d64b40a70ae7c78aefbf55",
+    "LICENSE.addon-search.txt": "689ceb10716bd7a87a804c14951d7c2b818cbd60aab83d540902470ce3b13444"
+  }
+}

@@ -68,7 +68,7 @@ class VerificationTests(unittest.TestCase):
 
     def test_compressed_resources(self):
         self.pack()
-        self.assertEqual(module.verify(self.app, ROOT)['terminal_assets'], 12)
+        self.assertEqual(module.verify(self.app, ROOT)['terminal_assets'], 14)
 
     def test_unused_copy_does_not_hide_stale_registered_module(self):
         for entry, source in [

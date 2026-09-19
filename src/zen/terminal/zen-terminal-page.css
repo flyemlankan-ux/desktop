@@ -120,6 +120,10 @@ body {
   color: rgba(244, 247, 239, 0.74);
 }
 
+#zen-terminal-surface[terminal-input-warning] #zen-terminal-status-text {
+  color: #f4d35e;
+}
+
 #zen-terminal-reconnect {
   color: #eeeeee;
   background: #262626;
@@ -143,3 +147,29 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+#zen-terminal-surface[terminal-search-open] {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+#zen-terminal-find {
+  display: grid;
+  grid-template-columns: minmax(40px, 1fr) repeat(3, auto);
+  gap: 5px;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid #333;
+  font-size: 12px;
+}
+#zen-terminal-find[hidden] { display: none; }
+#zen-terminal-find input, #zen-terminal-find button {
+  min-width: 0;
+  color: #eee;
+  background: #262626;
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font: inherit;
+}
+#zen-terminal-find :focus-visible { outline: 2px solid AccentColor; outline-offset: 1px; }
+#zen-terminal-find-result { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+#zen-terminal-find-result:empty { display: none; }

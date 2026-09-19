@@ -91,3 +91,14 @@ notarization requires a real Apple identity; never impersonate one or weaken mac
 - Update note: C15-C18 define native preservation, safe saved directories, security entry points and complete acceptance
 - Impacted index tags: `ZT-MIGRATE`, `ZT-UI`, `ZT-LIFE`, `ZT-RECIPE`, `ZT-RELEASE`
 - Contradiction review: `/Users/ar/zen-terminal-research/desktop-stable/docs/zen-terminal-q-and-a-contradiction-review.md`
+
+#### C17 navigation-away completion (R15 builder decision)
+Normal Zen navigation remains. While an owned terminal tab shows a website, a
+native per-tab nonmodal explanation and Return to terminal button reveal retained
+ownership. A native tab context-menu Return remains after dismissal. Return must
+revalidate actual owner identity/record, rebuild only the trusted terminal URI and
+carry started=1, preserving explicit consent for ended work. Never use website
+content/URI as execution authority. Preserve real website address/favicon/security
+controls. Reload/Back/quit get no modal. C05 final actual last-copy close remains
+the only tab-lifecycle event destroying saved work. Unsaved/direct sessions must
+not claim persistence. Dismissal lasts for the same away journey, including reload.

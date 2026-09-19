@@ -1,0 +1,7 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic profile; W3C native keyboard input; constructor capture is test-only observation, not patched product logic",
+  "results": [],
+  "failure": "JavascriptException('SyntaxError: missing } after property list')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-f55e5e90"
+}

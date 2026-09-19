@@ -501,6 +501,32 @@ try {
       });
     },
   );
+  await check("Scrollback search is literal, keyboard-accessible and never executes query text", async () => {
+    await page.locator(".xterm-helper-textarea").focus();
+    await page.keyboard.press("Control+f");
+    const input = page.locator("#zen-terminal-find-input");
+    await input.waitFor({state:"visible"});
+    await input.fill("LINE12040");
+    await page.waitForFunction(() => __testTerminal.getSelection() === "LINE12040");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Shift+Enter");
+    assert.equal(await page.locator("#zen-terminal-find-result").textContent(), "Match found");
+    await input.fill("LINE.*");
+    assert.equal(await page.locator("#zen-terminal-find-result").textContent(), "No matches");
+    await input.fill('touch "$HOME/SEARCH_MUST_NOT_RUN"');
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Escape");
+    assert(await page.locator("#zen-terminal-find").isHidden());
+    assert(await page.locator(".xterm-helper-textarea").evaluate(e => document.activeElement === e));
+    await command('printf "SEARCH_FOCUS_OK\\n" > "$HOME/search-focus-proof"');
+    await file("search-focus-proof", "SEARCH_FOCUS_OK\n");
+    assert(!existsSync(path.join(home, "SEARCH_MUST_NOT_RUN")));
+    await page.keyboard.press("Meta+f");
+    await input.waitFor({state:"visible"});
+    await input.fill("");
+    assert.equal(await page.locator("#zen-terminal-find-result").textContent(), "");
+    await page.keyboard.press("Escape");
+  });
   await check(
     "Reload reconnects to the same shell and does not repeat startup",
     async () => {

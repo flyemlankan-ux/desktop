@@ -1,41 +1,46 @@
 {
   "scope": "Real production terminal page/xterm/CSS in Chromium with test-only Firefox service adapter; real native PTY helper and isolated tmux. NOT installed Zen/native menu proof.",
-  "date": "2026-09-19T11:43:14.371Z",
+  "date": "2026-09-19T12:07:51.971Z",
   "checks": [
     {
       "name": "Real helper and tmux start the rendered production terminal page",
       "passed": true,
-      "durationMs": 16
+      "durationMs": 20
     },
     {
       "name": "Rapid repeated keyboard letters are delivered exactly once",
       "passed": true,
-      "durationMs": 278
+      "durationMs": 268
     },
     {
       "name": "Unicode keyboard insertion and terminal paste preserve exact text",
       "passed": true,
-      "durationMs": 109
+      "durationMs": 143
     },
     {
       "name": "Actual stty follows visible terminal resizing",
       "passed": true,
-      "durationMs": 356
+      "durationMs": 349
     },
     {
       "name": "Large output stays bounded and the last rendered line is present",
       "passed": true,
-      "durationMs": 198
+      "durationMs": 275
+    },
+    {
+      "name": "Scrollback search is literal, keyboard-accessible and never executes query text",
+      "passed": true,
+      "durationMs": 252
     },
     {
       "name": "Reload reconnects to the same shell and does not repeat startup",
       "passed": true,
-      "durationMs": 108
+      "durationMs": 308
     },
     {
       "name": "Saved starting folder is literal; edits apply only to new jobs",
       "passed": true,
-      "durationMs": 403
+      "durationMs": 639
     },
     {
       "name": "Disconnect offers reconnect without deleting the saved shell",
@@ -45,22 +50,22 @@
     {
       "name": "Missing helper shows a recoverable error and preserves saved work",
       "passed": true,
-      "durationMs": 163
+      "durationMs": 183
     },
     {
       "name": "Copied profile uses its own tmux shell even with the same saved session id",
       "passed": true,
-      "durationMs": 242
+      "durationMs": 245
     },
     {
       "name": "Lost session requires explicit Start again and reload never repeats startup",
       "passed": true,
-      "durationMs": 198
+      "durationMs": 209
     },
     {
       "name": "Without tmux, live resizing and real scrollback remain usable and bounded",
       "passed": true,
-      "durationMs": 1125
+      "durationMs": 1013
     }
   ],
   "pageErrors": []

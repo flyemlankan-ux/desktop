@@ -1,0 +1,46 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app",
+  "engine": "156.0",
+  "test_data": "new synthetic profile, native identities and test-owned jobs only",
+  "results": [
+    {
+      "test": "Firefox156 app owns fresh synthetic profile and app-data",
+      "result": "pass",
+      "detail": "156.0"
+    },
+    {
+      "test": "Two matching jobs and neighbor run, with a genuine background terminal tab",
+      "result": "pass",
+      "detail": {
+        "page_unloaded": false,
+        "background_tab_selected": false
+      }
+    },
+    {
+      "test": "Two actual windows use the same shared profile cleanup observer",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Native service removal stops visible/background exact jobs, removes recipe, keeps neighbor; duplicate removal harmless",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Actual service deletion during pending new-job settings prevents any startup command",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Without tmux, native service removal stops real direct shell and preserves unrelated tmux neighbor",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Pending direct cleanup record clears after tool availability returns",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/service-delete-486cdf61/gecko.log"
+}

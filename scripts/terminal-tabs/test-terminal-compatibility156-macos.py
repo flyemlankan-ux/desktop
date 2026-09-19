@@ -86,7 +86,9 @@ try:
  assert js('return gZenWorkspaces.getActiveWorkspaceFromCache().containerTabId;')==terminal_id
  route=js('return gZenWorkspaces.getContextIdIfNeeded(undefined,false,Services.scriptSecurityManager.getSystemPrincipal());')
  assert route[0]==0,route
- js('BrowserOpenTab();')
+ # Public native command with a supplied local address commits the tab directly;
+ # this is method-level integration, not URL-entry keyboard acceptance.
+ js('BrowserCommands.openTab({url:"about:blank"});')
  wait(lambda:js('return gBrowser.selectedTab!==compatSafeTab;'),'normal new tab')
  normal=js('return {id:Number(gBrowser.selectedTab.getAttribute("usercontextid")||0),terminal:gBrowser.selectedTab.hasAttribute("zen-terminal-tab"),uri:gBrowser.selectedBrowser.currentURI.spec,sessions:Services.prefs.getStringPref("zen.terminal.sessions","{}")};')
  assert normal['id']==0 and not normal['terminal'] and not normal['uri'].startswith('chrome://browser/content/zen-terminal/')
@@ -116,7 +118,7 @@ try:
   m.switch_to_window(handle)
   if m.execute_script('return document.documentURI;').startswith('about:preferences'):break
  else:raise AssertionError('Preferences content handle unavailable')
- wait(lambda:m.execute_script('return Boolean(window.gSubDialog);'),'native preferences dialog controller')
+ wait(lambda:m.execute_script('return document.readyState==="complete" && Boolean(document.getElementById("dialogTemplate")) && Boolean(window.gSubDialog);'),'native preferences dialog controller')
  m.execute_script('window.gSubDialog.open("chrome://browser/content/preferences/dialogs/siteContainer.xhtml");')
  frame=wait(lambda:m.execute_script('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/siteContainer.xhtml");'),'native association dialog')
  m.execute_async_script('const done=arguments[arguments.length-1];arguments[0]._dialogReady.then(()=>done(true));',script_args=[frame])

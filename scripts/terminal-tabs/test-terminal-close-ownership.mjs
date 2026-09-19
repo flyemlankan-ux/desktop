@@ -16,10 +16,12 @@ function fixture(){
   if(receipt)custom.set(item,{zenTerminalOwnership:JSON.stringify({id,userContextId:String(owner)})});
   return item;
  }
+ const windows=[];
  const browser={tabs:[],setIcon(){},_setTabLabel(){},addTab(url,options){const item=tab({owner:options.userContextId,url});browser.tabs.push(item);return item;}};
- const context=vm.createContext({console,URL,URLSearchParams,window:win,gBrowser:browser,normalizeTerminalSessionId:value=>/^[a-z0-9-]+$/.test(value||'')?value:'',getTerminalContainerRecipe:()=>({recipe:{steps:[]}}),isTerminalContainerId:id=>String(id)==='2',setTerminalContainerRecipe(){},getTerminalSessionRecord:id=>records.get(id)||null,registerTerminalSession(id,{userContextId}){const previous=records.get(id);if(previous&&(previous.pendingDelete||previous.userContextId!==userContextId))return null;const record={id,userContextId};records.set(id,record);return record;},destroyTerminalSession(id){destroyed.push(id);records.get(id).pendingDelete=true;},retryPendingTerminalSessionDeletes(){},Services:{prefs:{getBoolPref:()=>true},uuid:{generateUUID:()=>({toString:()=>'{fresh}'})},scriptSecurityManager:{getSystemPrincipal:()=>({})},prompt:{alert(){}}},SessionStore:{getCustomTabValue:(t,k)=>custom.get(t)?.[k]||'',setCustomTabValue(t,k,v){custom.set(t,{...custom.get(t),[k]:v});},getTabState:t=>JSON.stringify(t.savedState)},ChromeUtils:{importESModule:()=>({PrivateBrowsingUtils:{isWindowPrivate:w=>w.isPrivate},ContextualIdentityService:{getPublicIdentities:()=>[{userContextId:2}],getUserContextLabel:()=> 'Terminal'},BrowserWindowTracker:{orderedWindows:[{gBrowser:browser}]},RunState:state})}});
+ const context=vm.createContext({console,URL,URLSearchParams,window:win,gBrowser:browser,normalizeTerminalSessionId:value=>/^[a-z0-9-]+$/.test(value||'')?value:'',getTerminalContainerRecipe:()=>({recipe:{steps:[]}}),isTerminalContainerId:id=>String(id)==='2',setTerminalContainerRecipe(){},getTerminalSessionRecord:id=>records.get(id)||null,registerTerminalSession(id,{userContextId}){const previous=records.get(id);if(previous&&(previous.pendingDelete||previous.userContextId!==userContextId))return null;const record={id,userContextId};records.set(id,record);return record;},destroyTerminalSession(id){destroyed.push(id);records.get(id).pendingDelete=true;},retryPendingTerminalSessionDeletes(){},Services:{prefs:{getBoolPref:()=>true},uuid:{generateUUID:()=>({toString:()=>'{fresh}'})},scriptSecurityManager:{getSystemPrincipal:()=>({})},prompt:{alert(){}}},SessionStore:{getCustomTabValue:(t,k)=>custom.get(t)?.[k]||'',setCustomTabValue(t,k,v){custom.set(t,{...custom.get(t),[k]:v});},getTabState:t=>JSON.stringify(t.savedState)},ChromeUtils:{importESModule:()=>({PrivateBrowsingUtils:{isWindowPrivate:w=>w.isPrivate},ContextualIdentityService:{getPublicIdentities:()=>[{userContextId:2}],getUserContextLabel:()=> 'Terminal'},BrowserWindowTracker:{orderedWindows:windows},RunState:state})}});
+ windows.push({gBrowser:browser});
  vm.runInContext(source,context);timers.length=0;
- return {records,destroyed,tab,browser,win,state,manager:win.gZenTerminalTabs,flush(){while(timers.length)timers.shift()();},close(t,detail){t.closing=true;listeners.get('TabClose')({target:t,detail});},markRestored(t){listeners.get('SSTabRestored')({target:t});},addRecord(id='owned',owner='2'){records.set(id,{id,userContextId:owner});}};
+ return {records,destroyed,tab,browser,windows,win,state,manager:win.gZenTerminalTabs,flush(){while(timers.length)timers.shift()();},close(t,detail){t.closing=true;listeners.get('TabClose')({target:t,detail});},markRestored(t){listeners.get('SSTabRestored')({target:t});},addRecord(id='owned',owner='2'){records.set(id,{id,userContextId:owner});}};
 }
 let checks=0;
 for(const options of [{url:base+'.evil?session=owned&userContextId=2'},{owner:3,url:base+'?session=owned&userContextId=2'},{privateWindow:true},{url:base+'?session=../owned&userContextId=2'},{url:'https://example.com/?session=owned'}]){
@@ -45,5 +47,18 @@ for(const reason of ['adopted','quit','windowclose']){
 }
 {
  const f=fixture();f.browser.addTab=()=>{throw Error('synthetic addTab failure');};assert.throws(()=>f.manager.openTerminalContainerTab(2));assert.deepEqual(f.destroyed,['fresh']);f.addRecord('old');assert.throws(()=>f.manager.openTerminalTab({userContextId:2,terminalSessionId:'old'}));assert.deepEqual(f.destroyed,['fresh'],'failed duplicate open never kills preexisting job');checks++;
+}
+// A web page with the receipt in a different live window still owns the job.
+{
+ const f=fixture();f.addRecord();const a=f.tab(),b=f.tab({url:'https://example.com/work',receipt:true});
+ f.browser.tabs=[a];f.windows.push({gBrowser:{tabs:[b]}});
+ f.close(a);f.flush();assert.deepEqual(f.destroyed,[]);
+ f.close(b);f.flush();assert.deepEqual(f.destroyed,['owned']);checks++;
+}
+// A private or wrong-container copied receipt in another window is not an owner.
+for(const options of [{privateWindow:true},{owner:3}]){
+ const f=fixture();f.addRecord();const a=f.tab(),b=f.tab({...options,url:'https://example.com/work',receipt:true});
+ f.browser.tabs=[a];f.windows.push({gBrowser:{tabs:[b]}});
+ f.close(a);f.flush();assert.deepEqual(f.destroyed,['owned']);checks++;
 }
 console.log(`PASS ${checks} close-ownership cases (actual production class; no UI)`);

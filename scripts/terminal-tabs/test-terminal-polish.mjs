@@ -19,7 +19,7 @@ assert.match(page, /new ResizeObserver\(scheduleTerminalFit\)/);
 assert.match(page, /fitAddon\.proposeDimensions\(\)/);
 assert.doesNotMatch(page, /characterWidth|characterHeight/);
 assert.match(page, /terminal\.write\(chunk, resolve\)/);
-assert.match(page, /smoothScrollDuration: 80/);
+assert.match(page, /smoothScrollDuration: reducedMotionQuery\?\.matches \? 0 : 80/);
 assert.match(page, /resizeTerminalTmuxSession\(/);
 assert.match(page, /\.\.\.MACOS_SUBPROCESS_OPTIONS/);
 assert.match(managerSource, /disclaim: true/);
@@ -148,7 +148,14 @@ const context = vm.createContext({
     dirsvc: { get: () => ({ parent: { ...helper } }) },
   },
   Ci: { nsIFile: {} },
-  terminal: { rows: 24, cols: 80 },
+  terminal: { rows: 24, cols: 80, options: {} },
+  terminalPrompt: {},
+  statusText: { set textContent(value) { statuses.push(value); } },
+  surface: { attrs: new Set(), toggleAttribute(name, present) { if (present) this.attrs.add(name); else this.attrs.delete(name); } },
+  readyStatusText: "session saved · ready",
+  inputWarningActive: false,
+  inputWarningVersion: 0,
+  reducedMotionQuery: { matches: false },
   getTerminalTmuxSessionName: manager.getTerminalTmuxSessionName,
   terminalShellScript: manager.terminalShellScript,
   getTerminalTmuxSocket: manager.getTerminalTmuxSocket,
@@ -170,6 +177,8 @@ const context = vm.createContext({
 });
 const section = (start, end) =>
   page.slice(page.indexOf(start), page.indexOf(end));
+vm.runInContext(section("function setStatus(", "function getShellCommand()"), context);
+vm.runInContext('setStatus("session saved · ready", true)', context);
 vm.runInContext(
   section("function getShellCommand()", "function fitTerminalToSurface()"),
   context,
@@ -248,6 +257,47 @@ assert.deepEqual(
 await vm.runInContext('writeToShell("x".repeat(4 * 1024 * 1024 + 1))', context);
 assert.equal(written.length, 0, "oversized paste is rejected whole");
 assert.match(statuses.at(-1), /paste too large/);
+assert.equal(context.surface.attrs.has("terminal-ready"), true);
+assert.equal(context.surface.attrs.has("terminal-input-warning"), true);
+await vm.runInContext('writeToShell("safe")', context);
+assert.equal(statuses.at(-1), "session saved · ready");
+assert.equal(context.surface.attrs.has("terminal-input-warning"), false);
+written.length = 0;
+
+// Resize output and writes accepted BEFORE the rejection must not erase it.
+let finishQueuedWrite;
+context.shellProcess.stdin.write = async frame => {
+  written.push(frame);
+  await new Promise(resolve => { finishQueuedWrite = resolve; });
+};
+vm.runInContext('writeToShell("earlier")', context);
+await new Promise(resolve => setImmediate(resolve));
+await vm.runInContext('writeToShell("x".repeat(4 * 1024 * 1024 + 1))', context);
+finishQueuedWrite(); await context.inputQueue;
+assert.match(statuses.at(-1), /paste too large/);
+context.shellProcess.stdin.write = async frame => { written.push(frame); };
+await vm.runInContext('writeFrame("R24 80\\n")', context);
+assert.match(statuses.at(-1), /paste too large/);
+await vm.runInContext('writeToShell("later")', context);
+assert.equal(statuses.at(-1), "session saved · ready");
+context.queuedInputBytes = 4 * 1024 * 1024;
+await vm.runInContext('writeFrame("I1\\nx", {isInput:true})', context);
+assert.match(statuses.at(-1), /input is busy/);
+assert.equal(context.surface.attrs.has("terminal-ready"), true);
+context.queuedInputBytes = 0;
+vm.runInContext('setStatus("not saved · install tmux",true); setInputWarning("warning")', context);
+await vm.runInContext('writeToShell("safe")', context);
+assert.equal(statuses.at(-1), "not saved · install tmux");
+
+context.reducedMotionQuery.matches = true;
+vm.runInContext('updateTerminalMotion()', context);
+assert.deepEqual(context.terminal.options, {cursorBlink:false,smoothScrollDuration:0});
+context.reducedMotionQuery.matches = false;
+vm.runInContext('updateTerminalMotion()', context);
+assert.deepEqual(context.terminal.options, {cursorBlink:true,smoothScrollDuration:80});
+assert.match(page, /addEventListener\("change", updateTerminalMotion\)/);
+assert.match(page, /removeEventListener\("change", updateTerminalMotion\)/);
+written.length = 0;
 const beforeSplitPair = written.length;
 await vm.runInContext(
   'writeToShell("\\ud83d"); writeToShell("\\ude00"); inputQueue',
@@ -256,9 +306,48 @@ await vm.runInContext(
 assert.equal(written.length, beforeSplitPair + 1);
 assert.equal(written.pop(), "I4\n😀");
 
+// Execute actual initialization/change/teardown in both motion preference states.
+for (const initiallyReduced of [false, true]) {
+  const changeListeners = new Set();
+  const media = { matches: initiallyReduced,
+    addEventListener(type, fn) { assert.equal(type, "change"); changeListeners.add(fn); },
+    removeEventListener(type, fn) { assert.equal(type, "change"); changeListeners.delete(fn); },
+  };
+  const motion = vm.createContext({
+    terminal: null, searchAddon: null, reducedMotionQuery: null, fitAddon: null, resizeObserver: null,
+    resizeAnimationFrame: 0, stopping: false, shellReady: true, shellProcess: null,
+    pendingTmuxResize: null, pageState: {}, output: {}, sessionDeleteObserver: {},
+    ZEN_TERMINAL_SESSION_DELETE_TOPIC: "synthetic", Services: {appinfo:{}},
+    fitTerminalToSurface() {}, scheduleTerminalFit() {}, writeToShell() {},
+    document: { fonts: null }, ResizeObserver: class {observe() {} disconnect() {}},
+    window: {
+      matchMedia(query) { assert.equal(query, "(prefers-reduced-motion: reduce)"); return media; },
+      addEventListener() {}, removeEventListener() {}, cancelAnimationFrame() {},
+      Terminal: class {
+        constructor(options) {this.options=options;}
+        loadAddon() {} open() {} focus() {} onData() {return {dispose(){}};}
+      }, FitAddon: {FitAddon:class {}}, SearchAddon: {SearchAddon:class {dispose(){}}},
+    },
+  });
+  vm.runInContext(section("function updateTerminalMotion()", "function getShellCommand()"), motion);
+  vm.runInContext(section("function initTerminal()", "async function readPipe("), motion);
+  vm.runInContext('initTerminal()', motion);
+  assert.equal(motion.terminal.options.cursorBlink, !initiallyReduced);
+  assert.equal(motion.terminal.options.smoothScrollDuration, initiallyReduced ? 0 : 80);
+  assert.equal(changeListeners.size, 1);
+  media.matches = !initiallyReduced;
+  for (const listener of changeListeners) listener();
+  assert.equal(motion.terminal.options.cursorBlink, initiallyReduced);
+  assert.equal(motion.terminal.options.smoothScrollDuration, initiallyReduced ? 80 : 0);
+  vm.runInContext(page.slice(page.indexOf("async function stopShell()"), page.lastIndexOf("startShell();")), motion);
+  await vm.runInContext('stopShell()', motion);
+  assert.equal(changeListeners.size, 0);
+  assert.equal(motion.reducedMotionQuery, null);
+}
+
 context.stopping = true;
 await vm.runInContext('writeToShell("must not reach a closed shell")', context);
 assert.equal(written.length, 0);
 console.log(
-  "Terminal polish tests passed: vendor integrity, native helper launch, resize, Unicode input, repeated keys and whole-paste limits.",
+  "Terminal polish tests passed: vendor integrity, native helper launch, resize, Unicode input, repeated keys, whole-paste warning recovery, queued-warning races and reduced-motion lifecycle.",
 );

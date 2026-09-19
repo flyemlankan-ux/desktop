@@ -1,0 +1,44 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Native public methods, real DOM and one rendered dialog accept click; no remote sharing",
+  "results": [
+    {
+      "test": "owned Firefox156 process and synthetic browser data confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual All Tabs menu DOM excludes terminal setup and retains selected website",
+      "result": "pass",
+      "detail": [
+        {
+          "id": 1,
+          "label": null
+        },
+        {
+          "id": 2,
+          "label": null
+        },
+        {
+          "id": 3,
+          "label": null
+        },
+        {
+          "id": 4,
+          "label": null
+        },
+        {
+          "id": 7,
+          "label": "Website proof"
+        }
+      ]
+    },
+    {
+      "test": "loaded Firefox156 association choices exclude terminal and preserve web choice",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "JavascriptException('ReferenceError: BrowserOpenTab is not defined')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-c6d11274"
+}

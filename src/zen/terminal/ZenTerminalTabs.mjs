@@ -17,6 +17,7 @@ import {
   destroyTerminalSession,
   getTerminalSessionRecord,
   registerTerminalSession,
+  ZEN_TERMINAL_SESSION_DELETE_TOPIC,
   normalizeTerminalSessionId,
   retryPendingTerminalSessionDeletes,
 } from "chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs";
@@ -104,6 +105,7 @@ function terminalOwnershipForTab(tab) {
 
 export class ZenTerminalTabs {
   #terminalMenuPopups = new WeakSet();
+  #awayRequests = new WeakMap();
 
   #isPrivateWindow() {
     return ChromeUtils.importESModule(
@@ -126,11 +128,13 @@ export class ZenTerminalTabs {
     this.#patchFirefoxContainerMenuBuilder();
     this.#installTerminalSessionCloseHandler();
     this.#markRestoredTerminalTabsSoon();
+    this.#installNavigationReturnUI();
     // Restore can finish long after startup, including background tabs and Undo Close.
     for (const eventName of ["SSTabRestored", "TabSelect"]) {
-      window.addEventListener(eventName, (event) =>
-        this.#markRestoredTerminalTab(event.target), true
-      );
+      window.addEventListener(eventName, (event) => {
+        this.#markRestoredTerminalTab(event.target);
+        void this.updateTerminalAwayNotification(event.target);
+      }, true);
     }
     // Native location changes can clear a page's icon after restore/selection.
     // Repair the ordinary icon slot from the native notification, not a timer.
@@ -148,6 +152,149 @@ export class ZenTerminalTabs {
       if (tab.getAttribute("image") !== icon) gBrowser.setIcon(tab, icon);
     }, true);
     void retryPendingTerminalSessionDeletes();
+  }
+
+  #returnOwnership(tab) {
+    if (!tab || tab.closing || !tab.linkedBrowser || tab.hasAttribute("pending") ||
+        terminalPageParameters(tab.linkedBrowser.currentURI?.spec || "")) return null;
+    const ownership = terminalOwnershipForTab(tab);
+    if (!ownership) return null;
+    const record = getTerminalSessionRecord(ownership.id);
+    if (!record || record.pendingDelete || record.startupAttempted === false ||
+        !isTerminalContainerId(ownership.userContextId) ||
+        !ContextualIdentityService.getPublicIdentities().some(
+          identity => String(identity.userContextId) === ownership.userContextId,
+        )) return null;
+    return { ...ownership, persistent: record.persistent === true };
+  }
+
+  canReturnToTerminal(tab) {
+    return Boolean(this.#returnOwnership(tab));
+  }
+
+  returnToTerminal(tab) {
+    const ownership = this.#returnOwnership(tab);
+    if (!ownership) return false;
+    // Only verified browser-owned values enter this trusted address. A website
+    // cannot choose a setup/session, and returning never grants restart consent.
+    const url = new URL(ZEN_TERMINAL_TAB_URL);
+    url.searchParams.set("session", ownership.id);
+    url.searchParams.set("userContextId", ownership.userContextId);
+    url.searchParams.set("started", "1");
+    gBrowser.selectedTab = tab;
+    tab.linkedBrowser.loadURI(Services.io.newURI(url.href), {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
+    return true;
+  }
+
+  async updateTerminalAwayNotification(tab) {
+    if (!tab?.linkedBrowser) return;
+    const value = "zen-terminal-away";
+    let state = this.#awayRequests.get(tab);
+    if (!state) {
+      state = { generation: 0, pending: false };
+      this.#awayRequests.set(tab, state);
+    }
+    const ownership = this.#returnOwnership(tab);
+    const previousBox = tab.linkedBrowser._notificationBox;
+    const previous = previousBox?.getNotificationWithValue(value);
+    if (!ownership) {
+      state.generation++;
+      state.pending = false;
+      tab.removeAttribute("zen-terminal-away");
+      if (previous) previousBox.removeNotification(previous, true);
+      if (terminalPageParameters(tab.linkedBrowser.currentURI?.spec || "")) {
+        try { SessionStore.deleteCustomTabValue(tab, "zenTerminalAwayDismissed"); } catch (_) {}
+      }
+      return;
+    }
+    tab.setAttribute("zen-terminal-away", "true");
+    const journey = JSON.stringify({ id: ownership.id, userContextId: ownership.userContextId });
+    try {
+      if (SessionStore.getCustomTabValue(tab, "zenTerminalAwayDismissed") === journey) {
+        if (previous) previousBox.removeNotification(previous, true);
+        return;
+      }
+    } catch (_) {}
+    if (previous || state.pending) return;
+    const box = gBrowser.getNotificationBox(tab.linkedBrowser);
+    const generation = ++state.generation;
+    state.pending = true;
+    try {
+      const notification = await box.appendNotification(value, {
+        label: ownership.persistent
+          ? "This tab also has a terminal session. Closing its last copy ends that session."
+          : "This tab's unsaved terminal disconnected when you left. Return to start again.",
+        priority: box.PRIORITY_INFO_LOW,
+        eventCallback: event => {
+          if (event === "dismissed") {
+            try { SessionStore.setCustomTabValue(tab, "zenTerminalAwayDismissed", journey); } catch (_) {}
+          }
+        },
+      }, [{
+        label: "Return to terminal",
+        accessKey: "R",
+        callback: () => { this.returnToTerminal(tab); },
+      }]);
+      if (generation !== state.generation || !this.#returnOwnership(tab)) {
+        box.removeNotification(notification, true);
+        return;
+      }
+      // Navigation within this away journey must not quietly erase the notice.
+      // Returning, explicit dismissal or session deletion removes it instead.
+      notification.persistence = Number.MAX_SAFE_INTEGER;
+    } catch (error) {
+      console.error("Could not show terminal return action", error);
+    } finally {
+      if (generation === state.generation) state.pending = false;
+    }
+  }
+
+  #installNavigationReturnUI() {
+    // Browser startup supplies this native readiness promise; never poll a timer.
+    if (!window.delayedStartupPromise) return;
+    window.delayedStartupPromise.then(() => {
+      if (window.closed) return;
+      const progress = {
+        onLocationChange: (browser, webProgress) => {
+          if (!webProgress.isTopLevel) return;
+          const tab = gBrowser.getTabForBrowser(browser);
+          if (tab) void this.updateTerminalAwayNotification(tab);
+        },
+      };
+      gBrowser.addTabsProgressListener(progress);
+      const menu = document.getElementById("tabContextMenu");
+      let item;
+      const showing = event => {
+        if (event.target !== menu || !item) return;
+        const tab = window.TabContextMenu?.contextTab;
+        item.hidden = Boolean(tab?.multiselected) || !this.canReturnToTerminal(tab);
+      };
+      if (menu) {
+        item = document.createXULElement("menuitem");
+        item.id = "context_zenReturnToTerminal";
+        item.setAttribute("label", "Return to terminal");
+        item.hidden = true;
+        item.addEventListener("command", () => this.returnToTerminal(window.TabContextMenu?.contextTab));
+        menu.appendChild(item);
+        menu.addEventListener("popupshowing", showing);
+      }
+      const deletion = { observe: () => {
+        for (const tab of gBrowser.tabs) {
+          if (tab.hasAttribute("zen-terminal-away")) void this.updateTerminalAwayNotification(tab);
+        }
+      } };
+      Services.obs.addObserver(deletion, ZEN_TERMINAL_SESSION_DELETE_TOPIC);
+      window.addEventListener("unload", () => {
+        try { gBrowser.removeTabsProgressListener(progress); }
+        finally {
+          Services.obs.removeObserver(deletion, ZEN_TERMINAL_SESSION_DELETE_TOPIC);
+          menu?.removeEventListener("popupshowing", showing);
+        }
+      }, { once: true });
+      for (const tab of gBrowser.tabs) void this.updateTerminalAwayNotification(tab);
+    });
   }
 
   #ensureDefaultTerminalContainer() {

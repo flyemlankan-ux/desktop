@@ -105,6 +105,8 @@ jobs:
           node scripts/terminal-tabs/test-terminal-recipes.mjs
           node scripts/terminal-tabs/test-terminal-session-persistence.mjs
           node scripts/terminal-tabs/test-terminal-polish.mjs
+          node scripts/terminal-tabs/test-terminal-search.mjs
+          node scripts/terminal-tabs/test-terminal-navigation-return.mjs
           node scripts/terminal-tabs/test-terminal-native-polish.mjs
           node scripts/terminal-tabs/test-terminal-organization.mjs
           node scripts/terminal-tabs/test-terminal-entrypoints.mjs
@@ -118,6 +120,7 @@ jobs:
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
           python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py
+          python3 scripts/terminal-tabs/test-terminal-build-declarations.py
           python3 scripts/terminal-tabs/test-terminal-build-packaging.py
           python3 scripts/terminal-tabs/test-package-terminal-macos.py
           python3 scripts/terminal-tabs/test-verify-terminal-app-assets.py

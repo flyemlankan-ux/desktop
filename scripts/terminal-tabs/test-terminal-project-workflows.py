@@ -84,7 +84,7 @@ try:
  job_pids=[pane(sid) for sid in test_sessions]
  assert len(set(job_pids))==2 and len(set(test_sessions))==2
  record('same saved setup launches two independent shells exactly once')
- js('window.projectWeb=gBrowser.addTrustedTab("about:blank");window.projectFolder=gZenFolders.createFolder([projectWeb,...projectTerms],{name:"Mixed project proof"});gBrowser.selectedTab=projectWeb;gBrowser.selectedTab=projectTerms[0];')
+ js('window.projectWeb=gBrowser.addTrustedTab("about:blank");window.projectFolder=gZenFolders.createFolder([projectWeb,...projectTerms],{label:"Mixed project proof"});gBrowser.selectedTab=projectWeb;gBrowser.selectedTab=projectTerms[0];')
  time.sleep(1.7)
  assert js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder && t.pinned);')
  same_jobs();record('mixed folder retains web and both terminals after selection')
@@ -92,14 +92,14 @@ try:
  assert js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder);')
  same_jobs();record('native collapse/expand retains members and jobs')
  if args.pointer_drag:
-  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(projectDragEvents.length<30)projectDragEvents.push({type:e.type,trusted:e.isTrusted,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY});},true);}window.focus();')
+  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(e.type!=="dragover" || projectDragEvents.filter(x=>x.type==="dragover").length<10)projectDragEvents.push({type:e.type,trusted:e.isTrusted,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY,dropEffect:e.dataTransfer?.dropEffect,types:e.dataTransfer?[...e.dataTransfer.types]:[]});},true);}window.focus();')
   time.sleep(.6)
   # W3C pointer actions hit actual browser chrome. Never inject drag events or
   # silently substitute DOM moves when real pointer dragging fails.
   rects=js('return [projectTerms[1],projectWeb].map(t=>{t.scrollIntoView({block:"nearest"});const r=t.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,top:r.y+2};});')
   source,target=rects
   print('POINTER RECTS',rects,flush=True)
-  m.actions.sequence('pointer','project-drag',{'pointerType':'mouse'}).pointer_move(int(source['x']),int(source['y'])).pointer_down().pause(250).pointer_move(int(target['x']),int(target['top']),duration=800).pause(500).pointer_up().perform()
+  m.actions.sequence('pointer','project-drag',{'pointerType':'mouse'}).pointer_move(int(source['x']),int(source['y'])).pointer_down().pause(250).pointer_move(int(target['x']),int(target['y']-8),duration=800).pause(1000).pointer_up().perform()
   m.actions.release()
   wait(lambda:js('return projectTerms[1].group===projectFolder && projectFolder.tabs.indexOf(projectTerms[1])<projectFolder.tabs.indexOf(projectWeb);'),'actual pointer reorder')
   same_jobs();record('actual pointer drag reordered terminal before web inside folder')

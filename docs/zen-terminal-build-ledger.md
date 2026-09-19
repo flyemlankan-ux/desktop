@@ -391,3 +391,32 @@ written but pending actual runs. Full current source suite passes; new tests als
 wired into cloud workflow. Current engine156 overlay verifies actual sourcebytes
 and signatures. No personal copy, installed app change, signing claim or final
 release acceptance.
+
+Current156 main native suite passes input, Ctrl-C, full-screen editor, installed
+Codex/Claude version starts, resize, duplicate-view retention, rename/save/cancel,
+reload, lazy restore, quit/relaunch, actual browser crash, and exact finalclose.
+Current156 service-deletion native7checks pass including shared observer across
+windows, creation/deletion race, actual direct non-tmux child cleanup and durable
+retry. Web/ordinary-extension native6checks pass: same-container iframe/top/popup
+cannot open terminal chrome; ordinary extension create/update refuse; rejected
+wrong-context tab cannot kill a known orphan job. Compatibility native checks now
+pass actual AllTabs lists,156 association lists/acceptance stalechoice refusal,
+ordinary native NewTab supplied-address command routing to0, and packaged shared
+client nested unsafe URLs refusal/safeHTTPS acceptance. Test-only readiness and
+newcommand API assumptions were corrected, not product assertions waived.
+
+Post-build UI source additions: bounded literal scrollback search (same released
+xterm6 commit, npm integrity+license verified), nonfatal input-rejection state,
+reduced motion, and native Return-to-terminal notification/contextmenu while
+navigated away. Rendered page13checks pass including literal search not reaching
+shell. Native UI proof still pending these new additions. Cloud dev build
+35441216400 started at34375b2; it predates these additions and cannot be treated as
+final current-source delivery without a subsequent build/package step.
+
+### 2026-09-19 — native search/navigation acceptance and fresh-build failure
+
+- Rebuilt the disposable official-engine156 overlay with all14 terminal assets; exact registered-resource verification and ad-hoc signature checks pass. This remains an overlay, not a compiled release.
+- Native navigation journey `navigation156-navigation-workflows.json`: eight actual-browser checks pass, including real address-bar entry, native Return button, Back, dismissal/reload/restart, context-menu Return and exact final-close cleanup. Bookmark/URL-drop/mirror/direct-mode cases remain explicitly not run.
+- Native keyboard journey: corrected a test-only injected-JS brace syntax error (first run failed). v2/v3 passed real Cmd+F/Ctrl+F isolation, literal search/no shell execution, reconnect/reload focus, same process and narrow light/dark layout. Motion-off asserted cursorBlink=true, but native evidence shows media=false and smoothScroll=80 while cursorBlink=false; programs may request a steady cursor. Removed that invalid assertion, retaining reduced-motion no-blink checks. Additional escape-output audit underway; no product motion waiver.
+- Cloud35441216400 failed before compilation because Mozilla requires sorted EXTRA_JS_MODULES names. Reordered Manager/Safety entries without changing behavior; added four passing declaration checks and workflow preflight. It is not a successful build.
+- Plan remains on Chubs; original Zen/profile untouched. Next handoff: high reasoning for native input/lifecycle failures; real browser proof plus focused source regression, fresh compiled-package tests required. Drift: no replacement browser shell, no claims that synthetic profile tests prove personal migration.

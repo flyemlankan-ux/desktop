@@ -19,6 +19,7 @@
     />
     <script src="chrome://browser/content/zen-terminal/vendor/xterm.js"></script>
     <script src="chrome://browser/content/zen-terminal/vendor/addon-fit.js"></script>
+    <script src="chrome://browser/content/zen-terminal/vendor/addon-search.js"></script>
     <script
       type="module"
       src="chrome://browser/content/zen-terminal/ZenTerminalPage.mjs"
@@ -27,6 +28,13 @@
   <body>
     <main id="zen-terminal-page">
       <section id="zen-terminal-surface" aria-label="Terminal" tabindex="0">
+        <div id="zen-terminal-find" role="search" aria-label="Find in terminal scrollback" hidden="hidden">
+          <input id="zen-terminal-find-input" type="text" aria-label="Find in terminal scrollback" placeholder="Find in terminal" maxlength="1024" autocomplete="off" spellcheck="false" />
+          <button id="zen-terminal-find-previous" type="button" aria-label="Previous match" title="Previous match (Shift+Enter)">↑</button>
+          <button id="zen-terminal-find-next" type="button" aria-label="Next match" title="Next match (Enter)">↓</button>
+          <button id="zen-terminal-find-close" type="button" aria-label="Close find" title="Close (Escape)">×</button>
+          <span id="zen-terminal-find-result" role="status" aria-live="polite" aria-atomic="true"></span>
+        </div>
         <div id="zen-terminal-output"></div>
         <footer id="zen-terminal-status">
           <span id="zen-terminal-prompt">…</span>
