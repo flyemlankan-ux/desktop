@@ -169,13 +169,18 @@ def gecko_native_drag(source,target,split=False):
    const rect=fake?.getBoundingClientRect();
    return {canDrop:!!splitter._canDrop,hasAnimated:!!splitter._hasAnimated,selected:gBrowser.selectedTab?.id,last:splitter._lastOpenedTab?.id,dragging:splitter._draggingTab?.id,fake:fake?.id,side:fake?.getAttribute('side'),fakeConnected:fake?.isConnected,fakeRect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null};
  };
+ const splitTopology=()=>{
+   const describe=t=>t?{id:t.id,connected:t.isConnected,splitView:!!t.splitView,group:t.group?.id,groupIsSplit:!!t.group?.hasAttribute('split-view-group'),groupTabs:t.group?.tabs?.map(member=>member.id)}:null;
+   const web=window.projectWeb,terms=window.projectTerms||[];
+   return {web:describe(web),terms:terms.map(describe),mixedSplit:!!web?.splitView&&!!terms[0]?.splitView&&web.group===terms[0].group};
+ };
  const lifecycleTypes=['dragenter','dragleave','dragover','drop','dragend','TabSelect'];
  const traceLifecycle=event=>{
    if(!split||lifecycle.length>=128)return;
    const entry={type:event.type,time:performance.now(),trusted:event.isTrusted,previousTab:event.detail?.previousTab?.id,target:event.target.id||event.target.localName,document:event.target.ownerDocument?.documentURI,related:event.relatedTarget?.id||event.relatedTarget?.localName,path:event.composedPath().map(n=>n.id||n.localName||n.constructor.name),client:{x:event.clientX,y:event.clientY},screen:{x:event.screenX,y:event.screenY},chrome:{x:event.screenX-window.mozInnerScreenX,y:event.screenY-window.mozInnerScreenY},effect:event.dataTransfer?.dropEffect,cancelled:event.dataTransfer?.mozUserCancelled,before:splitState()};
    lifecycle.push(entry);
    // Observe the real production listeners; never call or replace them.
-   setTimeout(()=>{entry.after=splitState();entry.afterTime=performance.now();entry.afterEffect=event.dataTransfer?.dropEffect;},0);
+   setTimeout(()=>{entry.after=splitState();entry.afterTime=performance.now();entry.afterEffect=event.dataTransfer?.dropEffect;if(event.type==='dragend')entry.afterTopology=splitTopology();},0);
  };
  if(split)for(const type of lifecycleTypes)window.addEventListener(type,traceLifecycle,true);
  const traceMilestone=name=>{if(split&&lifecycle.length<128)lifecycle.push({milestone:name,time:performance.now(),state:splitState()});};
@@ -346,11 +351,29 @@ try:
  screen('project-workflows')
 except Exception as error:
  failure=repr(error)
+ failure_snapshot={'scope':'Diagnostic only; strict original failure is preserved, never acceptance'}
  try:
-  print('NATIVE FAILURE STATE',js('return {terms:projectTerms?.map(t=>({id:t.id,index:t.index,oldIndex:t._tPos,group:t.group?.id,pending:t.hasAttribute("pending")})),web:projectWeb?.id,order:projectFolder?.tabs?.map(t=>t.id),nativeDispatch:window.projectNativeDispatch,splitDiagnostic:window.projectSplitDiagnostic,drag:window.projectDragEvents||[]};'),flush=True)
+  failure_snapshot['native']=js('const describe=t=>t?{id:t.id,index:t.index,connected:t.isConnected,splitView:!!t.splitView,group:t.group?.id,groupIsSplit:!!t.group?.hasAttribute("split-view-group"),groupTabs:t.group?.tabs?.map(member=>member.id),pending:t.hasAttribute("pending")}:null;const terms=window.projectTerms||[],web=window.projectWeb;return {terms:terms.map(describe),web:describe(web),mixedSplit:!!web?.splitView&&!!terms[0]?.splitView&&web.group===terms[0].group,order:window.projectFolder?.tabs?.map(t=>t.id),nativeDispatch:window.projectNativeDispatch,splitDiagnostic:window.projectSplitDiagnostic,drag:window.projectDragEvents||[]};')
+  print('NATIVE FAILURE STATE',failure_snapshot['native'],flush=True)
   if args.gecko_native_drag_to_split:
-   (proof/(args.label+'-split-lifecycle.json')).write_text(json.dumps(js('return window.projectSplitDiagnostic||null;'),indent=2)+'\n')
-  screen('project-workflows-failure')
+   (proof/(args.label+'-split-lifecycle.json')).write_text(json.dumps(failure_snapshot['native'].get('splitDiagnostic'),indent=2)+'\n')
+ except Exception as diagnostic_error:failure_snapshot['native_error']=repr(diagnostic_error)
+ jobs=[]
+ for number,sid in enumerate(test_sessions[:2]):
+  job={'session':sid,'expectedPid':globals().get('job_pids',[None]*2)[number] if number<len(globals().get('job_pids',[])) else None}
+  try:
+   job['actualPid']=pane(sid);job['samePid']=job['expectedPid'] is not None and job['actualPid']==job['expectedPid']
+  except Exception as diagnostic_error:job['read_error']=repr(diagnostic_error)
+  jobs.append(job)
+ failure_snapshot['jobs']=jobs
+ try:
+  launch_marker=globals().get('marker')
+  failure_snapshot['startupCount']=len(launch_marker.read_text().splitlines()) if launch_marker and launch_marker.exists() else None
+  failure_snapshot['expectedStartupCount']=2
+ except Exception as diagnostic_error:failure_snapshot['startup_count_error']=repr(diagnostic_error)
+ (proof/(args.label+'-failure-state.json')).write_text(json.dumps(failure_snapshot,indent=2)+'\n')
+ print('FAILURE JOB CONTINUITY',json.dumps({'jobs':jobs,'startupCount':failure_snapshot.get('startupCount')}),flush=True)
+ try:screen('project-workflows-failure')
  except Exception:pass
  raise
 finally:

@@ -473,3 +473,14 @@ final current-source delivery without a subsequent build/package step.
 ### Compiled development installer inspection — 2026-09-19
 
 Run 35444319973 (source 0d0b370) completed successfully. Downloaded its DMG and matched SHA-256 `1415eba0b672ac1868038ac3312f71598f6f8bd21384b85bf84f223d174c2a46`. Read-only local inspection against scripts/resources archived from that exact source passed: image checksum, deep strict development signature, separate identity/profile root, absent stock updater, helper signature, whole-image recognized-profile-data scan, exact shipped assets and engine156. Receipts: `docs/proof/2026-09-19/compiled-0d0b370-installer-inspection.{json,log}`. No launch, installation or personal migration performed. This older artifact excludes subsequent fixes and is not release acceptance. Initial local archive/path setup mistakes were corrected before the successful inspection; they were not installer failures. Latest0c source build remains separate.
+
+
+### Compiled-app acceptance and delivery — 2026-09-19
+
+Compiled0c2b163 installer passed exact-source inspection. Real compiled0c-main passed27 checks including actual packageidentity, local shell/editor, CLI version-only startup, resize, reload, cleanrelaunch/crash recovery and exact close. Real compiled delivery12 checks passed with hashes: oldinstall/newupgrade/acknowledgedrollback/retainedremoval; no installed apps or profiles touched. Standalone delivery now refuses stock updater and missing/nonexecutable/invalidly signed terminalhelper;28 targeted tests pass.
+
+Window-leave repair independently reviewed and source-tested: exact trusted terminal internal transition no longer cancels owned preview. Native failure-state now proves actual mixed split+same2jobs+unchangedstartupcount; premature automated dragend still fails gesture acceptance. No production workaround for the driver. Compiled nativepicker attempts failed twice to locate ownedCancel; strict AX traversal/activation now tested6cases, but nativepicker remains open.
+
+Post-split source audit38/38 commands pass. Build5d12ee6 /35455394170 contains both split repairs; d29build35454947015 superseded/cancellationrequested. Apple signing/notarization, OS clipboard/IME/VoiceOver, remaining final-app checks and personal migration not complete. Original Zen699 remains running and destinationprofilefolder absent.
+
+Compiled0c followups: savedsetups9, extendednavigation12 (+2notrun), mixedfolderlifecycle8 allpass. Total56 checks across4 compilednative suites. Nativepicker retry stillfailed; no acceptance weakened. Local read-only `security find-identity -v -p codesigning` reports0 valid identities; accountsetup question sent to founder, no permission/credential changes.

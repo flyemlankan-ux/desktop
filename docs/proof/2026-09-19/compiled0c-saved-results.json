@@ -1,0 +1,74 @@
+{
+  "app": ".terminal-test/compiled-0c2b163/Zen Terminal.app",
+  "test_data": "synthetic profile and folders only",
+  "results": [
+    {
+      "test": "App owns only disposable profile and app-data",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Missing folder keeps editor open and creates nothing",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Rendered folder editor contains long literal path without sideways form overflow",
+      "result": "pass",
+      "detail": [
+        {
+          "id": "containerEditorHost",
+          "width": 460,
+          "scroll": 460
+        },
+        {
+          "id": "",
+          "width": 460,
+          "scroll": 460
+        },
+        {
+          "id": "zen-terminal-container-fields",
+          "width": 426,
+          "scroll": 426
+        },
+        {
+          "id": "zen-terminal-starting-directory",
+          "width": 252,
+          "scroll": 842
+        }
+      ]
+    },
+    {
+      "test": "Native Save persists literal Unicode, spaces and shell punctuation",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Real shell and startup command run in the exact chosen folder",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Opening saved setup twice creates independent shells, startup once each",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Edit then Cancel preserves previously saved folder",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Edited folder applies only to new tabs; old job and cwd remain unchanged",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Reopened native editor shows saved replacement folder",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "native_picker_tested": false,
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/saved-setups-ab1f9973/gecko.log"
+}

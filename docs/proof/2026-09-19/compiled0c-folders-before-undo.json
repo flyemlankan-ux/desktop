@@ -1,0 +1,45 @@
+{
+  "parent": "1789835852556-81",
+  "lastGroup": "1789835852556-81",
+  "lastCount": 4,
+  "groups": [
+    {
+      "id": "1789835852556-81",
+      "name": "Renamed project",
+      "tabs": [
+        {
+          "groupId": "1789835852561-73",
+          "pinned": true,
+          "zenIsEmpty": false,
+          "closedInTabGroupId": "1789835852556-81",
+          "terminalOwnership": null,
+          "terminalSession": null
+        },
+        {
+          "groupId": "1789835852561-73",
+          "pinned": true,
+          "zenIsEmpty": false,
+          "closedInTabGroupId": "1789835852556-81",
+          "terminalOwnership": "{\"id\":\"bd6bfdae-9472-42ff-bf63-cae876f0696a\",\"userContextId\":\"7\"}",
+          "terminalSession": "bd6bfdae-9472-42ff-bf63-cae876f0696a"
+        },
+        {
+          "groupId": "1789835852556-81",
+          "pinned": true,
+          "zenIsEmpty": false,
+          "closedInTabGroupId": "1789835852556-81",
+          "terminalOwnership": null,
+          "terminalSession": null
+        },
+        {
+          "groupId": "1789835852556-81",
+          "pinned": true,
+          "zenIsEmpty": false,
+          "closedInTabGroupId": "1789835852556-81",
+          "terminalOwnership": "{\"id\":\"fac12af6-e4ef-47b8-8043-9bbf961ddae7\",\"userContextId\":\"7\"}",
+          "terminalSession": "fac12af6-e4ef-47b8-8043-9bbf961ddae7"
+        }
+      ]
+    }
+  ]
+}

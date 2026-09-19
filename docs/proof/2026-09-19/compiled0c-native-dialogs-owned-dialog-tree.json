@@ -1,0 +1,16 @@
+[
+  {
+    "role": "AXApplication",
+    "title": "Zen Terminal",
+    "description": null,
+    "value": null,
+    "enabled": null
+  },
+  {
+    "role": "AXMenuBar",
+    "title": null,
+    "description": null,
+    "value": null,
+    "enabled": true
+  }
+]

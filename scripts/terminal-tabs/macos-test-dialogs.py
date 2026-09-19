@@ -30,6 +30,7 @@ class OwnedAppDialogs:
         for name in ['CFStringGetTypeID','CFArrayGetTypeID','CFBooleanGetTypeID']:
             bind(self.cf,name,[],C.c_ulong)
         bind(self.cf,'CFGetTypeID',[P],C.c_ulong)
+        bind(self.cf,'CFEqual',[P,P],C.c_bool)
         bind(self.cf,'CFArrayGetCount',[P],L)
         bind(self.cf,'CFArrayGetValueAtIndex',[P,L],P)
         bind(self.cf,'CFBooleanGetValue',[P],C.c_bool)
@@ -70,17 +71,28 @@ class OwnedAppDialogs:
     def tree(self,max_nodes=1800):
         for ref in self.refs[1:]:self.cf.CFRelease(ref)
         self.refs=self.refs[:1]
-        seen=set();count=0
+        seen=[];count=0
         def visit(element,depth):
             nonlocal count
-            if not element or element in seen or depth>28:return None
-            seen.add(element);count+=1
+            if not element or depth>28:return None
+            if any(self.cf.CFEqual(element,other) for other in seen):return None
+            # Native panels can expose another process. Never cross that boundary.
+            try:self.owner(element)
+            except AccessibilityError:return None
+            seen.append(element);count+=1
             if count>max_nodes:raise AccessibilityError('Owned accessibility tree exceeded bounded scan')
             self.owner(element)
             node={'element':element,'role':self.attr(element,'AXRole'),'title':self.attr(element,'AXTitle'),'description':self.attr(element,'AXDescription'),'value':self.attr(element,'AXValue'),'enabled':self.attr(element,'AXEnabled'),'children':[]}
-            # AXWindows is necessary at the app root; children are used below.
-            children=(self.attr(element,'AXWindows') or self.attr(element,'AXChildren')) if depth==0 else self.attr(element,'AXChildren')
-            for child in children or []:
+            # Some native sheets are not included in AXChildren. Union the
+            # supported branches; CFEqual deduplicates separately retained aliases.
+            children=[]
+            for attribute in (['AXWindows','AXChildren','AXSheets'] if depth==0 else ['AXChildren','AXSheets']):
+                branch=self.attr(element,attribute)
+                if isinstance(branch,list):children.extend(branch)
+            if depth==0:
+                focused=self.attr(element,'AXFocusedWindow')
+                if focused:children.append(focused)
+            for child in children:
                 item=visit(child,depth+1)
                 if item:node['children'].append(item)
             return node
@@ -95,7 +107,7 @@ class OwnedAppDialogs:
     def press(self,element):
         self.owner(element)
         if self.attr(element,'AXRole')!='AXButton':raise AccessibilityError('Expected actual AXButton')
-        if self.attr(element,'AXEnabled') is False:raise AccessibilityError('Button is disabled; not overriding it')
+        if self.attr(element,'AXEnabled') is not True:raise AccessibilityError('Button is not confirmed enabled; not overriding it')
         action=self.string('AXPress')
         try:error=self.ax.AXUIElementPerformAction(element,action)
         finally:self.cf.CFRelease(action)
@@ -108,7 +120,7 @@ class OwnedAppDialogs:
             # choose an identically named button from a different test window.
             scopes.sort(key=lambda n:sum(1 for _ in self.flatten(n)))
             for scope in scopes:
-                buttons=[n for n in self.flatten(scope) if n['role']=='AXButton' and n['enabled'] is not False]
+                buttons=[n for n in self.flatten(scope) if n['role']=='AXButton' and n['enabled'] is True]
                 last=[(n['title'],n['description']) for n in buttons]
                 matches=[n for n in buttons if n['title'] in labels or n['description'] in labels]
                 if len(matches)==1:return matches[0]['element']
@@ -159,9 +171,14 @@ class OwnedAppDialogs:
         if error:raise AccessibilityError(f'Owned app activation failed ({error})')
         end=time.monotonic()+10
         while time.monotonic()<end:
-            if self.attr(self.root,'AXWindows'):return
+            if self.attr(self.root,'AXFrontmost') is True:
+                focused=self.attr(self.root,'AXFocusedWindow')
+                windows=self.attr(self.root,'AXWindows') or []
+                if focused:
+                    self.owner(focused)
+                    if self.attr(focused,'AXRole')=='AXWindow' and any(self.cf.CFEqual(focused,w) for w in windows):return
             time.sleep(.1)
-        raise AccessibilityError('Owned app has no exposed native windows after activation')
+        raise AccessibilityError('Owned app did not confirm foreground and its exact focused native window after activation')
 
     def raise_window(self):
         focused=self.attr(self.root,'AXFocusedWindow')

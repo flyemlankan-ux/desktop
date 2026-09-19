@@ -1,0 +1,107 @@
+[
+  {
+    "role": "AXApplication",
+    "title": "Zen Terminal",
+    "description": null,
+    "value": null,
+    "enabled": null
+  },
+  {
+    "role": "AXMenuBar",
+    "title": null,
+    "description": null,
+    "value": null,
+    "enabled": true
+  },
+  {
+    "role": "AXWindow",
+    "title": "Settings",
+    "description": null,
+    "value": null,
+    "enabled": null
+  },
+  {
+    "role": "AXComboBox",
+    "title": "",
+    "description": "Search...",
+    "value": "about:preferences#containers",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Zen Terminal",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Compact Mode",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Back",
+    "value": "",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Forward",
+    "value": "",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Reload",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "New Tab",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Downloads",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": "",
+    "description": "Create New",
+    "value": "",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": null,
+    "description": null,
+    "value": null,
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": null,
+    "description": null,
+    "value": null,
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "title": null,
+    "description": null,
+    "value": null,
+    "enabled": true
+  }
+]

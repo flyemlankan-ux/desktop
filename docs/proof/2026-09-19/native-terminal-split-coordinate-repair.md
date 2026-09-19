@@ -45,3 +45,8 @@ Source inspection identifies the matching path: `ZenDragAndDrop.handle_windowDra
 The candidate changes only that window-leave handler. It ignores this internal transition only when all of the following hold: trusted native tab payload; same-window source tab; active matching split preview; connected preview node; selection has moved away from the source browser; exact source document identity; system principal; canonical terminal document and browser URLs; finite coordinates; and pointer strictly inside the chrome tabbox. Genuine outside/boundary leaves and ordinary web behavior retain the original cancellation path.
 
 The new actual-method source test passes the observed transition, 18 identity/source/geometry negative cases and both pre-existing relatedTarget/preview-target exceptions. Syntax and the earlier coordinate tests pass. Independent security review requested. No native acceptance claim yet, and no browser UI was launched by this source task.
+
+
+## Post-repair native outcome, not gesture acceptance
+
+`split-pointer156-leavefix-state` preserves the strict failure: native dragend precedes the driver's explicit release. The added failure snapshot proves that by the time of failure both the website and first terminal have splitView=true and the same real split group; both terminal shell PIDs match their pre-gesture PIDs, and startupCount remains2. Thus this trace is not a failed split creation: the repaired native commit actually created the mixed split. It still does not prove correct controlled release timing, Escape or genuine outside-window cancellation. No acceptance assertion was relaxed and no production method was invoked to create this split.

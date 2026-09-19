@@ -1,0 +1,85 @@
+{
+  "app": ".terminal-test/compiled-0c2b163/Zen Terminal.app",
+  "scope": "Synthetic local website and terminal; actual address-bar and notification inputs, native browser methods as labelled",
+  "results": [
+    {
+      "test": "fresh terminal has no away notice and owns one real job",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "real address-bar navigation keeps job and shows native return notice",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "rendered native Return button reconnects same job without startup",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual synthetic bookmark click navigates owned terminal tab and preserves job",
+      "result": "pass",
+      "detail": {
+        "setup": "native Places insert and toolbar visibility methods",
+        "activation": "real rendered toolbar bookmark click"
+      }
+    },
+    {
+      "test": "actual Return after bookmark navigation reconnects original shell",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual address-bar navigation in mirrored window shows native away notice",
+      "result": "pass",
+      "detail": {
+        "windowSetup": "native OpenBrowserWindow and select mirrored tab methods",
+        "navigation": "actual address-bar keyboard input",
+        "ownedPID": 12115
+      }
+    },
+    {
+      "test": "actual mirrored Return and closing its window preserve original terminal job",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Back and terminal reload preserve job without warning",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native dismissal persists over website reload without another warning",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "quit/restart while browsing preserves job, ownership and dismissed notice",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native context-menu Return works after persisted notification dismissal",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "only final actual tab close ends the retained terminal job",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "actual URL drag/drop into terminal",
+      "result": "not_run",
+      "detail": "Separate native journey required; no substitution by address-bar/module checks."
+    },
+    {
+      "test": "non-tmux native away wording",
+      "result": "not_run",
+      "detail": "Separate native journey required; no substitution by address-bar/module checks."
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-d8cf95e7"
+}
