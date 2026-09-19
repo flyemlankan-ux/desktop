@@ -1,0 +1,7 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [],
+  "failure": "",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-7e31819e",
+  "scope": "new synthetic profile; real nsIAccessibilityService, not macOS VoiceOver"
+}

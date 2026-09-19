@@ -1,0 +1,137 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app",
+  "engine": "156.0",
+  "budgets": {
+    "startup_seconds": 20,
+    "each_terminal_seconds": 8,
+    "six_terminals_seconds": 30,
+    "idle_total_one_core_percent": 25,
+    "idle_increment_one_core_percent": 15,
+    "six_terminal_rss_increment_mib": 512,
+    "burst_seconds": 10,
+    "heartbeat_p95_ms": 150,
+    "heartbeat_max_ms": 500,
+    "cleanup_seconds": 10
+  },
+  "metrics": {
+    "startup_seconds": 2.770676291,
+    "baseline_idle": {
+      "one_core_cpu_percent": 6.103269530841867,
+      "peak_aggregate_rss_mib": 945.8125,
+      "seconds": 8.028483709,
+      "samples": 28,
+      "pids_at_end": [
+        81168,
+        81169,
+        81170,
+        81171,
+        81172,
+        81174,
+        81176,
+        81177,
+        81178,
+        81179,
+        81180
+      ]
+    },
+    "six_terminal_seconds": 1.005415416,
+    "terminal_ready_seconds": [
+      0.2935463339999984,
+      0.14417904099999923,
+      0.13949966600000074,
+      0.1392480840000001,
+      0.14160083400000012,
+      0.14732200000000084
+    ],
+    "six_terminal_idle": {
+      "one_core_cpu_percent": 6.656161264599469,
+      "peak_aggregate_rss_mib": 929.25,
+      "seconds": 8.112784208999997,
+      "samples": 28,
+      "pids_at_end": [
+        81168,
+        81169,
+        81170,
+        81171,
+        81172,
+        81174,
+        81176,
+        81177,
+        81178,
+        81179,
+        81180,
+        81224,
+        81225,
+        81234,
+        81236,
+        81242,
+        81252,
+        81253,
+        81259,
+        81269,
+        81270,
+        81276,
+        81286,
+        81287,
+        81293,
+        81303,
+        81304,
+        81310,
+        81320,
+        81321
+      ]
+    }
+  },
+  "results": [
+    {
+      "test": "Process launch to browser ready (includes driver handshake)",
+      "result": "pass",
+      "actual": 2.770676291,
+      "limit": 20
+    },
+    {
+      "test": "Each real terminal reaches ready",
+      "result": "pass",
+      "actual": 0.2935463339999984,
+      "limit": 8
+    },
+    {
+      "test": "Six independent real terminal tabs",
+      "result": "pass",
+      "actual": 1.005415416,
+      "limit": 30
+    },
+    {
+      "test": "Six idle terminals plus browser CPU",
+      "result": "pass",
+      "actual": 6.656161264599469,
+      "limit": 25
+    },
+    {
+      "test": "Additional idle CPU above browser baseline",
+      "result": "pass",
+      "actual": 0.552891733757602,
+      "limit": 15
+    },
+    {
+      "test": "Additional aggregate RSS above browser baseline",
+      "result": "pass",
+      "actual": -16.5625,
+      "limit": 512
+    },
+    {
+      "test": "performance journey",
+      "result": "fail",
+      "detail": ""
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/performance-5731af2d/gecko.log",
+  "limitations": [
+    "single-machine smoke, not cross-hardware certification",
+    "startup includes Marionette handshake",
+    "aggregate RSS counts shared pages more than once",
+    "process sampling can miss CPU from jobs shorter than 250ms",
+    "heartbeat measures browser main-thread scheduling, not compositor paint latency",
+    "output completion checks actual xterm buffer, not screenshot pixels"
+  ]
+}

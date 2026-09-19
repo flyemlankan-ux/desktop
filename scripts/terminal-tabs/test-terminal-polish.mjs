@@ -18,7 +18,7 @@ const jar = read("src/zen/terminal/jar.inc.mn");
 assert.match(page, /new ResizeObserver\(scheduleTerminalFit\)/);
 assert.match(page, /fitAddon\.proposeDimensions\(\)/);
 assert.doesNotMatch(page, /characterWidth|characterHeight/);
-assert.match(page, /terminal\.write\(chunk, resolve\)/);
+assert.match(page, /viewer\.write\(chunk, complete\)/);
 assert.match(page, /smoothScrollDuration: reducedMotionQuery\?\.matches \? 0 : 80/);
 assert.match(page, /resizeTerminalTmuxSession\(/);
 assert.match(page, /\.\.\.MACOS_SUBPROCESS_OPTIONS/);
@@ -318,6 +318,7 @@ for (const initiallyReduced of [false, true]) {
     resizeAnimationFrame: 0, stopping: false, shellReady: true, shellProcess: null,
     pendingTmuxResize: null, pageState: {}, output: {}, sessionDeleteObserver: {},
     ZEN_TERMINAL_SESSION_DELETE_TOPIC: "synthetic", Services: {appinfo:{}},
+    startTerminalAccessibilityObserver() {}, stopTerminalAccessibilityObserver() {},
     fitTerminalToSurface() {}, scheduleTerminalFit() {}, writeToShell() {},
     document: { fonts: null }, ResizeObserver: class {observe() {} disconnect() {}},
     window: {

@@ -160,6 +160,14 @@ try:
  js('Services.prefs.setIntPref("ui.prefersReducedMotion",1);')
  wait(lambda:page('return !w.__keyboardProofTerminal.options.cursorBlink && w.__keyboardProofTerminal.options.smoothScrollDuration===0;'),'live reduced-motion on')
  record('live motion preference transitions update actual terminal options; non-reduced cursor style may be controlled by shell/tmux')
+ # Real shell output can select blinking cursor shapes independently of xterm's
+ # ordinary cursorBlink option. Inspect the rendered cursor, not just options.
+ for style in (1,3,5):
+  command("printf '\\033[?12h\\033[%d qMOTION_STYLE_%d\\n'" % (style,style))
+  wait(lambda:page('const b=w.__keyboardProofTerminal.buffer.active;return Array.from({length:Math.min(100,b.length)},(_,i)=>b.getLine(b.length-1-i)?.translateToString(true).trim()).includes("MOTION_STYLE_%d");' % style),'real cursor output consumed')
+  wait(lambda:page('const c=d.querySelector(".xterm-cursor");return c && w.getComputedStyle(c).animationName==="none";'),'shell-selected cursor respects reduced motion')
+ record('real shell blinking block/underline/bar requests stay visually static under reduced motion')
+
  results.extend([{'test':'OS clipboard all-format preservation and paste','result':'not_run','detail':'No system clipboard access; cannot guarantee all original formats and concurrent owner race preservation.'},{'test':'OS IME composition / screen-reader speech','result':'not_run','detail':'Trusted keyboard automation is not an operating-system input-method or assistive-technology session. DOM labels/live regions checked only.'}])
 except Exception as error:
  failure=repr(error)

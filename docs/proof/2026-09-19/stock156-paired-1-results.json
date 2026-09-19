@@ -1,0 +1,64 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Official Zen 1.22.2b.app",
+  "engine": "156.0",
+  "mode": "stock-browser-only",
+  "budgets": {
+    "startup_seconds": 20,
+    "each_terminal_seconds": 8,
+    "six_terminals_seconds": 30,
+    "idle_total_one_core_percent": 25,
+    "idle_increment_one_core_percent": 15,
+    "six_terminal_rss_increment_mib": 512,
+    "burst_seconds": 10,
+    "heartbeat_p95_ms": 150,
+    "heartbeat_max_ms": 500,
+    "cleanup_seconds": 10
+  },
+  "metrics": {
+    "startup_seconds": 7.272539292,
+    "baseline_idle": {
+      "one_core_cpu_percent": 24.483459919935335,
+      "peak_aggregate_rss_mib": 903.140625,
+      "seconds": 8.087092292000001,
+      "samples": 29,
+      "pids_at_end": [
+        86207,
+        86226,
+        86227,
+        86228,
+        86229,
+        86231,
+        86232,
+        86233,
+        86234,
+        86235,
+        86236
+      ]
+    }
+  },
+  "results": [
+    {
+      "test": "Process launch to browser ready (includes driver handshake)",
+      "result": "pass",
+      "actual": 7.272539292,
+      "limit": 20
+    },
+    {
+      "test": "Stock browser-only idle CPU",
+      "result": "pass",
+      "actual": 24.483459919935335,
+      "limit": 25
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/performance-a5dfb7a2/gecko.log",
+  "limitations": [
+    "single-machine smoke, not cross-hardware certification",
+    "startup includes Marionette handshake",
+    "aggregate RSS counts shared pages more than once",
+    "process sampling can miss CPU from jobs shorter than 250ms",
+    "heartbeat measures browser main-thread scheduling, not compositor paint latency",
+    "output completion checks actual xterm buffer, not screenshot pixels",
+    "per-tab completion sampled every 100ms in browser chrome; sampler overhead reported",
+    "producer marker timestamps use filesystem wall-clock relative to burst start; do not imply viewer completion"
+  ]
+}

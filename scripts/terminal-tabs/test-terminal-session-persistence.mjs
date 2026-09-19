@@ -189,6 +189,26 @@ test("restart consent cannot override unknown inventory", async () => {
   assert.equal(calls.filter(call=>call.arguments.includes("new-session")).length, 0);
 });
 
+test("final server exit is rechecked without treating unknown as absence", async () => {
+  manager.registerTerminalSession("server-exit");
+  let probes = 0;
+  handler = () => ++probes < 3
+    ? processResult("", "server exited unexpectedly", 1)
+    : processResult("", "no server running on /synthetic/socket", 1);
+  assert.equal(await manager.destroyTerminalSession("server-exit", {tmuxCommand:command}), true);
+  assert.equal(probes, 3);
+  assert.equal(manager.getTerminalSessionRecord("server-exit"), null);
+});
+
+test("repeated unknown cleanup stays bounded and preserves deletion intent", async () => {
+  manager.registerTerminalSession("unknown-cleanup");
+  let probes = 0;
+  handler = () => { probes++; return processResult("", "server exited unexpectedly", 1); };
+  assert.equal(await manager.destroyTerminalSession("unknown-cleanup", {tmuxCommand:command}), false);
+  assert.equal(probes, 3);
+  assert.equal(manager.getTerminalSessionRecord("unknown-cleanup").pendingDelete, true);
+});
+
 test("failed tool probes remain unknown and keep deletion pending", async () => {
   manager.registerTerminalSession("probe-failure");
   handler = () => {
@@ -459,7 +479,7 @@ test("hung tools time out as unknown and retain pending cleanup", async () => {
       manager.getTerminalSessionRecord("timeout").pendingDelete,
       true,
     );
-    assert.equal(kills, 1);
+    assert.equal(kills, 3, "Each of the three bounded unknown probes is killed on timeout");
   } finally {
     timerDelay = undefined;
   }

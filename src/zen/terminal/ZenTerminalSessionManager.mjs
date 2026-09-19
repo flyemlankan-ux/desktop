@@ -476,13 +476,27 @@ export async function resizeTerminalTmuxSession(
     return false;
   }
 }
+// The final tmux server can exit between concurrent final-close probes. Its
+// transient "server exited unexpectedly" response is still UNKNOWN, not proof
+// of absence. Recheck briefly while keeping the durable deletion intent intact.
+// This is cleanup-only: launch/reconnect probes never gain retries or consent.
+async function terminalCleanupSessionState(command, id) {
+  let state = await terminalTmuxSessionState(command, id);
+  for (const delay of [100, 250]) {
+    if (state !== "unknown") break;
+    await new Promise(resolve => timers().setTimeout(resolve, delay));
+    state = await terminalTmuxSessionState(command, id);
+  }
+  return state;
+}
+
 export async function destroyTerminalSession(id, { tmuxCommand = "" } = {}) {
   const record = markPending(id);
   if (!record) return true;
   return serial(record.id, async () => {
     const command = tmuxCommand || (await findTerminalTmuxCommand());
     if (!command) return false;
-    let state = await terminalTmuxSessionState(command, record.id);
+    let state = await terminalCleanupSessionState(command, record.id);
     if (state === "unknown") return false;
     if (state === "present") {
       try {
@@ -494,7 +508,7 @@ export async function destroyTerminalSession(id, { tmuxCommand = "" } = {}) {
       } catch (_) {
         return false;
       }
-      state = await terminalTmuxSessionState(command, record.id);
+      state = await terminalCleanupSessionState(command, record.id);
     }
     if (state !== "absent") return false;
     removeRecord(record.id);

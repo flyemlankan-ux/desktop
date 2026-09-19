@@ -171,7 +171,41 @@ class OwnedAppDialogs:
         finally:self.cf.CFRelease(action)
         if error:raise AccessibilityError(f'Owned window AXRaise failed ({error})')
 
-    def drag(self,start,end,bounds,duration=.8):
+    def owned_window_id(self,bounds,expected=None):
+        """Read window metadata only; retain no other app's metadata or imagery."""
+        self.owner(self.root);os.kill(self.pid,0)
+        P=C.c_void_p
+        listing=self.cg.CGWindowListCopyWindowInfo;listing.argtypes=[C.c_uint32,C.c_uint32];listing.restype=P
+        get=self.cf.CFDictionaryGetValue;get.argtypes=[P,P];get.restype=P
+        number=self.cf.CFNumberGetValue;number.argtypes=[P,C.c_int,P];number.restype=C.c_bool
+        def field(dictionary,name):
+            key=self.string(name)
+            try:return get(dictionary,key)
+            finally:self.cf.CFRelease(key)
+        def numeric(value):
+            if not value:raise AccessibilityError('Missing required CG window field')
+            result=C.c_double()
+            if not number(value,13,C.byref(result)):raise AccessibilityError('Invalid CG window number')
+            return result.value
+        # Only on-screen windows for initial resolution; exact ID thereafter.
+        windows=listing(8 if expected is not None else 1,expected or 0)
+        if not windows:raise AccessibilityError('No CG window metadata available')
+        candidates=[]
+        try:
+            for i in range(self.cf.CFArrayGetCount(windows)):
+                item=self.cf.CFArrayGetValueAtIndex(windows,i)
+                if numeric(field(item,'kCGWindowOwnerPID'))!=self.pid:continue
+                window_id=int(numeric(field(item,'kCGWindowNumber')))
+                if expected is not None and window_id!=expected:continue
+                if numeric(field(item,'kCGWindowLayer'))!=0:continue
+                rectangle=field(item,'kCGWindowBounds')
+                actual=[numeric(field(rectangle,key)) for key in ['X','Y','Width','Height']]
+                if all(abs(a-b)<=2 for a,b in zip(actual,bounds)):candidates.append(window_id)
+        finally:self.cf.CFRelease(windows)
+        if len(candidates)!=1:raise AccessibilityError('Owned CG window ID absent or ambiguous; refusing pointer input')
+        return candidates[0]
+
+    def drag(self,start,end,bounds,duration=.8,annotate_window=False):
         """Real mouse sequence to one PID; points must come from owned DOM+window geometry."""
         x,y,width,height=bounds
         if width<=0 or height<=0:raise ValueError('Owned window bounds required')
@@ -180,10 +214,21 @@ class OwnedAppDialogs:
         class Point(C.Structure):_fields_=[('x',C.c_double),('y',C.c_double)]
         create=self.cg.CGEventCreateMouseEvent;create.argtypes=[C.c_void_p,C.c_uint32,Point,C.c_uint32];create.restype=C.c_void_p
         self.raise_window()
+        window_id=self.owned_window_id(bounds) if annotate_window else None
+        set_field=self.cg.CGEventSetIntegerValueField;set_field.argtypes=[C.c_void_p,C.c_uint32,C.c_int64];set_field.restype=None
         def post(kind,point):
             self.owner(self.root);os.kill(self.pid,0)
             event=create(None,kind,Point(*point),0)
-            try:self.cg.CGEventPostToPid(self.pid,event)
+            if not event:raise AccessibilityError('Could not construct owned mouse event')
+            try:
+                if window_id is not None:
+                    if kind != 2:  # Always release within the same PID if geometry changes.
+                        self.owned_window_id(bounds,expected=window_id)
+                    # Public Apple fields: click count, window under pointer,
+                    # window able to handle event. No global HID posting.
+                    for field,value in [(1,1),(91,window_id),(92,window_id),(40,self.pid)]:
+                        set_field(event,field,value)
+                self.cg.CGEventPostToPid(self.pid,event)
             finally:self.cf.CFRelease(event)
         post(5,start);post(1,start)
         try:
@@ -191,3 +236,4 @@ class OwnedAppDialogs:
                 point=(start[0]+(end[0]-start[0])*step/24,start[1]+(end[1]-start[1])*step/24)
                 post(6,point);time.sleep(duration/24)
         finally:post(2,end)
+        return window_id

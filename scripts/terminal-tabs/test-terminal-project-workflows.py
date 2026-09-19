@@ -3,7 +3,7 @@
 Native methods unless explicitly labelled pointer input. Optional pointer drag
 uses real W3C input; unsupported/broken input fails rather than faking a pass.
 """
-import argparse, json, os, socket as net_socket, subprocess, time, uuid
+import argparse, ctypes as C, importlib.util, json, os, socket as net_socket, subprocess, time, uuid
 from pathlib import Path
 from marionette_driver.marionette import Marionette
 from marionette_driver.keys import Keys
@@ -11,8 +11,13 @@ from marionette_driver.keys import Keys
 parser=argparse.ArgumentParser()
 parser.add_argument('--app', required=True, type=Path)
 parser.add_argument('--label', default='packaged')
+parser.add_argument('--gecko-native-pointer-drag', action='store_true', help='Experimental process-local Gecko native down/move/up; moves system cursor but never posts global input')
+parser.add_argument('--annotate-native-window', action='store_true', help='Opt-in CG window annotations; requires --native-pointer-drag')
+parser.add_argument('--native-pointer-drag', action='store_true', help='Actual owned-PID macOS CGEvent drag; no W3C fallback')
 parser.add_argument('--pointer-drag', action='store_true', help='Attempt real pointer reorder; failure is NOT replaced by a native-method pass')
 args=parser.parse_args()
+if args.annotate_native_window and not args.native_pointer_drag:parser.error('--annotate-native-window requires --native-pointer-drag')
+if sum([args.pointer_drag,args.native_pointer_drag,args.gecko_native_pointer_drag])>1:parser.error('Choose one pointer mechanism explicitly')
 if not args.label.replace('-', '').replace('_', '').isalnum():parser.error('label must contain letters, digits, hyphens or underscores')
 root=Path(__file__).resolve().parents[2]
 run=root/'.terminal-test'/('mac-'+uuid.uuid4().hex[:8]);run.mkdir(parents=True)
@@ -65,6 +70,75 @@ def same_jobs():
  assert [pane(sid) for sid in test_sessions]==job_pids
  assert marker.read_text().splitlines()==['launch','launch']
 
+def native_drag(source, target):
+ # AX window geometry and DOM geometry use screen points on macOS, not Retina
+ # device pixels. Require agreement instead of guessing an offset or scale.
+ spec=importlib.util.spec_from_file_location('owned_dialogs',Path(__file__).with_name('macos-test-dialogs.py'))
+ module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+ ax=module.OwnedAppDialogs(process.pid)
+ try:
+  ax.activate();ax.raise_window()
+  assert js('return Services.appinfo.processID;')==process.pid
+  focused=ax.attr(ax.root,'AXFocusedWindow');assert focused,'No owned focused window'
+  ax.owner(focused)
+  class Pair(C.Structure):_fields_=[('a',C.c_double),('b',C.c_double)]
+  decode=ax.ax.AXValueGetValue;decode.argtypes=[C.c_void_p,C.c_int,C.c_void_p];decode.restype=C.c_bool
+  position=Pair();size=Pair()
+  assert decode(ax.attr(focused,'AXPosition'),1,C.byref(position)), 'No AX screen position'
+  assert decode(ax.attr(focused,'AXSize'),2,C.byref(size)), 'No AX window size'
+  geometry=js('return {x:window.screenX,y:window.screenY,width:window.outerWidth,height:window.outerHeight,innerX:window.mozInnerScreenX,innerY:window.mozInnerScreenY,ratio:window.devicePixelRatio};')
+  assert all(abs(a-b)<=2 for a,b in zip([position.a,position.b,size.a,size.b],[geometry['x'],geometry['y'],geometry['width'],geometry['height']])), {'AX':[position.a,position.b,size.a,size.b],'DOM':geometry}
+  start=(geometry['innerX']+source['x'],geometry['innerY']+source['y'])
+  end=(geometry['innerX']+target['x'],geometry['innerY']+target['y']-8)
+  bounds=(position.a,position.b,size.a,size.b)
+  print('NATIVE POINTER GEOMETRY',{'start':start,'end':end,'bounds':bounds,'DOM':geometry},flush=True)
+  # Native helper checks ownership before every mouse event and always releases.
+  window_id=ax.drag(start,end,bounds,duration=1.2,annotate_window=args.annotate_native_window)
+  geometry["verifiedCGWindowID"]=window_id
+  return {'start':start,'end':end,'bounds':bounds,'DOM':geometry}
+ finally:ax.close()
+
+def gecko_native_drag(source,target):
+ result=async_js("""
+ const pid=arguments[0],source=arguments[1],target=arguments[2];
+ if(Services.appinfo.processID!==pid)throw new Error('Wrong owned browser process');
+ const ownedDocument=window.document,element=projectTerms[1];
+ if(element.ownerDocument!==ownedDocument || !element.isConnected)throw new Error('Not an owned chrome tab');
+ const u=window.windowUtils,ratio=window.devicePixelRatio;
+ if(!Number.isFinite(ratio)||ratio<=0)throw new Error('Invalid device-pixel scale');
+ const origin={x:window.mozInnerScreenX,y:window.mozInnerScreenY};
+ const outer={x:window.screenX,y:window.screenY,width:window.outerWidth,height:window.outerHeight};
+ const start={x:origin.x+source.x,y:origin.y+source.y},end={x:origin.x+target.x,y:origin.y+target.y-8};
+ for(const p of [start,end])if(p.x<outer.x||p.y<outer.y||p.x>outer.x+outer.width||p.y>outer.y+outer.height)throw new Error('Point outside owned window');
+ const sent=[];
+ async function send(message,point){
+   if(Services.appinfo.processID!==pid || element.ownerDocument!==ownedDocument || !element.isConnected)throw new Error('Owned widget changed');
+   if(message!==u.NATIVE_MOUSE_MESSAGE_BUTTON_UP && (window.screenX!==outer.x || window.screenY!==outer.y || window.outerWidth!==outer.width || window.outerHeight!==outer.height || window.devicePixelRatio!==ratio))throw new Error('Owned geometry changed');
+   await new Promise((resolve,reject)=>{
+     const timeout=window.setTimeout(()=>reject(new Error('Native mouse dispatch callback timed out')),3000);
+     try{u.sendNativeMouseEvent(Math.round(point.x*ratio),Math.round(point.y*ratio),message,0,0,element,{onCompleteDispatch(){window.clearTimeout(timeout);resolve();}});}
+     catch(error){window.clearTimeout(timeout);reject(error);}
+   });
+   sent.push({message,x:point.x,y:point.y});
+ }
+ window.focus();
+ await send(u.NATIVE_MOUSE_MESSAGE_MOVE,start);
+ try{
+   await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_DOWN,start);
+   for(let step=1;step<=3;step++){
+     const p=end;
+     // Move directly to the destination, then allow native drag tracking to settle.
+     // API has MOVE only, not a DRAG constant. Completion must be observed,
+     // never fabricated using a DOM drop or a tab reorder method.
+     await send(u.NATIVE_MOUSE_MESSAGE_MOVE,p);
+     await new Promise(resolve=>window.setTimeout(resolve,50));
+   }
+ }finally{await send(u.NATIVE_MOUSE_MESSAGE_BUTTON_UP,end);}
+ return {start:[start.x,start.y],end:[end.x,end.y],outer,ratio,sent,scope:'own NSApp NSEvent down/move/up; shared cursor moved'};
+ """,[process.pid,source,target])
+ assert 'error' not in result,result
+ return result['value']
+
 failure=None
 try:
  start()
@@ -91,22 +165,38 @@ try:
  js('projectFolder.collapsed=true;projectFolder.collapsed=false;')
  assert js('return [projectWeb,...projectTerms].every(t=>t.group===projectFolder);')
  same_jobs();record('native collapse/expand retains members and jobs')
- if args.pointer_drag:
-  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(e.type!=="dragover" || projectDragEvents.filter(x=>x.type==="dragover").length<10)projectDragEvents.push({type:e.type,trusted:e.isTrusted,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY,dropEffect:e.dataTransfer?.dropEffect,types:e.dataTransfer?[...e.dataTransfer.types]:[]});},true);}window.focus();')
+ if args.pointer_drag or args.native_pointer_drag or args.gecko_native_pointer_drag:
+  js('window.projectDragEvents=[];for(const type of ["mousedown","dragstart","dragover","drop","dragend"]){window.addEventListener(type,e=>{if(e.type!=="dragover" || projectDragEvents.filter(x=>x.type==="dragover").length<10)projectDragEvents.push({type:e.type,trusted:e.isTrusted,button:e.button,buttons:e.buttons,target:e.target.closest?.("tab")?.id||e.target.localName,x:e.clientX,y:e.clientY,screenX:e.screenX,screenY:e.screenY,dropEffect:e.dataTransfer?.dropEffect,types:e.dataTransfer?[...e.dataTransfer.types]:[]});},true);}window.focus();')
   time.sleep(.6)
-  # W3C pointer actions hit actual browser chrome. Never inject drag events or
+  # Both pointer mechanisms hit actual browser chrome. Never inject drag events or
   # silently substitute DOM moves when real pointer dragging fails.
-  rects=js('return [projectTerms[1],projectWeb].map(t=>{t.scrollIntoView({block:"nearest"});const r=t.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,top:r.y+2};});')
+  rects=js('const tabs=[projectTerms[1],projectWeb];tabs.forEach(t=>t.scrollIntoView({block:"nearest"}));return tabs.map(t=>{const r=t.getBoundingClientRect();const x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,top:r.y+2,width:r.width,height:r.height,hit:document.elementFromPoint(x,y)?.closest("tab")===t};});')
+  assert all(r["width"]>0 and r["height"]>16 and r["hit"] for r in rects),rects
   source,target=rects
   print('POINTER RECTS',rects,flush=True)
-  m.actions.sequence('pointer','project-drag',{'pointerType':'mouse'}).pointer_move(int(source['x']),int(source['y'])).pointer_down().pause(250).pointer_move(int(target['x']),int(target['y']-8),duration=800).pause(1000).pointer_up().perform()
-  m.actions.release()
+  native_geometry=None
+  if args.gecko_native_pointer_drag:
+   native_geometry=gecko_native_drag(source,target)
+  elif args.native_pointer_drag:
+   native_geometry=native_drag(source,target)
+  else:
+   m.actions.sequence('pointer','project-drag',{'pointerType':'mouse'}).pointer_move(int(source['x']),int(source['y'])).pointer_down().pause(250).pointer_move(int(target['x']),int(target['y']-8),duration=800).pause(1000).pointer_up().perform()
+   m.actions.release()
   wait(lambda:js('return projectTerms[1].group===projectFolder && projectFolder.tabs.indexOf(projectTerms[1])<projectFolder.tabs.indexOf(projectWeb);'),'actual pointer reorder')
-  same_jobs();record('actual pointer drag reordered terminal before web inside folder')
+  wait(lambda:js('return projectDragEvents.some(e=>e.type==="dragend" && e.trusted);'),'native drag session finishes')
+  events=js('return projectDragEvents;')
+  assert all(any(event['type']==kind and event['trusted'] for event in events) for kind in ['dragstart','drop','dragend']), events
+  # Capture sees dragstart before the native tab handler fills dataTransfer.
+  # The actual trusted drop must carry the native tab payload.
+  assert any(event['type']=='drop' and event['trusted'] and 'application/x-moz-tabbrowser-tab' in event['types'] for event in events),events
+  if native_geometry:
+   down=next(event for event in events if event['type']=='mousedown')
+   assert abs(down['screenX']-native_geometry['start'][0])<=2 and abs(down['screenY']-native_geometry['start'][1])<=2, {'event':down,'geometry':native_geometry}
+  same_jobs();record('actual pointer drag reordered terminal before web inside folder',{'mechanism':'Gecko own NSApp NSEvent' if args.gecko_native_pointer_drag else 'owned-PID CGEvent' if native_geometry else 'W3C','events':events,'geometry':native_geometry})
  else:
-  results.append({'test':'actual pointer drag/drop','result':'not_run','detail':'Use --pointer-drag; native methods do not establish pointer acceptance'})
+  results.append({'test':'actual pointer drag/drop','result':'not_run','detail':'Use --pointer-drag, --native-pointer-drag or --gecko-native-pointer-drag; native methods do not establish pointer acceptance'})
  # Use Zen's actual move helper, not direct DOM insertion.
- js('gBrowser.moveTabTo(projectTerms[1],{tabIndex:gBrowser.tabs.indexOf(projectWeb)});')
+ js('const from=gBrowser.tabs.indexOf(projectTerms[1]),to=gBrowser.tabs.indexOf(projectWeb);gBrowser.moveTabTo(projectTerms[1],{tabIndex:to-(from<to?1:0)});')
  assert js('return projectTerms[1].group===projectFolder && projectFolder.tabs.indexOf(projectTerms[1])<projectFolder.tabs.indexOf(projectWeb);')
  same_jobs();record('native tab reorder retains folder and live jobs')
  created=async_js('window.projectSpace=await gZenWorkspaces.createAndSaveWorkspace("Mixed proof workspace");return projectSpace?.uuid;')

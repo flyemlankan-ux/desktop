@@ -1,0 +1,73 @@
+{
+  "scope": "only synthetic official155 profiles and copied fork156 profiles; not personal migration proof",
+  "results": [
+    {
+      "test": "Official155 created and encrypted synthetic records; clean shutdown",
+      "result": "pass",
+      "detail": {
+        "profile": "first",
+        "real_services": true
+      }
+    },
+    {
+      "test": "Official155 created and encrypted synthetic records; clean shutdown",
+      "result": "pass",
+      "detail": {
+        "profile": "second",
+        "real_services": true
+      }
+    },
+    {
+      "test": "Actual copy tool copied two closed synthetic profiles forward155 to156 without changing source",
+      "result": "pass",
+      "detail": {
+        "profiles": 2,
+        "source_files": 127,
+        "global_guard_difference": "only broad process-name guard bypassed; actual source locks/lsof retained"
+      }
+    },
+    {
+      "test": "Fork156 opens selected copied profile and decrypts original synthetic login",
+      "result": "pass",
+      "detail": {
+        "profile": "first",
+        "checks": {
+          "bookmark": true,
+          "history": true,
+          "loginDecrypted": true,
+          "container": true,
+          "cookie": true,
+          "workspace": true,
+          "preference": true
+        },
+        "selection": "explicit -profile; automatic install selection is a separate test"
+      }
+    },
+    {
+      "test": "Fork156 opens selected copied profile and decrypts original synthetic login",
+      "result": "pass",
+      "detail": {
+        "profile": "second",
+        "checks": {
+          "bookmark": true,
+          "history": true,
+          "loginDecrypted": true,
+          "container": true,
+          "cookie": true,
+          "workspace": true,
+          "preference": true
+        },
+        "selection": "explicit -profile; automatic install selection is a separate test"
+      }
+    },
+    {
+      "test": "Source file hashes unchanged after both copied profiles opened in fork156",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": null,
+  "synthetic_data_root": "/private/var/folders/cj/1dgxxg4x231glgr63kcssvcm0000gn/T/zen-synthetic-native-migration-b8_uva13",
+  "source_app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Official Zen.app",
+  "target_app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app"
+}

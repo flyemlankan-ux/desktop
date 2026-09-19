@@ -1,0 +1,28 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app",
+  "test_data": "new synthetic profile/folders; AX restricted to launched browser PID",
+  "mode": "private-only",
+  "results": [
+    {
+      "test": "Owned browser/profile confirmed; existing Accessibility trust used without permission changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Native folder-picker Cancel, Choose and Settings Save",
+      "result": "not_run",
+      "detail": "Explicit --private-only mode; independent private-alert proof only"
+    },
+    {
+      "test": "Private-only setup created through actual public identity service and terminal store",
+      "result": "pass",
+      "detail": 7
+    },
+    {
+      "test": "Actual private alert body and enabled OK button work; no tab or terminal job created",
+      "result": "pass",
+      "detail": "Terminals can save shell history and files outside the browser. Open a normal window to use a terminal."
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/native-dialogs-0a6deb85/gecko.log"
+}

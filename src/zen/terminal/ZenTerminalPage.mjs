@@ -62,6 +62,7 @@ let inputWarningActive = false;
 let inputWarningVersion = 0;
 let reducedMotionQuery = null;
 let searchAddon = null;
+let accessibilityObserver = null;
 
 const MACOS_SUBPROCESS_OPTIONS =
   Services.appinfo.OS === "Darwin" ? { disclaim: true } : {};
@@ -291,6 +292,28 @@ function scheduleTerminalFit() {
   });
 }
 
+function startTerminalAccessibilityObserver() {
+  if (accessibilityObserver || stopping) return;
+  accessibilityObserver = {
+    observe(_subject, topic, data) {
+      if (topic !== "a11y-init-or-shutdown" || stopping || !terminal) return;
+      // Firefox also starts a PDF-only accessibility service. That is not a
+      // screen-reader activation and must not change the terminal's mode.
+      if (data === "1") terminal.options.screenReaderMode = true;
+      else if (data === "0") terminal.options.screenReaderMode = false;
+    },
+  };
+  Services.obs.addObserver(accessibilityObserver, "a11y-init-or-shutdown");
+  // Recheck after subscribing: an existing service needs no new notification.
+  terminal.options.screenReaderMode = Boolean(Services.appinfo.accessibilityEnabled);
+}
+
+function stopTerminalAccessibilityObserver() {
+  if (!accessibilityObserver) return;
+  Services.obs.removeObserver(accessibilityObserver, "a11y-init-or-shutdown");
+  accessibilityObserver = null;
+}
+
 function initTerminal() {
   if (!window.Terminal) {
     throw new Error("xterm.js did not load");
@@ -345,6 +368,7 @@ function initTerminal() {
   fitAddon = new window.FitAddon.FitAddon();
   terminal.loadAddon(fitAddon);
   terminal.open(output);
+  startTerminalAccessibilityObserver();
   searchAddon = new window.SearchAddon.SearchAddon({ highlightLimit: 100 });
   terminal.loadAddon(searchAddon);
   reducedMotionQuery?.addEventListener("change", updateTerminalMotion);
@@ -363,15 +387,75 @@ function initTerminal() {
 }
 
 async function readPipe(pipe, className = "") {
+  // Firefox156 subprocess_common.sys.mjs buffers at most 32768 bytes per
+  // default read. Reserve twice that plus a carried UTF-8 decoder prefix
+  // for decoded UTF-16 payload before reading.
+  // Let xterm parse several queued chunks per scheduled turn, not one hidden-tab
+  // timer per chunk. Retain public write callbacks as bounded backpressure.
+  const MAX_PAYLOAD_BYTES = 256 * 1024;
+  const READ_RESERVE_BYTES = 64 * 1024 + 8;
+  const MAX_WRITES = 64;
+  const viewer = terminal;
+  const pending = new Set();
+  let queuedBytes = 0;
+  let wake = null;
+  let cancelled = false;
+  let cancelRead = null;
+  const notify = () => { const resolve = wake; wake = null; resolve?.(); };
+  const cancel = () => {
+    cancelled = true;
+    cancelRead?.();
+    cancelRead = null;
+    notify();
+  };
+  const active = () => !cancelled && !stopping && terminal === viewer;
+  const waitFor = async predicate => {
+    while (active() && !predicate()) {
+      await new Promise(resolve => { wake = resolve; });
+    }
+    return active();
+  };
+  window.addEventListener("pagehide", cancel, { once: true });
+  window.addEventListener("beforeunload", cancel, { once: true });
   try {
-    let chunk;
-    while ((chunk = await pipe.readString())) {
-      await new Promise((resolve) => terminal.write(chunk, resolve));
+    while (active()) {
+      if (!await waitFor(() => queuedBytes <= MAX_PAYLOAD_BYTES - READ_RESERVE_BYTES && pending.size < MAX_WRITES)) break;
+      const chunk = await new Promise((resolve, reject) => {
+        cancelRead = () => resolve(null);
+        Promise.resolve().then(() => pipe.readString()).then(
+          value => { cancelRead = null; resolve(value); },
+          error => { cancelRead = null; reject(error); },
+        );
+      });
+      if (!active() || !chunk) break;
+      const bytes = chunk.length * 2;
+      if (bytes > READ_RESERVE_BYTES) {
+        throw new Error("Terminal output exceeded the bounded pipe read size");
+      }
+      const entry = { bytes };
+      pending.add(entry);
+      queuedBytes += bytes;
+      const complete = () => {
+        // xterm may call synchronously; a throw must not decrement twice.
+        if (!pending.delete(entry)) return;
+        queuedBytes -= entry.bytes;
+        notify();
+      };
+      try {
+        viewer.write(chunk, complete);
+      } catch (error) {
+        complete();
+        throw error;
+      }
     }
+    await waitFor(() => pending.size === 0);
   } catch (error) {
-    if (!stopping) {
-      terminal.writeln(`reader stopped: ${error.message}`);
-    }
+    // Preserve earlier output before the error message, unless unloading.
+    await waitFor(() => pending.size === 0);
+    if (active()) viewer.writeln(`reader stopped: ${error.message}`);
+  } finally {
+    window.removeEventListener("pagehide", cancel);
+    window.removeEventListener("beforeunload", cancel);
   }
 }
 
@@ -669,6 +753,7 @@ window.addEventListener("pageshow", () => {
 });
 
 async function stopShell() {
+  stopTerminalAccessibilityObserver();
   try { Services.obs?.removeObserver?.(sessionDeleteObserver, ZEN_TERMINAL_SESSION_DELETE_TOPIC); } catch (_) {}
   stopping = true;
   shellReady = false;

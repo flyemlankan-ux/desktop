@@ -1,0 +1,13 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Actual pre-trusted Chubs SSH, only harmless printf/exit commands; saved-setup manager methods, not Settings editor UI",
+  "results": [
+    {
+      "test": "owned app/profile/home; exact pre-trusted Chubs key; noninteractive authentication without copying a key",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError('Timed out: real remote ordered printf; None')",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-4617fd4a"
+}

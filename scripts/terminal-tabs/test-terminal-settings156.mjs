@@ -263,6 +263,19 @@ function editor(options = {}) {
 const tests = [];
 const test = (name, run) => tests.push([name, run]);
 
+test("compact setup help preserves every warning and accessible folder description", () => {
+  const item = editor();
+  const elements = descendants(item._terminalFields);
+  const help = elements.find(element => element.id === "zen-terminal-folder-help");
+  assert.equal(item._startingDirectory.attrs["aria-describedby"], help.id);
+  assert.equal(elements.find(element => element.tagName === "label").htmlFor, item._startingDirectory.id);
+  assert.equal(help.textContent, "Blank uses home. Use a literal path starting with /; ~ and variables are not expanded.");
+  const paragraphs = elements.filter(element => element.tagName === "p").map(element => element.textContent || "");
+  assert(paragraphs.includes("Changes affect new terminals only. Running work stays unchanged."));
+  assert(paragraphs.includes("Steps run in order; failure stops later steps. A simple SSH connection sends later steps to that computer."));
+  assert(paragraphs.slice(0, 3).join(" ").split(/\s+/).length < 50, "setup help stays concise without hiding safety information");
+});
+
 test("native creation requires kind and name and saves one terminal identity", () => {
   const item = editor();
   assert.equal(item.isValid, false);

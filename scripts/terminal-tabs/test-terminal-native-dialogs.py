@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Real macOS folder-picker and private alert controls, scoped to one owned app PID."""
-import argparse, importlib.util, json, os, socket as net_socket, subprocess, time, uuid
+import argparse, importlib.util, json, os, re, socket as net_socket, subprocess, time, uuid
 from pathlib import Path
 from marionette_driver.marionette import Marionette
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--app',required=True,type=Path);p.add_argument('--label',default='native-dialogs');p.add_argument('--launch-services',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--app',required=True,type=Path);p.add_argument('--label',default='native-dialogs');p.add_argument('--launch-services',action='store_true');p.add_argument('--private-only',action='store_true',help='Exercise real private alert without depending on the folder-picker journey');a=p.parse_args()
 if not a.label.replace('-','').replace('_','').isalnum():p.error('Invalid proof label')
 root=Path(__file__).resolve().parents[2];app=a.app.resolve();exe=app/'Contents/MacOS/zen-terminal'
 if not exe.is_file():p.error('Expected separate Zen Terminal app')
+tmux=next((path for path in ['/opt/homebrew/bin/tmux','/usr/local/bin/tmux'] if Path(path).is_file()),None)
+if not tmux:p.error('Actual private no-job proof requires tmux inventory; not silently skipped')
 spec=importlib.util.spec_from_file_location('owned_dialogs',Path(__file__).with_name('macos-test-dialogs.py'));axmodule=importlib.util.module_from_spec(spec);spec.loader.exec_module(axmodule)
 run=root/'.terminal-test'/('native-dialogs-'+uuid.uuid4().hex[:8]);home=run/'home';profile=run/'profile';home.mkdir(parents=True);profile.mkdir()
 folder_a=home/'Original project';folder_b=home/'Chosen project 雪';folder_a.mkdir();folder_b.mkdir()
@@ -32,6 +34,11 @@ def record(name,detail=True):results.append({'test':name,'result':'pass','detail
 def deep(selector):return js('const find=root=>{const x=root.querySelector(arguments[0]);if(x)return x;for(const el of root.querySelectorAll("*")){if(el.shadowRoot){const found=find(el.shadowRoot);if(found)return found;}}return null;};return find(document);',[selector])
 def identity():return js('return ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs").ContextualIdentityService.getPublicIdentities().find(x=>x.name==="Picker proof")?.userContextId;')
 def screen(name):(proof/(a.label+'-'+name+'.png')).write_bytes(m.screenshot(format='binary'))
+def assert_no_owned_tmux_jobs(socket):
+ assert re.fullmatch(r'zen-terminal-p[0-9a-f]{16}',socket)
+ result=subprocess.run([tmux,'-L',socket,'-f','/dev/null','list-sessions','-F','#{session_name}'],capture_output=True,text=True,timeout=10,env={**env,'LC_ALL':'C'})
+ assert result.returncode==1 and re.match(r'^(no server running on |error connecting to [^\n]+ \(No such file or directory\))',result.stderr.strip()),'Owned tmux namespace was not confirmed absent'
+
 try:
  args=['-no-remote','-marionette','--remote-allow-system-access','-profile',str(profile)]
  if a.launch_services:
@@ -51,50 +58,63 @@ try:
  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'browser ready')
  ax.activate()
  record('Owned browser/profile confirmed; existing Accessibility trust used without permission changes')
- js('gBrowser.selectedTab=gBrowser.addTab("about:preferences#containers",{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
- m.set_context('content')
- for handle in m.window_handles:
-  m.switch_to_window(handle)
-  if m.get_url().startswith('about:preferences'):break
- wait(lambda:deep('[data-l10n-id="containers-add-button2"]'),'Settings Add')
- wait(lambda:js('return document.readyState==="complete" && !!window.gSubDialog;'),'Settings initialized')
- time.sleep(.5)
- button=deep('[data-l10n-id="containers-add-button2"]');js('return arguments[0].shadowRoot?.querySelector("button")||arguments[0];',[button]).click()
- frame=wait(lambda:js('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/containers.xhtml");'),'native editor')
- m.execute_async_script('const done=arguments[arguments.length-1];arguments[0]._dialogReady.then(()=>done(true));',script_args=[frame]);m.switch_to_frame(frame)
- m.execute_async_script('const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));')
- m.find_element('id','zen-container-kind-terminal').click()
- wait(lambda:js('return document.querySelector("moz-input-text[name=name]")?.shadowRoot?.querySelector("input");'),'name input').send_keys('Picker proof')
- m.find_element('id','zen-terminal-starting-directory').send_keys(str(folder_a))
- # Real macOS Cancel button, not a mocked nsIFilePicker callback.
- m.find_element('id','zen-terminal-choose-directory').click()
- time.sleep(.5)
- print('PICKER_FOCUSED_APPLICATION',subprocess.check_output(['/usr/bin/osascript','-l','JavaScript','-e','ObjC.import("AppKit"); var a=$.NSWorkspace.sharedWorkspace.frontmostApplication; JSON.stringify({pid:a.processIdentifier,bundle:ObjC.unwrap(a.bundleIdentifier)})'],text=True).strip(),flush=True)
- ax.activate()
- print('AFTER_ACTIVATION_FOCUSED_APPLICATION',subprocess.check_output(['/usr/bin/osascript','-l','JavaScript','-e','ObjC.import("AppKit"); var a=$.NSWorkspace.sharedWorkspace.frontmostApplication; JSON.stringify({pid:a.processIdentifier,bundle:ObjC.unwrap(a.bundleIdentifier)})'],text=True).strip(),flush=True)
- ax.press_dialog_button(['Cancel'],'Choose starting folder')
- wait(lambda:js('return !document.getElementById("zen-terminal-choose-directory").disabled;'),'picker cancelled')
- assert js('return document.getElementById("zen-terminal-starting-directory").value;')==str(folder_a)
- assert identity() is None
- record('Native picker Cancel preserves typed folder and creates no saved setup')
- m.find_element('id','zen-terminal-choose-directory').click()
- ax.enter_picker_folder(str(folder_b))
- ax.press_dialog_button(['Choose','Open','Select','Select Folder'],'Choose starting folder')
- wait(lambda:js('return document.getElementById("zen-terminal-starting-directory").value;')==str(folder_b),'real selected folder returns to input')
- assert identity() is None
- screen('chosen-folder')
- record('Native picker chooses a different Unicode folder without prematurely saving')
- js('document.querySelector("dialog").getButton("accept").click();');m.switch_to_frame();m.set_context('chrome')
- cid=wait(identity,'saved native setup')
- assert js('return ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs").getTerminalContainerRecipe(arguments[0]).recipe.startingDirectory;',[cid])==str(folder_b)
- record('Actual Settings Save persists the folder returned by native picker')
+ if a.private_only:
+  results.append({'test':'Native folder-picker Cancel, Choose and Settings Save','result':'not_run','detail':'Explicit --private-only mode; independent private-alert proof only'})
+  cid=js('''const {ContextualIdentityService}=ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs");
+   const store=ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs");
+   const created=ContextualIdentityService.create("Private refusal proof","briefcase","purple");
+   store.setTerminalContainerRecipe(created.userContextId,{recipe:{steps:[]}});
+   if(!store.getTerminalContainerRecipe(created.userContextId))throw new Error("Synthetic terminal setup was not persisted");
+   return created.userContextId;''')
+  record('Private-only setup created through actual public identity service and terminal store',cid)
+ else:
+  js('gBrowser.selectedTab=gBrowser.addTab("about:preferences#containers",{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});')
+  m.set_context('content')
+  for handle in m.window_handles:
+   m.switch_to_window(handle)
+   if m.get_url().startswith('about:preferences'):break
+  wait(lambda:deep('[data-l10n-id="containers-add-button2"]'),'Settings Add')
+  wait(lambda:js('return document.readyState==="complete" && !!window.gSubDialog;'),'Settings initialized')
+  time.sleep(.5)
+  button=deep('[data-l10n-id="containers-add-button2"]');js('return arguments[0].shadowRoot?.querySelector("button")||arguments[0];',[button]).click()
+  frame=wait(lambda:js('return [...document.querySelectorAll("browser.dialogFrame")].find(x=>x.contentDocument?.documentURI==="chrome://browser/content/preferences/dialogs/containers.xhtml");'),'native editor')
+  m.execute_async_script('const done=arguments[arguments.length-1];arguments[0]._dialogReady.then(()=>done(true));',script_args=[frame]);m.switch_to_frame(frame)
+  m.execute_async_script('const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));')
+  m.find_element('id','zen-container-kind-terminal').click()
+  wait(lambda:js('return document.querySelector("moz-input-text[name=name]")?.shadowRoot?.querySelector("input");'),'name input').send_keys('Picker proof')
+  m.find_element('id','zen-terminal-starting-directory').send_keys(str(folder_a))
+  # Real macOS Cancel button, not a mocked nsIFilePicker callback.
+  m.find_element('id','zen-terminal-choose-directory').click()
+  time.sleep(.5)
+  print('PICKER_FOCUSED_APPLICATION',subprocess.check_output(['/usr/bin/osascript','-l','JavaScript','-e','ObjC.import("AppKit"); var a=$.NSWorkspace.sharedWorkspace.frontmostApplication; JSON.stringify({pid:a.processIdentifier,bundle:ObjC.unwrap(a.bundleIdentifier)})'],text=True).strip(),flush=True)
+  ax.activate()
+  print('AFTER_ACTIVATION_FOCUSED_APPLICATION',subprocess.check_output(['/usr/bin/osascript','-l','JavaScript','-e','ObjC.import("AppKit"); var a=$.NSWorkspace.sharedWorkspace.frontmostApplication; JSON.stringify({pid:a.processIdentifier,bundle:ObjC.unwrap(a.bundleIdentifier)})'],text=True).strip(),flush=True)
+  ax.press_dialog_button(['Cancel'],'Choose starting folder')
+  wait(lambda:js('return !document.getElementById("zen-terminal-choose-directory").disabled;'),'picker cancelled')
+  assert js('return document.getElementById("zen-terminal-starting-directory").value;')==str(folder_a)
+  assert identity() is None
+  record('Native picker Cancel preserves typed folder and creates no saved setup')
+  m.find_element('id','zen-terminal-choose-directory').click()
+  ax.enter_picker_folder(str(folder_b))
+  ax.press_dialog_button(['Choose','Open','Select','Select Folder'],'Choose starting folder')
+  wait(lambda:js('return document.getElementById("zen-terminal-starting-directory").value;')==str(folder_b),'real selected folder returns to input')
+  assert identity() is None
+  screen('chosen-folder')
+  record('Native picker chooses a different Unicode folder without prematurely saving')
+  js('document.querySelector("dialog").getButton("accept").click();');m.switch_to_frame();m.set_context('chrome')
+  cid=wait(identity,'saved native setup')
+  assert js('return ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalContainerStore.mjs").getTerminalContainerRecipe(arguments[0]).recipe.startingDirectory;',[cid])==str(folder_b)
+  record('Actual Settings Save persists the folder returned by native picker')
+ owned_socket=js('return ChromeUtils.importESModule("chrome://browser/content/zen-terminal/ZenTerminalSessionManager.mjs").getTerminalTmuxSocket();')
+ assert_no_owned_tmux_jobs(owned_socket)
  original=m.current_chrome_window_handle;handles=set(m.chrome_window_handles);js('OpenBrowserWindow({private:true});')
  private=wait(lambda:next(iter(set(m.chrome_window_handles)-handles),None),'private browser window');m.switch_to_window(private);m.set_context('chrome')
  wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'private window ready')
  assert js('return ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs").PrivateBrowsingUtils.isWindowPrivate(window);')
  before=js('return {records:Services.prefs.getStringPref("zen.terminal.sessions","{}"),tabs:gBrowser.tabs.length};')
- js('window.__privateResult="waiting";setTimeout(()=>{window.__privateResult=gZenTerminalTabs.openTerminalContainerTab(arguments[0]);},0);',[cid])
+ js('const userContextId=arguments[0];window.__privateResult="waiting";setTimeout(()=>{window.__privateResult=gZenTerminalTabs.openTerminalContainerTab(userContextId);},0);',[cid])
  body=wait(lambda:m.switch_to_alert().text,'private refusal message')
+ print('PRIVATE_ALERT_BODY',body,flush=True)
  assert 'shell history and files' in body and 'normal window' in body,body
  # Deliberately avoid WebDriver:AcceptAlert's close-notification wait. AXPress
  # still operates the actual visible enabled OK button; no response is forged.
@@ -102,6 +122,7 @@ try:
  wait(lambda:js('return window.__privateResult===null;'),'private refusal returns after real OK button')
  after=js('return {records:Services.prefs.getStringPref("zen.terminal.sessions","{}"),tabs:gBrowser.tabs.length};')
  assert before==after
+ assert_no_owned_tmux_jobs(owned_socket)
  record('Actual private alert body and enabled OK button work; no tab or terminal job created',body)
  js('window.close();');m.switch_to_window(original);m.set_context('chrome')
 except Exception as e:
@@ -133,4 +154,4 @@ finally:
    time.sleep(.1)
   else:os.kill(owned_pid,15)
  log.close()
- (proof/(a.label+'-results.json')).write_text(json.dumps({'app':str(app),'test_data':'new synthetic profile/folders; AX restricted to launched browser PID','results':results,'log':str(run/'gecko.log')},indent=2)+'\n')
+ (proof/(a.label+'-results.json')).write_text(json.dumps({'app':str(app),'test_data':'new synthetic profile/folders; AX restricted to launched browser PID','mode':'private-only' if a.private_only else 'folder-picker-and-private','results':results,'log':str(run/'gecko.log')},indent=2)+'\n')

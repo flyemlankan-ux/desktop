@@ -66,3 +66,40 @@ Repeat at least three times on the final compiled app with no overlapping UI tes
 7. Drift check: the test measures actual jobs and browser responsiveness; it does not redefine the product around synthetic benchmark scores.
 
 Recommended handoff: medium reasoning for an ordinary run; high reasoning if a budget fails. Proof level: actual isolated macOS app plus real terminal jobs, then three final-build runs before release acceptance.
+
+## Investigation after parent runs (no additional UI launched here)
+
+The parent's `performance156-fixed.log` records a **failed** 12.2866605-second burst against the unchanged 10-second limit. Its maximum browser heartbeat was about 80ms, and native cleanup completed in about 0.312 seconds. An earlier run reportedly completed the burst in about 6.22 seconds. These are variable preliminary results, not a reason to silently relax the limit. Existing evidence files remain untouched; the script now refuses to overwrite an existing result label.
+
+Source inspection finds a plausible explanation to measure, not yet a proven diagnosis:
+- The shipped xterm write queue uses `setTimeout` to start or continue `_innerWrite`, including yields after roughly 12ms of parsing.
+- Production Page `readPipe` awaits each xterm write callback before reading another chunk.
+- Five of six test terminals are background tabs. If their document timers are throttled, browser responsiveness can remain good while background terminal ingestion is slow.
+- The original burst measurement also included twelve sequential tmux client invocations (literal input plus Enter per job) and repeated test-control polling. It did not separate producer completion from viewer completion.
+
+New diagnostic metrics, without changing the 10-second budget or product code:
+- Each tab's command-dispatch start/finish and separate literal/Enter subprocess durations.
+- Total dispatch duration.
+- A synthetic per-job file written only after awk finishes flushing to its real PTY. Its modification timestamp gives producer-side completion relative to burst start; it does not claim xterm has consumed those bytes.
+- Per-tab selected/hidden state, xterm parsed-event count and last parsed time.
+- Per-tab final-marker observation time, sampled every 100ms from the browser chrome window rather than six hidden-page timers.
+- Total sampler execution time, allowing measurement overhead to be seen rather than ignored.
+
+The sampler observes actual xterm buffers and does not switch tabs, force callbacks, alter throttling preferences, or change scheduling. Completion is still a full exact marker line, not the command echo. Filesystem marker times use wall-clock time and browser completion uses browser monotonic time; they are diagnostic offsets, not a nanosecond-accurate cross-clock trace.
+
+### Separate stock Firefox156-based Zen comparison
+
+The same harness has `--stock-baseline`, which runs only launch and browser-only idle measurements, with identical fresh-profile/app-data isolation and settling/sample durations. It requires an explicit **copied official app under this project's `.terminal-test`**, matching the expected official bundle identifier and binary. It refuses the original installed-app path. It never controls, quits or examines the already-running original Zen.
+
+Parent, in its exclusive UI slot:
+
+```sh
+/Users/ar/zen-terminal-research/desktop/.terminal-test/venv/bin/python3 -B \
+  scripts/terminal-tabs/test-terminal-performance-macos.py \
+  --stock-baseline --app '.terminal-test/Official Zen 1.22.2b.app' \
+  --label stock156-performance-baseline-1
+```
+
+This official copy's platform.ini was read without launching: Milestone156.0, binary `zen`. The actual launched PID, profile and app-data must still be verified during the future run. A stock browser cannot provide terminal burst comparison; compare launch/idle values only. Run stock and fork sequentially, preferably three interleaved repetitions, preserving every result. Do not make an overhead claim from one noisy pair.
+
+Current proof of these improvements: Python syntax and help pass. **No new native performance or stock comparator run occurred in this slice.** Recommended handoff: high reasoning to interpret producer/viewer/hidden-tab evidence; actual isolated native runs with the unchanged acceptance budget. Drift check: do not optimize test timing by forcing background tabs foreground or disabling normal browser behavior.

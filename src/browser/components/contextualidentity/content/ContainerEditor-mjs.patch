@@ -103,12 +103,12 @@ diff --git a/browser/components/contextualidentity/content/ContainerEditor.mjs b
 +    folderRow.style.gridTemplateColumns = "minmax(0, 1fr) auto";
 +    folderRow.style.gap = "6px";
 +    folderRow.append(this._startingDirectory, this._folderButton);
-+    const folderHelp = this._element("p", "Leave blank for your home folder. Otherwise use a full path beginning with /. Folder names are literal: ~ and environment variables are not expanded.");
++    const folderHelp = this._element("p", "Blank uses home. Use a literal path starting with /; ~ and variables are not expanded.");
 +    folderHelp.id = "zen-terminal-folder-help";
 +    this._terminalFields.append(folderLabel, folderRow, folderHelp);
-+    this._terminalFields.append(this._element("p", "Changes apply to new terminal tabs. Running terminals keep their current work."));
++    this._terminalFields.append(this._element("p", "Changes affect new terminals only. Running work stays unchanged."));
 +    this._terminalFields.append(this._element("h3", "Startup steps"));
-+    this._terminalFields.append(this._element("p", "Steps run in order. A simple SSH connection moves following steps onto that computer. A failed step stops the following steps."));
++    this._terminalFields.append(this._element("p", "Steps run in order; failure stops later steps. A simple SSH connection sends later steps to that computer."));
 +    this._stepList = this._element("div");
 +    this._stepList.id = "zen-terminal-recipe-steps";
 +    this._stepList.style.minWidth = "0";

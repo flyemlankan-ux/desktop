@@ -1,0 +1,163 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app",
+  "engine": "156.0",
+  "budgets": {
+    "startup_seconds": 20,
+    "each_terminal_seconds": 8,
+    "six_terminals_seconds": 30,
+    "idle_total_one_core_percent": 25,
+    "idle_increment_one_core_percent": 15,
+    "six_terminal_rss_increment_mib": 512,
+    "burst_seconds": 10,
+    "heartbeat_p95_ms": 150,
+    "heartbeat_max_ms": 500,
+    "cleanup_seconds": 10
+  },
+  "metrics": {
+    "startup_seconds": 7.105992541000001,
+    "baseline_idle": {
+      "one_core_cpu_percent": 6.960222113116605,
+      "peak_aggregate_rss_mib": 915.203125,
+      "seconds": 8.045720249999999,
+      "samples": 29,
+      "pids_at_end": [
+        83638,
+        83670,
+        83671,
+        83674,
+        83675,
+        83678,
+        83679,
+        83685,
+        83686,
+        83687,
+        83688
+      ]
+    },
+    "six_terminal_seconds": 1.5919627500000004,
+    "terminal_ready_seconds": [
+      0.7826765410000007,
+      0.1355677919999998,
+      0.14145733400000182,
+      0.14166179100000065,
+      0.13487404199999986,
+      0.255715833
+    ],
+    "six_terminal_idle": {
+      "one_core_cpu_percent": 6.475963617539236,
+      "peak_aggregate_rss_mib": 611.578125,
+      "seconds": 8.029693041999998,
+      "samples": 28,
+      "pids_at_end": [
+        83638,
+        83670,
+        83671,
+        83674,
+        83675,
+        83678,
+        83679,
+        83685,
+        83686,
+        83687,
+        83688,
+        83783,
+        83784,
+        83792,
+        83795,
+        83801,
+        83811,
+        83812,
+        83818,
+        83828,
+        83829,
+        83835,
+        83845,
+        83846,
+        83852,
+        83862,
+        83863,
+        83878,
+        83890,
+        83891
+      ]
+    },
+    "burst_seconds": 12.286660499999996,
+    "heartbeat": {
+      "samples": 227,
+      "p95_ms": 59.876208333331306,
+      "max_ms": 80.04379166666331
+    },
+    "cleanup_seconds": 0.3118917919999973
+  },
+  "results": [
+    {
+      "test": "Process launch to browser ready (includes driver handshake)",
+      "result": "pass",
+      "actual": 7.105992541000001,
+      "limit": 20
+    },
+    {
+      "test": "Each real terminal reaches ready",
+      "result": "pass",
+      "actual": 0.7826765410000007,
+      "limit": 8
+    },
+    {
+      "test": "Six independent real terminal tabs",
+      "result": "pass",
+      "actual": 1.5919627500000004,
+      "limit": 30
+    },
+    {
+      "test": "Six idle terminals plus browser CPU",
+      "result": "pass",
+      "actual": 6.475963617539236,
+      "limit": 25
+    },
+    {
+      "test": "Additional idle CPU above browser baseline",
+      "result": "pass",
+      "actual": -0.484258495577369,
+      "limit": 15
+    },
+    {
+      "test": "Additional aggregate RSS above browser baseline",
+      "result": "pass",
+      "actual": -303.625,
+      "limit": 512
+    },
+    {
+      "test": "All six output bursts reach actual xterm buffers",
+      "result": "fail",
+      "actual": 12.286660499999996,
+      "limit": 10
+    },
+    {
+      "test": "Browser main-thread heartbeat p95 during output",
+      "result": "pass",
+      "actual": 59.876208333331306,
+      "limit": 150
+    },
+    {
+      "test": "Worst browser main-thread heartbeat during output",
+      "result": "pass",
+      "actual": 80.04379166666331,
+      "limit": 500
+    },
+    {
+      "test": "Native setup removal stops all six jobs and clears records",
+      "result": "pass",
+      "actual": 0.3118917919999973,
+      "limit": 10
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/performance-1a5424e3/gecko.log",
+  "limitations": [
+    "single-machine smoke, not cross-hardware certification",
+    "startup includes Marionette handshake",
+    "aggregate RSS counts shared pages more than once",
+    "process sampling can miss CPU from jobs shorter than 250ms",
+    "heartbeat measures browser main-thread scheduling, not compositor paint latency",
+    "output completion checks actual xterm buffer, not screenshot pixels"
+  ]
+}

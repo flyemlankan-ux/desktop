@@ -2,7 +2,7 @@
 """Native performance acceptance smoke; fresh synthetic profile, never personal data.
 Budgets are provisional product acceptance limits, not measured baseline claims.
 """
-import argparse, json, math, os, re, socket as net_socket, subprocess, time, uuid
+import argparse, json, math, os, plistlib, re, shlex, socket as net_socket, subprocess, time, uuid
 from pathlib import Path
 from marionette_driver.marionette import Marionette
 
@@ -10,17 +10,25 @@ p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--app',required=True,type=Path)
 p.add_argument('--label',default='native-performance')
 p.add_argument('--expected-engine',default='156.0')
+p.add_argument('--stock-baseline',action='store_true',help='Only launch/idle measurements for an isolated official app copy under .terminal-test')
 a=p.parse_args()
 if not re.fullmatch(r'[A-Za-z0-9_-]+',a.label):p.error('Invalid proof label')
-root=Path(__file__).resolve().parents[2];app=a.app.resolve();exe=app/'Contents/MacOS/zen-terminal'
-if not exe.is_file():p.error('Expected separate Zen Terminal app')
+root=Path(__file__).resolve().parents[2];app=a.app.resolve()
+if a.stock_baseline:
+ if not app.is_relative_to((root/'.terminal-test').resolve()) or not app.name.startswith('Official Zen'):p.error('Stock baseline requires an explicit copied Official Zen app under .terminal-test, never the original installation')
+ info=plistlib.loads((app/'Contents/Info.plist').read_bytes())
+ if info.get('CFBundleIdentifier')!='app.zen-browser.zen' or info.get('CFBundleExecutable')!='zen':p.error('Unexpected official app identity')
+ exe=app/'Contents/MacOS/zen'
+else:exe=app/'Contents/MacOS/zen-terminal'
+if not exe.is_file():p.error('Expected app executable')
 if 'Milestone='+a.expected_engine not in (app/'Contents/Resources/platform.ini').read_text().splitlines():p.error('Unexpected engine; no launch')
 if os.environ.get('MOZ_HEADLESS'):p.error('This is a headed native test; no launch')
 tmux_exe=Path('/opt/homebrew/bin/tmux')
-if not tmux_exe.is_file():p.error('Real tmux required; no launch')
+if not a.stock_baseline and not tmux_exe.is_file():p.error('Real tmux required; no launch')
 run=root/'.terminal-test'/('performance-'+uuid.uuid4().hex[:8]);home=run/'home';profile=run/'profile'
 home.mkdir(parents=True);profile.mkdir()
 proof=root/'docs/proof/2026-09-19';proof.mkdir(parents=True,exist_ok=True)
+if (proof/(a.label+'-results.json')).exists():p.error('Proof label already exists; choose a new label to preserve previous results')
 (home/'.zshenv').write_text('export PATH=/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin\n')
 (home/'.zshrc').write_text("PROMPT='performance-proof> '\n")
 with net_socket.socket() as listener:listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
@@ -87,9 +95,13 @@ try:
  assert Path(js('return Services.dirsvc.get("ProfD",Ci.nsIFile).path;')).resolve()==profile.resolve()
  assert js('return Services.dirsvc.get("UAppData",Ci.nsIFile).path;')==str(home/'app-data')
  owned=True
- wait(lambda:js('return Boolean(window.gZenTerminalTabs && gBrowserInit.delayedStartupFinished);'),'startup ready')
+ wait(lambda:js('return Boolean(gBrowserInit.delayedStartupFinished && (arguments[0] || window.gZenTerminalTabs));',[a.stock_baseline]),'startup ready')
  metrics['startup_seconds']=time.monotonic()-started;check('Process launch to browser ready (includes driver handshake)',metrics['startup_seconds'],budgets['startup_seconds'])
  metrics['baseline_idle']=idle_measure()
+ if a.stock_baseline:
+  check('Stock browser-only idle CPU',metrics['baseline_idle']['one_core_cpu_percent'],budgets['idle_total_one_core_percent'])
+  print('STOCK BASELINE',json.dumps(metrics),flush=True)
+  raise SystemExit(1 if any(r['result']=='fail' for r in results) else 0)
  socket=js('return ChromeUtils.importESModule(arguments[0]).getTerminalTmuxSocket();',[manager])
  # Observe the real unchanged xterm instance, only to confirm output reaches its buffer.
  js('''window.performanceObserver={observe(doc){
@@ -117,15 +129,32 @@ try:
  check('Additional idle CPU above browser baseline',metrics['six_terminal_idle']['one_core_cpu_percent']-metrics['baseline_idle']['one_core_cpu_percent'],budgets['idle_increment_one_core_percent'])
  check('Additional aggregate RSS above browser baseline',metrics['six_terminal_idle']['peak_aggregate_rss_mib']-metrics['baseline_idle']['peak_aggregate_rss_mib'],budgets['six_terminal_rss_increment_mib'])
  js('window.performancePulse={last:performance.now(),gaps:[]};window.performanceTimer=setInterval(()=>{const now=performance.now();performancePulse.gaps.push(now-performancePulse.last);performancePulse.last=now;},50);')
- token='PERF_DONE_'+uuid.uuid4().hex;burst_start=time.monotonic()
+ token='PERF_DONE_'+uuid.uuid4().hex;burst_start=time.monotonic();burst_wall_ns=time.time_ns()
+ metrics['burst_dispatch']=[];metrics['producer_done_seconds']={}
+ # One low-frequency sampler in browser chrome, not six hidden document timers.
+ # Observe real parsed data without changing xterm scheduling or foreground tabs.
+ js('''window.performanceBurst={start:performance.now(),polls:0,samplerTimeMs:0,rows:performanceTabs.map((tab,index)=>({index,selected:tab.selected,hidden:tab.linkedBrowser.contentDocument.hidden,parsedEvents:0,completedMs:null}))};
+ window.performanceParsedObservers=performanceTabs.map((tab,index)=>tab.linkedBrowser.contentWindow.wrappedJSObject.__performanceTerminal.onWriteParsed(()=>{const row=performanceBurst.rows[index];row.parsedEvents++;row.lastParsedMs=performance.now()-performanceBurst.start;}));
+ window.performanceBurstTimer=setInterval(()=>{const began=performance.now();performanceBurst.polls++;for(const row of performanceBurst.rows){if(row.completedMs!==null)continue;const tab=performanceTabs[row.index];const b=tab.linkedBrowser.contentWindow.wrappedJSObject.__performanceTerminal.buffer.active;for(let i=Math.max(0,b.length-8);i<b.length;i++){if(b.getLine(i)?.translateToString(true).trim()===arguments[0]){row.completedMs=performance.now()-performanceBurst.start;row.hiddenAtCompletion=tab.linkedBrowser.contentDocument.hidden;break;}}}performanceBurst.samplerTimeMs+=performance.now()-began;},100);''',[token])
  # 4096 lines x ~97 bytes x 6 jobs: ~2.3 MiB from actual PTYs, bounded output.
  command="/usr/bin/awk 'BEGIN { for(i=0;i<4096;i++) printf \"%096d\\n\",i; print \""+token+"\" }'"
- for sid in session_ids:
-  assert tmux('send-keys','-t','=zt_'+sid,'-l',command).returncode==0
-  assert tmux('send-keys','-t','=zt_'+sid,'Enter').returncode==0
+ producer_markers=[]
+ for index,sid in enumerate(session_ids):
+  marker=home/('burst-producer-'+str(index)+'.done');producer_markers.append(marker)
+  # This file appears only after awk has flushed its output into the real PTY.
+  payload=command+'; printf done > '+shlex.quote(str(marker))
+  begin=time.monotonic();assert tmux('send-keys','-t','zt_'+sid,'-l',payload).returncode==0
+  literal_done=time.monotonic();assert tmux('send-keys','-t','zt_'+sid,'Enter').returncode==0
+  end=time.monotonic()
+  metrics['burst_dispatch'].append({'tab':index,'start_seconds':begin-burst_start,'literal_ms':1000*(literal_done-begin),'enter_ms':1000*(end-literal_done),'finish_seconds':end-burst_start})
+ metrics['burst_dispatch_total_seconds']=time.monotonic()-burst_start
  def all_rendered():
-  return js('return performanceTabs.every(tab=>{const t=tab.linkedBrowser.contentWindow.wrappedJSObject.__performanceTerminal;const b=t?.buffer.active;if(!b)return false;for(let i=Math.max(0,b.length-8);i<b.length;i++){if(b.getLine(i)?.translateToString(true).trim()===arguments[0])return true;}return false;});',[token])
+  for index,marker in enumerate(producer_markers):
+   if str(index) not in metrics['producer_done_seconds'] and marker.exists():metrics['producer_done_seconds'][str(index)]=(marker.stat().st_mtime_ns-burst_wall_ns)/1e9
+  state=js('return performanceBurst;');metrics['burst_per_tab']=state
+  return all(row['completedMs'] is not None for row in state['rows'])
  wait(all_rendered,'all actual terminal buffers contain completed output',timeout=20)
+ js('clearInterval(performanceBurstTimer);for(const observer of performanceParsedObservers)observer.dispose();')
  metrics['burst_seconds']=time.monotonic()-burst_start
  gaps=js('clearInterval(performanceTimer);performancePulse.gaps.push(performance.now()-performancePulse.last);return performancePulse.gaps;')
  assert gaps;ordered=sorted(gaps);metrics['heartbeat']={'samples':len(gaps),'p95_ms':ordered[max(0,math.ceil(.95*len(gaps))-1)],'max_ms':max(gaps)}
@@ -153,5 +182,5 @@ finally:
  if socket and owned:
   for sid in session_ids:tmux('kill-session','-t','=zt_'+sid) # Exact owned jobs only; no kill-server.
  log.close()
- (proof/(a.label+'-results.json')).write_text(json.dumps({'app':str(app),'engine':a.expected_engine,'budgets':budgets,'metrics':metrics,'results':results,'log':str(run/'gecko.log'),'limitations':['single-machine smoke, not cross-hardware certification','startup includes Marionette handshake','aggregate RSS counts shared pages more than once','process sampling can miss CPU from jobs shorter than 250ms','heartbeat measures browser main-thread scheduling, not compositor paint latency','output completion checks actual xterm buffer, not screenshot pixels']},indent=2)+'\n')
+ (proof/(a.label+'-results.json')).write_text(json.dumps({'app':str(app),'engine':a.expected_engine,'mode':'stock-browser-only' if a.stock_baseline else 'terminal-six-jobs','budgets':budgets,'metrics':metrics,'results':results,'log':str(run/'gecko.log'),'limitations':['single-machine smoke, not cross-hardware certification','startup includes Marionette handshake','aggregate RSS counts shared pages more than once','process sampling can miss CPU from jobs shorter than 250ms','heartbeat measures browser main-thread scheduling, not compositor paint latency','output completion checks actual xterm buffer, not screenshot pixels','per-tab completion sampled every 100ms in browser chrome; sampler overhead reported','producer marker timestamps use filesystem wall-clock relative to burst start; do not imply viewer completion']},indent=2)+'\n')
 if any(r['result']=='fail' for r in results):raise SystemExit(1)

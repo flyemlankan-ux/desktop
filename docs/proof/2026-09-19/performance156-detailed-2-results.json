@@ -1,0 +1,280 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/Zen Terminal Test 156.app",
+  "engine": "156.0",
+  "mode": "terminal-six-jobs",
+  "budgets": {
+    "startup_seconds": 20,
+    "each_terminal_seconds": 8,
+    "six_terminals_seconds": 30,
+    "idle_total_one_core_percent": 25,
+    "idle_increment_one_core_percent": 15,
+    "six_terminal_rss_increment_mib": 512,
+    "burst_seconds": 10,
+    "heartbeat_p95_ms": 150,
+    "heartbeat_max_ms": 500,
+    "cleanup_seconds": 10
+  },
+  "metrics": {
+    "startup_seconds": 2.29898475,
+    "baseline_idle": {
+      "one_core_cpu_percent": 5.413635983643858,
+      "peak_aggregate_rss_mib": 1010.9375,
+      "seconds": 8.127624416,
+      "samples": 29,
+      "pids_at_end": [
+        86627,
+        86628,
+        86629,
+        86630,
+        86631,
+        86633,
+        86634,
+        86637,
+        86638,
+        86639,
+        86640
+      ]
+    },
+    "six_terminal_seconds": 0.9678974579999995,
+    "terminal_ready_seconds": [
+      0.28325025000000004,
+      0.13826795800000014,
+      0.13616383299999946,
+      0.13640420800000008,
+      0.1348576659999985,
+      0.1389422919999994
+    ],
+    "six_terminal_idle": {
+      "one_core_cpu_percent": 6.9923063504639416,
+      "peak_aggregate_rss_mib": 979.984375,
+      "seconds": 8.008802416999998,
+      "samples": 28,
+      "pids_at_end": [
+        86627,
+        86628,
+        86629,
+        86630,
+        86631,
+        86633,
+        86634,
+        86637,
+        86638,
+        86639,
+        86640,
+        86708,
+        86709,
+        86717,
+        86720,
+        86726,
+        86736,
+        86737,
+        86743,
+        86753,
+        86754,
+        86760,
+        86770,
+        86771,
+        86777,
+        86787,
+        86788,
+        86794,
+        86804,
+        86805
+      ]
+    },
+    "burst_dispatch": [
+      {
+        "tab": 0,
+        "start_seconds": 0.0017099169999994501,
+        "literal_ms": 7.090375000000648,
+        "enter_ms": 5.438250000000977,
+        "finish_seconds": 0.014238542000001075
+      },
+      {
+        "tab": 1,
+        "start_seconds": 0.01432425000000137,
+        "literal_ms": 4.874334000000147,
+        "enter_ms": 4.918165999999502,
+        "finish_seconds": 0.02411675000000102
+      },
+      {
+        "tab": 2,
+        "start_seconds": 0.02421179199999912,
+        "literal_ms": 4.614833000001539,
+        "enter_ms": 4.633625000000308,
+        "finish_seconds": 0.03346025000000097
+      },
+      {
+        "tab": 3,
+        "start_seconds": 0.03354520899999969,
+        "literal_ms": 4.647791000000012,
+        "enter_ms": 5.351666999999338,
+        "finish_seconds": 0.04354466699999904
+      },
+      {
+        "tab": 4,
+        "start_seconds": 0.0436426670000003,
+        "literal_ms": 4.978916999998972,
+        "enter_ms": 7.938083000002649,
+        "finish_seconds": 0.05655966700000192
+      },
+      {
+        "tab": 5,
+        "start_seconds": 0.056691624999999135,
+        "literal_ms": 4.8626250000012305,
+        "enter_ms": 5.474208999999064,
+        "finish_seconds": 0.06702845899999943
+      }
+    ],
+    "producer_done_seconds": {
+      "0": 0.045535838,
+      "1": 0.063759698,
+      "2": 0.08705862,
+      "3": 0.108492566,
+      "4": 0.120654167,
+      "5": 0.123864502
+    },
+    "burst_dispatch_total_seconds": 0.06703745900000158,
+    "burst_per_tab": {
+      "start": 24593.903416666664,
+      "polls": 108,
+      "samplerTimeMs": 40.600916666706325,
+      "rows": [
+        {
+          "index": 0,
+          "selected": false,
+          "hidden": true,
+          "parsedEvents": 10,
+          "completedMs": 10309.297458333338,
+          "lastParsedMs": 10219.733083333336,
+          "hiddenAtCompletion": true
+        },
+        {
+          "index": 1,
+          "selected": false,
+          "hidden": true,
+          "parsedEvents": 3,
+          "completedMs": 3092.4089999999997,
+          "lastParsedMs": 3077.4752916666694,
+          "hiddenAtCompletion": true
+        },
+        {
+          "index": 2,
+          "selected": false,
+          "hidden": true,
+          "parsedEvents": 4,
+          "completedMs": 4135.027374999998,
+          "lastParsedMs": 4100.9814583333355,
+          "hiddenAtCompletion": true
+        },
+        {
+          "index": 3,
+          "selected": false,
+          "hidden": true,
+          "parsedEvents": 11,
+          "completedMs": 11237.93091666666,
+          "lastParsedMs": 11236.296708333331,
+          "hiddenAtCompletion": true
+        },
+        {
+          "index": 4,
+          "selected": false,
+          "hidden": true,
+          "parsedEvents": 8,
+          "completedMs": 8227.302041666666,
+          "lastParsedMs": 8191.565041666672,
+          "hiddenAtCompletion": true
+        },
+        {
+          "index": 5,
+          "selected": true,
+          "hidden": false,
+          "parsedEvents": 188,
+          "completedMs": 310.01783333333515,
+          "lastParsedMs": 316.00437500000044,
+          "hiddenAtCompletion": false
+        }
+      ]
+    },
+    "burst_seconds": 11.302346334,
+    "heartbeat": {
+      "samples": 212,
+      "p95_ms": 56.52645833333372,
+      "max_ms": 64.63124999999854
+    },
+    "cleanup_seconds": 0.1681469999999976
+  },
+  "results": [
+    {
+      "test": "Process launch to browser ready (includes driver handshake)",
+      "result": "pass",
+      "actual": 2.29898475,
+      "limit": 20
+    },
+    {
+      "test": "Each real terminal reaches ready",
+      "result": "pass",
+      "actual": 0.28325025000000004,
+      "limit": 8
+    },
+    {
+      "test": "Six independent real terminal tabs",
+      "result": "pass",
+      "actual": 0.9678974579999995,
+      "limit": 30
+    },
+    {
+      "test": "Six idle terminals plus browser CPU",
+      "result": "pass",
+      "actual": 6.9923063504639416,
+      "limit": 25
+    },
+    {
+      "test": "Additional idle CPU above browser baseline",
+      "result": "pass",
+      "actual": 1.5786703668200834,
+      "limit": 15
+    },
+    {
+      "test": "Additional aggregate RSS above browser baseline",
+      "result": "pass",
+      "actual": -30.953125,
+      "limit": 512
+    },
+    {
+      "test": "All six output bursts reach actual xterm buffers",
+      "result": "fail",
+      "actual": 11.302346334,
+      "limit": 10
+    },
+    {
+      "test": "Browser main-thread heartbeat p95 during output",
+      "result": "pass",
+      "actual": 56.52645833333372,
+      "limit": 150
+    },
+    {
+      "test": "Worst browser main-thread heartbeat during output",
+      "result": "pass",
+      "actual": 64.63124999999854,
+      "limit": 500
+    },
+    {
+      "test": "Native setup removal stops all six jobs and clears records",
+      "result": "pass",
+      "actual": 0.1681469999999976,
+      "limit": 10
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/performance-5bec9452/gecko.log",
+  "limitations": [
+    "single-machine smoke, not cross-hardware certification",
+    "startup includes Marionette handshake",
+    "aggregate RSS counts shared pages more than once",
+    "process sampling can miss CPU from jobs shorter than 250ms",
+    "heartbeat measures browser main-thread scheduling, not compositor paint latency",
+    "output completion checks actual xterm buffer, not screenshot pixels",
+    "per-tab completion sampled every 100ms in browser chrome; sampler overhead reported",
+    "producer marker timestamps use filesystem wall-clock relative to burst start; do not imply viewer completion"
+  ]
+}

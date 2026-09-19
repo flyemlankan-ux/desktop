@@ -104,7 +104,9 @@ jobs:
           node scripts/terminal-tabs/test-terminal-settings156.mjs
           node scripts/terminal-tabs/test-terminal-recipes.mjs
           node scripts/terminal-tabs/test-terminal-session-persistence.mjs
+          node scripts/terminal-tabs/test-terminal-output-pipeline.mjs
           node scripts/terminal-tabs/test-terminal-polish.mjs
+          node scripts/terminal-tabs/test-terminal-accessibility-lifecycle.mjs
           node scripts/terminal-tabs/test-terminal-search.mjs
           node scripts/terminal-tabs/test-terminal-navigation-return.mjs
           node scripts/terminal-tabs/test-terminal-native-polish.mjs
@@ -113,17 +115,26 @@ jobs:
           node scripts/terminal-tabs/test-terminal-alltabs.mjs
           node scripts/terminal-tabs/test-terminal-associations156.mjs
           node scripts/terminal-tabs/test-terminal-container-deletion.mjs
+          node scripts/terminal-tabs/test-terminal-concurrent-cleanup.mjs
           node scripts/terminal-tabs/test-terminal-close-ownership.mjs
           node scripts/terminal-tabs/test-terminal-share-safety.mjs
           node scripts/terminal-tabs/test-terminal-session-ownership.mjs
+          python3 scripts/terminal-tabs/test-clipboard-proof-transaction.py
           python3 scripts/terminal-tabs/test-copy-zen-profiles.py
           scripts/terminal-tabs/build-terminal-pty.sh
           python3 scripts/terminal-tabs/test-terminal-pty.py
           python3 scripts/terminal-tabs/test-sign-terminal-dev-dmg.py
           python3 scripts/terminal-tabs/test-terminal-build-declarations.py
           python3 scripts/terminal-tabs/test-terminal-build-packaging.py
+          python3 scripts/terminal-tabs/test-manage-terminal-app.py
+          python3 scripts/terminal-tabs/test-terminal-package-privacy.py
           python3 scripts/terminal-tabs/test-package-terminal-macos.py
           python3 scripts/terminal-tabs/test-verify-terminal-app-assets.py
+
+      - name: Check rendered reduced-motion cursor protection
+        run: |
+          npx playwright install chromium
+          node scripts/terminal-tabs/test-terminal-reduced-motion.mjs
 
       - name: Prepare terminal fork identity
         shell: bash

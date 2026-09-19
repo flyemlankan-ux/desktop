@@ -141,6 +141,12 @@ body {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
+  /* xterm 6's DOM renderer lets application escape sequences override its
+     cursorBlink option. Keep the user's motion preference above those modes. */
+  .xterm .xterm-cursor {
+    animation: none !important;
+  }
+
   *,
   *::before,
   *::after {

@@ -274,7 +274,15 @@ try {
           },
         }),
       };
+      const terminalObservers = new Map();
       window.Services = {
+        obs: {
+          addObserver(observer, topic) {
+            if (!terminalObservers.has(topic)) terminalObservers.set(topic, new Set());
+            terminalObservers.get(topic).add(observer);
+          },
+          removeObserver(observer, topic) { terminalObservers.get(topic)?.delete(observer); },
+        },
         appinfo: { OS: "Darwin", accessibilityEnabled: false },
         prefs: {
           getStringPref: (key, fallback) =>

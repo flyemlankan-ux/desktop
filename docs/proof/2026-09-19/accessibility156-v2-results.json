@@ -1,0 +1,45 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "results": [
+    {
+      "test": "Terminal starts without accessibility enabled",
+      "result": "pass",
+      "detail": {
+        "browser_observers_before": 3,
+        "browser_observers_after": 7,
+        "observer_scope": "diagnostic only; unrelated browser components initialize asynchronously"
+      }
+    },
+    {
+      "test": "Actual Firefox accessibility service started after terminal; existing terminal creates accessible output tree",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "Real accessible objects include terminal label and actual shell output; input label and live status exist",
+      "result": "pass",
+      "detail": {
+        "surfaceName": "Terminal",
+        "outputMarkerPresent": true,
+        "nodes": 76
+      }
+    },
+    {
+      "test": "Actual tab close removes exact terminal job",
+      "result": "pass",
+      "detail": {
+        "browser_observers_before_close": 8,
+        "browser_observers_after_close": 7,
+        "observer_cleanup_proof": "exact subscription/removal checked by focused production-function lifecycle test, not inferred from global browser totals"
+      }
+    },
+    {
+      "test": "macOS VoiceOver speech and OS IME",
+      "result": "not_run",
+      "detail": "Browser accessibility objects are not a VoiceOver/IME session; no OS settings changed"
+    }
+  ],
+  "failure": null,
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-ee62b2e2",
+  "scope": "new synthetic profile; real nsIAccessibilityService, not macOS VoiceOver"
+}

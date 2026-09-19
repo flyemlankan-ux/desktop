@@ -99,9 +99,10 @@ readonly APPLICATION_INI="$APP_PATH/Contents/Resources/application.ini"
 
 grep -Fxq 'Profile=zen-terminal' "$APPLICATION_INI" ||
   fail "application profile root is not isolated from stock Zen"
-if find "$APP_PATH" \( -name profiles.ini -o -name cookies.sqlite -o -name key4.db -o -name logins.json \) -print -quit | grep -q .; then
-  fail "private browser profile data found inside the distributable"
-fi
+# Check the WHOLE image, including accidentally packaged sibling folders and
+# resource archives. Never follow the Applications shortcut into the host Mac.
+python3 scripts/terminal-tabs/check-terminal-package-privacy.py "$MOUNT_POINT" ||
+  fail "distributable privacy inspection failed"
 
 if grep -Fq "[AppUpdate]" "$APPLICATION_INI"; then
   fail "application.ini still contains an AppUpdate section"

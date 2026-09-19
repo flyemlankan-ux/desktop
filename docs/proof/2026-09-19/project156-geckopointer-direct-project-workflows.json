@@ -1,0 +1,28 @@
+{
+  "app": ".terminal-test/Zen Terminal Test 156.app",
+  "scope": "Synthetic data; native browser-method integration except explicitly labelled pointer action",
+  "results": [
+    {
+      "test": "owned process and synthetic profile/data root confirmed",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "same saved setup launches two independent shells exactly once",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "mixed folder retains web and both terminals after selection",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native collapse/expand retains members and jobs",
+      "result": "pass",
+      "detail": true
+    }
+  ],
+  "failure": "AssertionError([{'type': 'mousedown', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': None, 'types': []}, {'type': 'dragstart', 'trusted': True, 'button': 0, 'buttons': 0, 'target': None, 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'none', 'types': []}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159768-5fa3bcdf-1cb9-4bbe-aac9-adbda9cb1f14', 'x': 125, 'y': 267, 'screenX': 129, 'screenY': 292, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'dragover', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159933-211c6fb1-cb14-43f4-ab81-b13ea7de47cf', 'x': 125, 'y': 179, 'screenX': 129, 'screenY': 204, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}, {'type': 'drop', 'trusted': True, 'button': 0, 'buttons': 0, 'target': '1789822159933-211c6fb1-cb14-43f4-ab81-b13ea7de47cf', 'x': 125, 'y': 179, 'screenX': 129, 'screenY': 204, 'dropEffect': 'move', 'types': ['application/x-moz-tabbrowser-tab', 'text/x-moz-text-internal']}])",
+  "run": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/mac-bb7ff0fe"
+}
