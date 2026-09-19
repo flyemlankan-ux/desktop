@@ -484,3 +484,10 @@ Window-leave repair independently reviewed and source-tested: exact trusted term
 Post-split source audit38/38 commands pass. Build5d12ee6 /35455394170 contains both split repairs; d29build35454947015 superseded/cancellationrequested. Apple signing/notarization, OS clipboard/IME/VoiceOver, remaining final-app checks and personal migration not complete. Original Zen699 remains running and destinationprofilefolder absent.
 
 Compiled0c followups: savedsetups9, extendednavigation12 (+2notrun), mixedfolderlifecycle8 allpass. Total56 checks across4 compilednative suites. Nativepicker retry stillfailed; no acceptance weakened. Local read-only `security find-identity -v -p codesigning` reports0 valid identities; accountsetup question sent to founder, no permission/credential changes.
+
+
+### Founder approval and further picker control — 2026-09-19
+
+Founder confirmed narrow app-specific changes if required and backed-up profile COPY, not a move. This does not make failed acceptance checks pass. No system protections were disabled. Existing development app already launches. Read-only disk sizing shows original Zen root about1.27GiB with about5GiB free; recheck before backup/copy, and never copy live profiles.
+
+Additional compiled0c nativepicker control used normal macOS LaunchServices (`--launch-services`) rather than direct executable launch. Separate owned app/profile identity confirmed, but actual ownedCancel still undiscoverable: `compiled0c-native-dialogs-launchservices-results.json`. Thus direct launch alone does not explain the earlier picker failure. Original699 remains untouched; no personal copy or security-setting changes. New compiled5d build35455394170 remains in progress.

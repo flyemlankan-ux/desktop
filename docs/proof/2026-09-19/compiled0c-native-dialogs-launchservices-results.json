@@ -1,0 +1,18 @@
+{
+  "app": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/compiled-0c2b163/Zen Terminal.app",
+  "test_data": "new synthetic profile/folders; AX restricted to launched browser PID",
+  "mode": "folder-picker-and-private",
+  "results": [
+    {
+      "test": "Owned browser/profile confirmed; existing Accessibility trust used without permission changes",
+      "result": "pass",
+      "detail": true
+    },
+    {
+      "test": "native dialogs",
+      "result": "fail",
+      "detail": "No unique enabled ['Cancel'] button in owned dialog containing 'Choose starting folder'; buttons=[]; frontmost=False; hidden=False; children=1; AXerrors=[{'attribute': 'AXValue', 'error': -25205}, {'attribute': 'AXEnabled', 'error': -25205}, {'attribute': 'AXSheets', 'error': -25205}, {'attribute': 'AXTitle', 'error': -25212}, {'attribute': 'AXDescription', 'error': -25205}, {'attribute': 'AXValue', 'error': -25205}, {'attribute': 'AXChildren', 'error': -25212}, {'attribute': 'AXSheets', 'error': -25205}]"
+    }
+  ],
+  "log": "/Users/ar/zen-terminal-research/desktop-stable/.terminal-test/native-dialogs-4cc65f83/gecko.log"
+}
